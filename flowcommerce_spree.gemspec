@@ -18,6 +18,7 @@ Gem::Specification.new do |s|
   s.files = Dir['{app,config,db,lib}/**/*', 'MIT-LICENSE', 'Rakefile', 'README.md', 'SPREE_FLOW.md']
   s.require_path = 'lib'
 
+  s.add_dependency 'awesome_print'
   s.add_dependency 'colorize'
   s.add_dependency 'flowcommerce'
   # s.add_dependency 'flowcommerce-activemerchant'
