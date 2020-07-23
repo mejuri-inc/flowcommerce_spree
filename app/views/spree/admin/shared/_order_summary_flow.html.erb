@@ -1,0 +1,13 @@
+<hr />
+
+<h5 class="sidebar-title">Flow details</h5>
+
+<%= total_cart_breakdown %>
+
+<% if @order.flow_data['order'] %>
+  <p>Experience: <b><%= @order.flow_data.dig('order', 'experience', 'key') %></b></p>
+  <a target="_fc_<%= @order.id %>" href="https://console.flow.io/<%= Flow::ORGANIZATION %>/orders/<%= @order.number %>">Open in Flow console</a>
+<% else %>
+  <p>Order is not localized with Flow.</p>
+<% end %>
+

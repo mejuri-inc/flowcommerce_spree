@@ -1,0 +1,86 @@
+<%
+  # render text email in console. parts[1] for html body
+  # puts Spree::OrderMailer.confirm_email(Spree::Order.last).body.parts[0].body
+
+  @prices      = @order.flow_cart_breakdown
+  @total_price = @prices.pop
+%>
+
+<style>
+  table.order td { padding: 4px; border-top: 1px solid #bbb; }
+</style>
+
+<h6>Dear <%= @order.bill_address.firstname %></h6>
+
+<br>
+<br>
+
+<p><%= Spree.t('order_mailer.confirm_email.instructions') %></p>
+<p><%= Spree.t('order_mailer.confirm_email.order_summary') %></p>
+
+<table class="order">
+  <tr>
+    <th>Product</th>
+    <th width="100" align="right">Price</th>
+    <th width="80" align="center">Quantity</th>
+    <th width="100" align="right">Total</th>
+  </tr>
+  <% @order.line_items.each do |line_item| %>
+    <tr>
+      <td><%= line_item.variant.product.name %></td>
+      <td align="right"><%= @order.flow_line_item_price(line_item) %></td>
+      <td align="center"><%= line_item.quantity %></td>
+      <td align="right"><%= @order.flow_line_item_price(line_item, :with_quantity) %></td>
+    </tr>
+  <% end %>
+</table>
+
+<br>
+
+<p><b>Total</b></p>
+
+<table class="order">
+
+  <% @prices.each do |price| %>
+    <tr><td width="120"><%= price.name.capitalize %></td><td align="right"><%= price.label %></td></tr>
+  <% end %>
+
+  <tr>
+    <td><%= Spree.t(:total) %></td>
+    <td align="right"><b><%= @total_price.label %></b></td>
+  </tr>
+  <tr>
+    <td>Payment method</td>
+    <td align="right"><%= @order.flow_payment_method == 'paypal' ? 'PayPal' : 'Credit Card' %></td>
+  </tr>
+</table>
+
+<br>
+
+<% ['ship', 'bill'].each do |name|
+  address = @order.send('%s_address' % name)
+%>
+<p><b><%= name.capitalize %>ing address</b></p>
+
+<table class="order">
+  <tr>
+    <td>Full name</td>
+    <td><%= address.firstname %> <%= address.lastname %></td>
+  </tr>
+  <tr>
+    <td>Address</td>
+    <td><%= address.address1 %></td>
+  </tr>
+  <tr>
+    <td>City</td>
+    <td><%= address.city %></td>
+  </tr>
+  <tr>
+    <td>Country</td>
+    <td><%= address.country.name rescue '-' %>, <%= address.state.name rescue '-' %></td>
+  </tr>
+</table>
+<br />
+<% end %>
+
+<p><%= Spree.t('order_mailer.confirm_email.thanks') %></p>
