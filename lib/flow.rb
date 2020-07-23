@@ -8,6 +8,8 @@ module Flow
   BASE_COUNTRY = ENV.fetch('FLOW_BASE_COUNTRY', 'USA')
   API_KEY = ENV.fetch('FLOW_API_KEY', 'test_key')
 
+  ENV['FLOW_TOKEN'] = API_KEY
+
   extend self
 
   # builds curl command and gets remote data
