@@ -2,32 +2,31 @@ require 'flowcommerce'
 require 'thread/pool'
 require 'digest/sha1'
 require 'colorize'
+require 'awesome_print'
 
-desc 'lists all flow tasks'
+desc 'Listing and possible invocation of all the Flow tasks'
 task :flow do |t|
-  command = 'rake -T | grep flow'
-  puts '    %s' % command
-  puts '    -'
+  tasks = `#{'rake -T | grep flow'}`.split($/)
 
-  tasks = `#{command}`.split($/)
-
-  tasks.shift # first task is this on, rake flow
+  puts "Executing: #{t} (#{tasks[0].partition('# ').last}):", ''
 
   tasks.each_with_index do |task, index|
-    puts ' %d. %s' % [index + 1, task]
+    puts ' %3d. %s' % [index + 1, task]
   end
 
-  puts '    -'
-  print 'Task number: '
-  task = $stdin.gets.to_i
-  exit if task == 0
-  task = tasks[task - 1].to_s.split(/\s+/)[1]
+  print "\nType the task number to be invoked: "
+  task_number = $stdin.gets.to_i
 
-  if task.present?
-    puts 'Executing: %s' % task
-    Rake::Task[task].invoke
+  if (1..tasks.size).cover?(task_number)
+    if task_number == 1
+      puts 'The app:flow task was currently being run'.green
+    else
+      task = tasks[task_number - 1].to_s.split(/\s+/)[1]
+      puts 'Executing: %s' % task
+      Rake::Task[task].invoke
+    end
   else
-    puts 'task not found'.red
+    puts "Unknown task number: #{task_number}".red
   end
 end
 
@@ -73,21 +72,21 @@ namespace :flow do
   desc 'Check if ENV vars, center and tier per experience is set'
   task check: :environment do
     puts 'Environment check'
-    required_env_variables = ['FLOW_API_KEY', 'FLOW_ORGANIZATION', 'FLOW_BASE_COUNTRY']
-    required_env_variables.each { |el| puts ' ENV: %s - %s ' % [el, ENV[el].present? ? 'present'.green : 'MISSING'.red]  }
+    required_env_vars = %w[FLOW_API_KEY FLOW_ORGANIZATION FLOW_BASE_COUNTRY]
+    required_env_vars.each { |el| puts ' ENV: %s - %s ' % [el, ENV[el].present? ? 'present'.green : 'MISSING'.red]  }
 
     # experiences
     puts 'Experiences:'
     puts ' Getting experiences for flow org: %s' % Flow::ORGANIZATION
     client      = FlowCommerce.instance
     experiences = client.experiences.get(Flow::ORGANIZATION)
-    puts ' Got %d experinences - %s'.green % [experiences.length, experiences.map(&:country).join(', ')]
+    puts ' Got %d experiences - %s'.green % [experiences.length, experiences.map(&:country).join(', ')]
 
-    # create detault experience unless one exists
+    # create default experience unless one exists
     puts 'Centers:'
     center_name     = 'default'
-    current_cetners = client.centers.get(Flow::ORGANIZATION).map(&:key)
-    if current_cetners.include?(center_name)
+    current_centers = client.centers.get(Flow::ORGANIZATION).map(&:key)
+    if current_centers.include?(center_name)
       puts ' Default center: %s' % 'present'.green
     else
       Flow.api :put, '/:organization/centers/%s' % center_name, {}, {'key':center_name,
@@ -196,7 +195,7 @@ namespace :flow do
     puts 'Finished with total of %s rows.' % total.to_s.green
   end
 
-  # checks existance of every item in local produt catalog
+  # checks existance of every item in local product catalog
   # remove product from flow unless exists localy
   desc 'Remove unused items from flow catalog'
   task clean_catalog: :environment do
