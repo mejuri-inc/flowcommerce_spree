@@ -127,8 +127,9 @@ namespace :flow do
     puts ' Spree::Store.find_by(default:true).url == "%s" (ensure this is valid and right URL)' % url.blue
 
     # rate cards
-    puts 'Rate cards (checking shipping from USA to China): '
-    data = Flow.api :post, '/:organization/ratecard_estimates', {}, { origin:'USA', destination: 'China' }
+    puts 'Rate cards (checking shipping from Canada to France):'
+    data = Flow.api :post, '/:organization/ratecard_estimates/summaries', {},
+                    { origin: 'Canada', destination: 'France' }
     if data.is_a?(Array) && data.length > 0
       puts ' Rate cards set, OK'.green
     else
