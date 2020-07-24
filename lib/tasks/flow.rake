@@ -75,7 +75,6 @@ namespace :flow do
     required_env_vars = %w[FLOW_API_KEY FLOW_ORGANIZATION FLOW_BASE_COUNTRY]
     required_env_vars.each { |el| puts ' ENV: %s - %s ' % [el, ENV[el].present? ? 'present'.green : 'MISSING'.red]  }
 
-    # experiences
     puts 'Experiences:'
     puts ' Getting experiences for flow org: %s' % Flow::ORGANIZATION
     client      = FlowCommerce.instance
@@ -89,15 +88,37 @@ namespace :flow do
     if current_centers.include?(center_name)
       puts ' Default center: %s' % 'present'.green
     else
-      Flow.api :put, '/:organization/centers/%s' % center_name, {}, {'key':center_name,
-                                                                     'address':{'contact':{'name':{'first':'Kinto',
-                                                                                                   'last':'Doe'},
-                                                                                           'company':'XYZ
-                                                                                           Corporation, Inc','email':'dcone@test.flow.io','phone':'1-555-444-0001'},'location':{'streets':['88 East Broad Street'],'city':'Columbus','province':'OH','postal':'43215','country':'USA'}},'packaging':[{'dimensions':{'packaging':{'depth':{'value':'9','units':'inch'},'length':{'value':'13','units':'inch'},'weight':{'value':'1','units':'pound'},'width':{'value':'3','units':'inch'}}},'name':'Big Box','number':'box1'}],'name':'Spree Test','services':[{'service':'dhl-express-worldwide'},{'service':'landmark-global'}],'schedule':{'holiday':'us_bank_holidays','exception':[{'type':'closed','datetime_range':{'from':'2016-05-05T18:30:00.000Z','to':'2016-05-06T18:30:00.000Z'}}],'calendar':'weekdays','cutoff':'16:30'},'timezone':'US/Eastern'}
+      Flow.api :put, '/:organization/centers/%s' % center_name, {},
+               {'key': center_name,
+                'address': { 'contact': { 'name': { 'first': 'Kinto',
+                                                    'last':'Doe' },
+                                          'company': Flow::ORGANIZATION,
+                                          'email': 'dcone@test.flow.io',
+                                          'phone': '1-555-444-0001' },
+                             'location': { 'streets': ['88 East Broad Street'],
+                                           'city': 'Columbus',
+                                           'province': 'OH',
+                                           'postal': '43215',
+                                           'country': Flow::BASE_COUNTRY } },
+                'packaging': [{ 'dimensions': { 'packaging': { 'depth':  { 'value': '9',  'units': 'inch' },
+                                                               'length': { 'value': '13', 'units': 'inch' },
+                                                               'weight': { 'value': '1',  'units': 'pound' },
+                                                               'width':  { 'value': '3',  'units': 'inch' } } },
+                                'name': 'Big Box',
+                                'number': 'box1' }],
+                'name': 'Spree Test',
+                'services': [{ 'service': 'dhl-express-worldwide' },
+                             { 'service': 'landmark-global' }],
+                'schedule': { 'holiday': 'us_bank_holidays',
+                              'exception': [{ 'type': 'closed',
+                                              'datetime_range': { 'from': '2016-05-05T18:30:00.000Z',
+                                                                  'to':   '2016-05-06T18:30:00.000Z' } }],
+                              'calendar': 'weekdays',
+                              'cutoff': '16:30' },
+                'timezone': 'US/Eastern' }
       puts ' Default center: %s (run again)' % 'created'.blue
     end
 
-    # tiers
     puts 'Tiers:'
     experiences.each do |exp|
       exp_tiers = FlowCommerce.instance.tiers.get(Flow::ORGANIZATION, experience: exp.key)
@@ -109,31 +130,52 @@ namespace :flow do
       if exp_services.length == 0
         puts 'and no delivery services defined!'.red
       else
-        puts 'with %s devlivery services defined (%s)' % [exp_services.length.to_s.green, exp_services.join(', ')]
+        puts 'with %s delivery services defined (%s)' % [exp_services.length.to_s.green, exp_services.join(', ')]
       end
     end
 
-    # database fields
-    puts 'Database field (flow_data)'
-    for klass in [Spree::CreditCard, Spree::Product, Spree::Variant, Spree::Order, Spree::Promotion]
+    puts 'Database fields (flow_data):'
+    [Spree::CreditCard, Spree::Product, Spree::Variant, Spree::Order, Spree::Promotion].each { |klass|
       state = klass.new.respond_to?(:flow_data) ? 'exists'.green : 'not present (run rake flow:migrate)'.red
       puts ' %s - %s' % [klass.to_s.ljust(18), state]
-    end
+    }
 
-    # default URL
     puts 'Default store URL:'
     url = Spree::Store.find_by(default:true).url
     puts ' Spree::Store.find_by(default:true).url == "%s" (ensure this is valid and right URL)' % url.blue
 
-    # rate cards
-    puts 'Rate cards (checking shipping from Canada to France):'
-    data = Flow.api :post, '/:organization/ratecard_estimates/summaries', {},
-                    { origin: 'Canada', destination: 'France' }
-    if data.is_a?(Array) && data.length > 0
-      puts ' Rate cards set, OK'.green
-    else
-      puts ' error!'.red
-      ap data
+    # rate cards check
+    ratecard_estimates_path = '/:organization/ratecard_estimates/summaries'
+    origins = []
+    errors = []
+    ratecards = client.ratecards.get(Flow::ORGANIZATION).each do |rc|
+      rc.origination_zones.each do |oz|
+        data = Flow.api :post, ratecard_estimates_path, {}, { origin: oz.country, destination: origins.last || 'MDA' }
+
+        if data.is_a?(Hash) && data['code'] == 'generic_error'
+          errors << { origin: oz.country, messages: data['messages'] }
+          next
+        elsif data.is_a?(Array) && data.length > 0
+          origins << oz.country
+        else
+          errors << { origin: oz.country, messages: ['Unknown error'] }
+        end
+      end
+    end
+    if origins.size > 0
+      puts "\nRate cards set, OK:".green
+      origins.each_with_index do |origin, index|
+        puts ' %3d. %s' % [index + 1, origin]
+      end
+    end
+    if errors.size > 0
+      puts "\nRate cards errors:".red
+      errors.each_with_index do |err, index|
+        puts ' %3d. Origin = %s, errors:' % [index + 1, err[:origin]]
+        err[:messages].each do |m|
+          puts "      #{m}".red
+        end
+      end
     end
   end
 
