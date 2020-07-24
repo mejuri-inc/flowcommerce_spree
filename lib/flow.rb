@@ -22,7 +22,7 @@ module Flow
 
     curl = ['curl -s']
     curl.push '-X %s' % action.to_s.upcase
-    curl.push '-u %s:' % api_key
+    curl.push '-u %s:' % API_KEY
 
     if body
       body = body.to_json unless body.is_a?(Array)
