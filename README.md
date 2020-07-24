@@ -29,11 +29,6 @@ init complete flow app
   config.after_initialize do |app|
     # init Flow payments as an option
     app.config.spree.payment_methods << Spree::Gateway::Flow
-
-    # define defaults
-    Flow::ORGANIZATION = ENV.fetch('FLOW_ORGANIZATION')
-    Flow.base_country = ENV.fetch('FLOW_BASE_COUNTRY')
-    Flow.api_key      = ENV.fetch('FLOW_API_KEY')
   end
 ```
 
