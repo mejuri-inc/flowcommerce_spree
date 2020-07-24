@@ -100,9 +100,8 @@ namespace :flow do
 
     # tiers
     puts 'Tiers:'
-    tiers = FlowCommerce.instance.tiers.get(Flow::ORGANIZATION)
     experiences.each do |exp|
-      exp_tiers    = tiers.select{ |tier| tier.experience.id == exp.key }
+      exp_tiers = FlowCommerce.instance.tiers.get(Flow::ORGANIZATION, experience: exp.key)
       count        = exp_tiers.length
       count_desc   = count == 0 ? '0 (error!)'.red : count.to_s.green
       print ' Experience %s has %s devivery tiers defined, ' % [exp.key.yellow, count_desc]
