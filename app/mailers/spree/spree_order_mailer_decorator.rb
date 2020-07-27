@@ -1,6 +1,6 @@
 module Spree
   OrderMailer.class_eval do
-    default from: ApplicationMailer::DEFAULT_FROM
+    # default from: ApplicationMailer::DEFAULT_FROM
 
     def refund_complete_email web_hook_event
       auth_id = web_hook_event.dig('refund', 'authorization', 'key')
