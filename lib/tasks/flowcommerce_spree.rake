@@ -4,39 +4,41 @@ require 'digest/sha1'
 require 'colorize'
 require 'awesome_print'
 
-desc 'Listing and possible invocation of all the Flow tasks'
-task :flow do |t|
-  tasks = `#{'rake -T | grep flow'}`.split($/)
+namespace :flowcommerce_spree do
+  desc 'Listing and possible invocation of all the Flow tasks'
+  task :list_tasks do |t|
+    task_list = `#{'rake -T | grep flowcommerce_spree'}`.split($/)
+    @exit = false
+    puts "Executing: #{t}", ''
 
-  puts "Executing: #{t} (#{tasks[0].partition('# ').last}):", ''
+    loop do
+      puts 'Flowcommerce tasks:'
+      task_list.each_with_index do |task, index|
+        puts ' %3d. %s' % [index + 1, task]
+      end
 
-  tasks.each_with_index do |task, index|
-    puts ' %3d. %s' % [index + 1, task]
-  end
+      print "\nType the task number to be invoked: "
+      task_number = $stdin.gets.to_i
 
-  print "\nType the task number to be invoked: "
-  task_number = $stdin.gets.to_i
+      if (1..task_list.size).cover?(task_number)
+        selected_task_name = task_list[task_number - 1].to_s.split(/\s+/)[1]
+        puts "\nRunning: %s" % selected_task_name
+        Rake::Task[selected_task_name].invoke
+        puts
+      else
+        puts "Unknown task number: #{task_number}".red, ''
+      end
 
-  if (1..tasks.size).cover?(task_number)
-    if task_number == 1
-      puts 'The app:flow task was currently being run'.green
-    else
-      task = tasks[task_number - 1].to_s.split(/\s+/)[1]
-      puts 'Executing: %s' % task
-      Rake::Task[task].invoke
+      break if @exit
     end
-  else
-    puts "Unknown task number: #{task_number}".red
   end
-end
 
-namespace :flow do
   # uploads catalog to Flow API
   # using local Spree database
   # run like 'rake flow:upload_catalog[:force]'
   # if you want to force update all products
   desc 'Upload catalog'
-  task :upload_catalog => :environment do |t|
+  task upload_catalog: :environment do |t|
     # do reqests in paralel
     # thread_pool  = Thread.pool(5)
     update_sum   = 0
@@ -136,7 +138,7 @@ namespace :flow do
 
     puts 'Database fields (flow_data):'
     [Spree::CreditCard, Spree::Product, Spree::Variant, Spree::Order, Spree::Promotion].each { |klass|
-      state = klass.new.respond_to?(:flow_data) ? 'exists'.green : 'not present (run rake flow:migrate)'.red
+      state = klass.new.respond_to?(:flow_data) ? 'exists'.green : 'not present (run DB migrations)'.red
       puts ' %s - %s' % [klass.to_s.ljust(18), state]
     }
 
@@ -180,7 +182,7 @@ namespace :flow do
   end
 
   desc 'Sync localized catalog items'
-  task :sync_localized_items => :environment do |t|
+  task sync_localized_items: :environment do |t|
     # we have to log start, so that another process does not start while this one is running
     next unless FlowApiRefresh.needs_refresh?
 
@@ -276,30 +278,19 @@ namespace :flow do
   end
 
   # creates needed fields in DB for Flow to work
-  desc 'Ensure we have DB prepared for flow'
-  task :migrate => :environment do |t|
-    migrate = []
-    migrate.push [:spree_products,     :flow_data, :jsonb, default: {}]
-    migrate.push [:spree_variants,     :flow_data, :jsonb, default: {}]
-    migrate.push [:spree_orders,       :flow_data, :jsonb, default: {}]
-    migrate.push [:spree_promotions,   :flow_data, :jsonb, default: {}]
-
-    migrate.each do |table, field, type, opts={}|
-      klass = table.to_s.sub('spree_','spree/').classify.constantize
-
-      if klass.new.respond_to?(field)
-        puts 'Field %s in table %s exists'.green % [field, table]
-      else
-        ActiveRecord::Migration.add_column table, field, type, opts
-        puts 'Field %s in table %s added'.blue % [field, table]
-      end
-    end
+  desc 'Run flowcommerce_spree DB migrations'
+  task migrate: :environment do |t|
+    Rake::Task['db:migrate'].invoke('SCOPE=flowcommerce_spree')
   end
 
   desc 'Pretty print flow_data of last updated product variant'
-  task :sync_check => :environment do |t|
+  task sync_check: :environment do |t|
     data = Spree::Variant.order('updated_at desc').first.flow_data
     puts JSON.pretty_generate(data).gsub(/"(\w+)":/) { '"%s":' % $1.yellow }
   end
-end
 
+  desc 'Exit list_tasks'
+  task exit: :environment do
+    @exit = true
+  end
+end
