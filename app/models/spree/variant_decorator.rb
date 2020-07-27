@@ -29,7 +29,7 @@ module Spree
       response = FlowCommerce.instance.items.put_by_number(Flow::ORGANIZATION, id.to_s, flow_item)
 
       # after successful put, write cache
-      update_column :flow_data, flow_data.merge('last_sync_sh1'=>flow_item_sh1)
+      update_column(:flow_data, flow_data.merge('last_sync_sh1' => flow_item_sh1).to_json)
 
       response
     end
@@ -56,19 +56,21 @@ module Spree
     # creates object for flow api
     # TODO: Remove and use the one in rakefile
     def flow_api_item
-      image_base = ENV.fetch('RAILS_ASSET_HOST')
+      image_base = ENV.fetch('ASSET_HOST')
 
       # add product categories
       categories = []
       taxon = product.taxons.first
-      while taxon
-        categories.unshift taxon.name
-        taxon = taxon.parent
+      current_taxon = taxon
+      while current_taxon
+        categories.unshift current_taxon.name
+        current_taxon = current_taxon.parent
       end
 
-      images = product.images.first ? [
-        { url: image_base + product.display_image.attachment(:large), tags: ['main'] },
-        { url: image_base + product.images.first.attachment.url(:product), tags: ['thumbnail'] }
+      image = product.images.first || product.variant_images.first
+      images = image ? [
+        { url: image_base + image.attachment(:large), tags: ['main'] },
+        { url: image_base + image.attachment.url(:product), tags: ['thumbnail'] }
       ] : []
 
       Io::Flow::V0::Models::ItemForm.new(
@@ -91,9 +93,9 @@ module Spree
                        tax_category: product.tax_category_id.to_s,
                        product_description: product.description,
                        product_shipping_category: product.shipping_category_id ? shipping_category.name : nil,
-                       product_meta_title: product.meta_title.to_s,
-                       product_meta_description: product.meta_description.to_s,
-                       product_meta_keywords: product.meta_keywords.to_s,
+                       product_meta_title: taxon&.meta_title.to_s,
+                       product_meta_description: taxon&.meta_description.to_s,
+                       product_meta_keywords: taxon&.meta_keywords.to_s,
                        product_slug: product.slug,
                      }.select{ |k,v| v.present? }
       )
