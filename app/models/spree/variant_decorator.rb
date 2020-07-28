@@ -69,7 +69,7 @@ module Spree
 
       image = product.images.first || product.variant_images.first
       images = image ? [
-        { url: image_base + image.attachment(:large), tags: ['main'] },
+        { url: image_base + image.attachment(:large), tags: ['checkout'] },
         { url: image_base + image.attachment.url(:product), tags: ['thumbnail'] }
       ] : []
 
