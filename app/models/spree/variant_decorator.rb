@@ -56,7 +56,7 @@ module Spree
     # creates object for flow api
     # TODO: Remove and use the one in rakefile
     def flow_api_item
-      image_base = ENV.fetch('ASSET_HOST')
+      image_base = ENV.fetch('ASSET_HOST', 'staging.mejuri.com')
 
       # add product categories
       categories = []
