@@ -1,4 +1,6 @@
 class FlowSettings < ActiveRecord::Base
+  serialize :data, ActiveRecord::Coders::JSON.new(symbolize_keys: true)
+
   class << self
     # create or set value with timestamp
     def set key, value
