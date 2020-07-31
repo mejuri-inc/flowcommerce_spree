@@ -1,7 +1,6 @@
 # Flow.io (2017)
 # helper class to manage product sync scheduling
 
-require 'json'
 require 'logger'
 require 'pathname'
 
@@ -9,22 +8,18 @@ module FlowApiRefresh
   extend self
 
   SYNC_INTERVAL_IN_MINUTES = 60 unless defined?(SYNC_INTERVAL_IN_MINUTES)
-  # CHECK_FILE = Pathname.new './tmp/last-flow-refresh.txt' unless defined?(CHECK_FILE)
   LOGGER = Logger.new('./log/sync.log', 3, 1024000) unless defined?(LOGGER)
-
-  ###
 
   def now
     Time.now.to_i
   end
 
   def settings
-    FlowSettings.fetch 'rake-products-refresh'
+    FlowSettings.fetch('rake-products-refresh')
   end
 
   def data
-    # CHECK_FILE.exist? ? JSON.parse(CHECK_FILE.read) : {}
-    @data ||= JSON.load(settings.data || '{}')
+    @data ||= settings.data
   end
 
   def duration
@@ -35,7 +30,7 @@ module FlowApiRefresh
 
   def write
     yield data
-    settings.update_attribute :data, data.to_json
+    settings.update_attribute(:data, data)
     data
   end
 
