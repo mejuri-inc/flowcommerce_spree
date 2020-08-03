@@ -106,15 +106,14 @@ module Spree
     def flow_import_item(item)
       experience_key = item.local.experience.key
       flow_data['exp'] ||= {}
-      flow_data['exp'][experience_key] = {}
-      flow_data['exp'][experience_key]['status'] = item.local.status.value
+      flow_data['exp'][experience_key] = { 'status' => item.local.status.value }
       flow_data['exp'][experience_key]['prices'] = item.local.prices.map do |price|
         price = price.to_hash
         [:includes, :adjustment].each { |el| price.delete(el) unless price[el] }
         price
       end
 
-      update_column :flow_data, flow_data.dup
+      update_column(:flow_data, flow_data.to_json)
     end
   end
 end

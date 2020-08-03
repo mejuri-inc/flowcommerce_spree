@@ -219,16 +219,16 @@ namespace :flowcommerce_spree do
           # if item is not included, mark it in product as excluded
           # regardles if excluded or restricted
           unless item.local.status.value == 'included'
-            print '[%s]:' % item.local.status.value.red
-            if product = variant.product
-              product.flow_data['%s.excluded' % experience.key] = 1
-              product.update_column :flow_data, product.flow_data.dup
+            print "[#{item.local.status.value.red}]:"
+            if (product = variant.product)
+              product.flow_data["#{experience.key}.excluded"] = 1
+              product.update_column(:flow_data, product.flow_data.to_json)
             end
           end
 
-          variant.flow_import_item item
+          variant.flow_import_item(item)
 
-          print '%s, ' % sku
+          print "#{sku}, "
         end
       end
     end
