@@ -14,7 +14,7 @@ namespace :flowcommerce_spree do
     loop do
       puts 'Flowcommerce tasks:'
       task_list.each_with_index do |task, index|
-        puts ' %3d. %s' % [index + 1, task]
+        puts " %3d. #{task}" % (index + 1)
       end
 
       print "\nType the task number to be invoked: "
@@ -22,7 +22,7 @@ namespace :flowcommerce_spree do
 
       if (1..task_list.size).cover?(task_number)
         selected_task_name = task_list[task_number - 1].to_s.split(/\s+/)[1]
-        puts "\nRunning: %s" % selected_task_name
+        puts "\nRunning: #{selected_task_name}"
         Rake::Task[selected_task_name].invoke
         puts
       else
@@ -58,7 +58,7 @@ namespace :flowcommerce_spree do
           # skip if sync not needed
           if variant.flow_sync_product
             update_sum += 1
-            $stdout.print "\n%s: %s (%s %s)" % [variant.id.to_s, variant.product.name, variant.price, variant.cost_currency]
+            $stdout.print "\n#{variant.id.to_s}: #{variant.product.name} (#{variant.price} #{variant.cost_currency})"
           else
             $stdout.print '.'
           end
@@ -68,29 +68,30 @@ namespace :flowcommerce_spree do
 
     # thread_pool.shutdown
 
-    puts "\nFor total of %s products, %s needed update" % [total_sum.to_s.blue, (update_sum == 0 ? 'none' : update_sum).to_s.green]
+    needed_update = (update_sum == 0 ? 'none' : update_sum).to_s.green
+    puts "\nFor total of #{total_sum.to_s.blue} products, #{needed_update} needed update"
   end
 
   desc 'Check if ENV vars, center and tier per experience is set'
   task check: :environment do |t|
     puts 'Environment check'
     required_env_vars = %w[FLOW_API_KEY FLOW_ORGANIZATION FLOW_BASE_COUNTRY]
-    required_env_vars.each { |el| puts ' ENV: %s - %s ' % [el, ENV[el].present? ? 'present'.green : 'MISSING'.red]  }
+    required_env_vars.each { |el| puts " ENV: #{el} - #{ENV[el].present? ? 'present'.green : 'MISSING'.red} " }
 
     puts 'Experiences:'
-    puts ' Getting experiences for flow org: %s' % Flow::ORGANIZATION
+    puts " Getting experiences for flow org: #{Flow::ORGANIZATION}"
     client      = FlowCommerce.instance
     experiences = client.experiences.get(Flow::ORGANIZATION)
-    puts ' Got %d experiences - %s'.green % [experiences.length, experiences.map(&:country).join(', ')]
+    puts " Got %d experiences - #{experiences.map(&:country).join(', ')}".green % experiences.length
 
     # create default experience unless one exists
     puts 'Centers:'
     center_name     = 'default'
     current_centers = client.centers.get(Flow::ORGANIZATION).map(&:key)
     if current_centers.include?(center_name)
-      puts ' Default center: %s' % 'present'.green
+      puts " Default center: #{'present'.green}"
     else
-      Flow.api :put, '/:organization/centers/%s' % center_name, {},
+      Flow.api :put, "/:organization/centers/#{center_name}", {},
                {'key': center_name,
                 'address': { 'contact': { 'name': { 'first': 'Kinto',
                                                     'last':'Doe' },
@@ -118,7 +119,7 @@ namespace :flowcommerce_spree do
                               'calendar': 'weekdays',
                               'cutoff': '16:30' },
                 'timezone': 'US/Eastern' }
-      puts ' Default center: %s (run again)' % 'created'.blue
+      puts " Default center: #{'created'.blue} (run again)"
     end
 
     puts 'Tiers:'
@@ -126,25 +127,25 @@ namespace :flowcommerce_spree do
       exp_tiers = FlowCommerce.instance.tiers.get(Flow::ORGANIZATION, experience: exp.key)
       count        = exp_tiers.length
       count_desc   = count == 0 ? '0 (error!)'.red : count.to_s.green
-      print ' Experience %s has %s devivery tiers defined, ' % [exp.key.yellow, count_desc]
+      print " Experience #{exp.key.yellow} has #{count_desc} delivery tiers defined, "
 
       exp_services = exp_tiers.inject([]) { |total, tier| total.push(*tier.services.map(&:id)) }
       if exp_services.length == 0
         puts 'and no delivery services defined!'.red
       else
-        puts 'with %s delivery services defined (%s)' % [exp_services.length.to_s.green, exp_services.join(', ')]
+        puts "with #{exp_services.length.to_s.green} delivery services defined (#{exp_services.join(', ')})"
       end
     end
 
     puts 'Database fields (flow_data):'
     [Spree::CreditCard, Spree::Product, Spree::Variant, Spree::Order, Spree::Promotion].each { |klass|
       state = klass.new.respond_to?(:flow_data) ? 'exists'.green : 'not present (run DB migrations)'.red
-      puts ' %s - %s' % [klass.to_s.ljust(18), state]
+      puts " #{klass.to_s.ljust(18)} - #{state}"
     }
 
     puts 'Default store URL:'
     url = Spree::Store.find_by(default:true).url
-    puts ' Spree::Store.find_by(default:true).url == "%s" (ensure this is valid and right URL)' % url.blue
+    puts " Spree::Store.find_by(default:true).url == \"#{url.blue}\" (ensure this is valid and right URL)"
 
     # rate cards check
     ratecard_estimates_path = '/:organization/ratecard_estimates/summaries'
@@ -167,13 +168,13 @@ namespace :flowcommerce_spree do
     if origins.size > 0
       puts "\nRate cards set, OK:".green
       origins.each_with_index do |origin, index|
-        puts ' %3d. %s' % [index + 1, origin]
+        puts " %3d. #{origin}" % (index + 1)
       end
     end
     if errors.size > 0
       puts "\nRate cards errors:".red
       errors.each_with_index do |err, index|
-        puts ' %3d. Origin = %s, errors:' % [index + 1, err[:origin]]
+        puts " %3d. Origin = #{err[:origin]}, errors:" % (index + 1)
         err[:messages].each do |m|
           puts "      #{m}".red
         end
@@ -205,7 +206,7 @@ namespace :flowcommerce_spree do
 
       while offset == 0 || items.length == 100
         # show current list size
-        puts "\nGetting items: %s, rows %s - %s" % [experience.key.green, offset, offset + page_size]
+        puts "\nGetting items: #{experience.key.green}, rows #{offset} - #{offset + page_size}"
 
         items = FlowCommerce.instance.experiences.get_items Flow::ORGANIZATION, experience: experience.key, limit: page_size, offset: offset
 
@@ -237,7 +238,7 @@ namespace :flowcommerce_spree do
     # Log sync end time
     FlowApiRefresh.log_refresh! true
 
-    puts 'Finished with total of %s rows.' % total.to_s.green
+    puts "Finished with total of #{total.to_s.green} rows."
 
     t.reenable
   end
@@ -271,8 +272,8 @@ namespace :flowcommerce_spree do
         next unless do_remove
 
         thread_pool.process do
-          Flow.api :delete, '/:organization/catalog/items/%s' % sku
-          $stdout.puts 'Removed item: %s' % sku.red
+          Flow.api :delete, "/:organization/catalog/items/#{sku}"
+          $stdout.puts "Removed item: #{sku.red}"
         end
       end
     end
@@ -291,7 +292,7 @@ namespace :flowcommerce_spree do
   desc 'Pretty print flow_data of last updated product variant'
   task sync_check: :environment do |t|
     data = Spree::Variant.order('updated_at desc').first.flow_data
-    puts JSON.pretty_generate(data).gsub(/"(\w+)":/) { '"%s":' % $1.yellow }
+    puts JSON.pretty_generate(data).gsub(/"(\w+)":/) { "\"#{$1.yellow}\":" }
     t.reenable
   end
 
