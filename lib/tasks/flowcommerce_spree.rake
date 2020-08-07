@@ -2,7 +2,6 @@ require 'flowcommerce'
 require 'thread/pool'
 require 'digest/sha1'
 require 'colorize'
-require 'awesome_print'
 
 namespace :flowcommerce_spree do
   desc 'Listing and possible invocation of all the Flow tasks'
