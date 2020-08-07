@@ -72,7 +72,7 @@ namespace :flowcommerce_spree do
   end
 
   desc 'Check if ENV vars, center and tier per experience is set'
-  task check: :environment do
+  task check: :environment do |t|
     puts 'Environment check'
     required_env_vars = %w[FLOW_API_KEY FLOW_ORGANIZATION FLOW_BASE_COUNTRY]
     required_env_vars.each { |el| puts ' ENV: %s - %s ' % [el, ENV[el].present? ? 'present'.green : 'MISSING'.red]  }
@@ -179,6 +179,7 @@ namespace :flowcommerce_spree do
         end
       end
     end
+    t.reenable
   end
 
   desc 'Sync localized catalog items'
@@ -237,12 +238,14 @@ namespace :flowcommerce_spree do
     FlowApiRefresh.log_refresh! true
 
     puts 'Finished with total of %s rows.' % total.to_s.green
+
+    t.reenable
   end
 
   # checks existance of every item in local product catalog
   # remove product from flow unless exists localy
   desc 'Remove unused items from flow catalog'
-  task clean_catalog: :environment do
+  task clean_catalog: :environment do |t|
 
     page_size  = 100
     offset     = 0
@@ -275,18 +278,21 @@ namespace :flowcommerce_spree do
     end
 
     thread_pool.shutdown
+    t.reenable
   end
 
   # creates needed fields in DB for Flow to work
   desc 'Run flowcommerce_spree DB migrations'
   task migrate: :environment do |t|
     Rake::Task['db:migrate'].invoke('SCOPE=flowcommerce_spree')
+    t.reenable
   end
 
   desc 'Pretty print flow_data of last updated product variant'
   task sync_check: :environment do |t|
     data = Spree::Variant.order('updated_at desc').first.flow_data
     puts JSON.pretty_generate(data).gsub(/"(\w+)":/) { '"%s":' % $1.yellow }
+    t.reenable
   end
 
   desc 'Exit list_tasks'
