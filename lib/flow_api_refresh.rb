@@ -8,7 +8,7 @@ module FlowApiRefresh
   extend self
 
   SYNC_INTERVAL_IN_MINUTES = 60 unless defined?(SYNC_INTERVAL_IN_MINUTES)
-  LOGGER = Logger.new('./log/sync.log', 3, 1024000) unless defined?(LOGGER)
+  LOGGER = Logger.new('log/flowcommerce.log', 3, 1024000) unless defined?(LOGGER)
 
   def now
     Time.now.to_i
