@@ -4,34 +4,39 @@
 # flow sync data for specific
 module Spree
   Variant.class_eval do
-    # after every save we sync product
-    # we generate sh1 checksums to update only when change happend
+    serialize :flow_data, ActiveRecord::Coders::JSON.new(symbolize_keys: true)
+
+    # after every save we sync product we generate sh1 checksums to update only when change happend
     after_save :flow_sync_product
 
     # clears flow cache from all records
     def self.flow_truncate
-      all_records = all
-      all_records.each { |o| o.update_column :flow_data, {} }
-      puts 'Truncated %d records' % all_records.length
+      all_records = all.size
+      update_all(flow_data: '{}')
+      puts "Truncated #{all_records} records"
     end
 
-    # syncs product variant with flow
+    # upload product variant to Flow's Product Catalog
     def flow_sync_product
-      # initial Spree seed will fail, so skip unless we have Flow data folder
+      # initial Spree seed will fail, so skip unless we have Flow data field
       return if !respond_to?(:flow_data) || Flow::API_KEY.blank? || Flow::API_KEY == 'test_key'
+      # master is not sellable, if product has other variants
+      return { error: 'master not sellable, if product has other variants' } if is_master? && product.variants.size > 1
 
       flow_item     = flow_api_item
-      flow_item_sh1 = Digest::SHA1.hexdigest flow_api_item.to_json
+      flow_item_sh1 = Digest::SHA1.hexdigest(flow_api_item.to_json)
 
       # skip if sync not needed
-      return nil if flow_data['last_sync_sh1'] == flow_item_sh1
+      return nil if flow_data[:last_sync_sh1] == flow_item_sh1
 
-      response = FlowCommerce.instance.items.put_by_number(Flow::ORGANIZATION, id.to_s, flow_item)
+      response = FlowCommerce.instance.items.put_by_number(Flow::ORGANIZATION, sku.downcase.split('p')[1], flow_item)
 
       # after successful put, write cache
       update_column(:flow_data, flow_data.merge('last_sync_sh1' => flow_item_sh1).to_json)
 
       response
+    rescue Net::OpenTimeout => e
+      return { error: e.message }
     end
 
     def flow_spree_price
@@ -74,7 +79,7 @@ module Spree
       ] : []
 
       Io::Flow::V0::Models::ItemForm.new(
-        number:      id.to_s,
+        number:      sku.downcase.split('p')[1],
         locale:      'en_US',
         language:    'en',
         name:        product.name,

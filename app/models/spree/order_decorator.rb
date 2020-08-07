@@ -3,6 +3,8 @@
 # Added flow specific methods to Spree::Order
 module Spree
   Order.class_eval do
+    serialize :flow_data, ActiveRecord::Coders::JSON.new(symbolize_keys: true)
+
     def display_total
       price = Flow.format_default_price total
       price += ' (%s)' % flow_total if flow_order
