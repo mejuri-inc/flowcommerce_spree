@@ -69,6 +69,7 @@ namespace :flowcommerce_spree do
 
     needed_update = (update_sum == 0 ? 'none' : update_sum).to_s.green
     puts "\nFor total of #{total_sum.to_s.blue} products, #{needed_update} needed update"
+    t.reenable
   end
 
   desc 'Check if ENV vars, center and tier per experience is set'
@@ -266,7 +267,7 @@ namespace :flowcommerce_spree do
         do_remove = true if sku.to_i == 0 || sku.to_i.to_s != sku
 
         # remove if variant not found
-        do_remove ||= true if !Spree::Variant.find_by(id: sku.to_i)
+        do_remove ||= true unless Spree::Variant.find_by(id: sku.to_i)
 
         next unless do_remove
 
