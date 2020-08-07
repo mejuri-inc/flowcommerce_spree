@@ -1,6 +1,8 @@
 # Flow specific methods for Spree::Product
 module Spree
   Product.class_eval do
+    serialize :flow_data, ActiveRecord::Coders::JSON.new(symbolize_keys: true)
+
     # returns price tied to local experience from master variant
     def flow_local_price(flow_exp)
       variants.first.flow_local_price(flow_exp)

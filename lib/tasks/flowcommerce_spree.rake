@@ -55,12 +55,16 @@ namespace :flowcommerce_spree do
         # multiprocess upload
         # thread_pool.process do
           # skip if sync not needed
-          if variant.flow_sync_product
-            update_sum += 1
-            $stdout.print "\n#{variant.id.to_s}: #{variant.product.name} (#{variant.price} #{variant.cost_currency})"
-          else
-            $stdout.print '.'
-          end
+        result = variant.flow_sync_product
+
+        next $stdout.print "\nVariant #{variant.sku} is synced, no need to update".green unless result
+
+        if result.is_a?(Hash) && result[:error]
+          $stdout.print "\nError uploading #{variant.sku}. Reason: #{result[:error]}".red
+        else
+          update_sum += 1
+          $stdout.print "\n#{variant.sku}: #{variant.product.name} (#{variant.price} #{variant.cost_currency})"
+        end
         # end
       end
     end
@@ -208,14 +212,16 @@ namespace :flowcommerce_spree do
         # show current list size
         puts "\nGetting items: #{experience.key.green}, rows #{offset} - #{offset + page_size}"
 
-        items = FlowCommerce.instance.experiences.get_items Flow::ORGANIZATION, experience: experience.key, limit: page_size, offset: offset
+        items = FlowCommerce.instance.experiences.get_items(
+          Flow::ORGANIZATION, experience: experience.key, limit: page_size, offset: offset
+        )
 
         offset += page_size
 
         items.each do |item|
           total += 1
-          sku        = item.number.downcase
-          variant    = Spree::Variant.find_by id: sku.split('-').last.to_i
+          sku        = "p#{item.number}"
+          variant    = Spree::Variant.find_by(id: sku)
           next unless variant
 
           # if item is not included, mark it in product as excluded
@@ -279,6 +285,35 @@ namespace :flowcommerce_spree do
     end
 
     thread_pool.shutdown
+    t.reenable
+  end
+
+  # remove all the products from flow.io
+  desc 'Purge Product Catalog on flow.io'
+  task purge_catalog: :environment do |t|
+
+    page_size  = 100
+    offset     = 0
+    items      = []
+
+    thread_pool = Thread.pool(5)
+
+    while offset == 0 || items.length == 100
+      items = Flow.api :get, '/:organization/catalog/items', limit: page_size, offset: offset
+      offset += page_size
+
+      items.each do |item|
+        sku = item['number']
+
+        thread_pool.process do
+          Flow.api :delete, "/:organization/catalog/items/#{sku}"
+          $stdout.puts "Removed item: #{sku.red}"
+        end
+      end
+    end
+
+    thread_pool.shutdown
+    Spree::Variant.flow_truncate
     t.reenable
   end
 
