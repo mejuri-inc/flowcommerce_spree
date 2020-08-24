@@ -55,7 +55,7 @@ namespace :flowcommerce_spree do
         # multiprocess upload
         # thread_pool.process do
           # skip if sync not needed
-        result = variant.flow_sync_product
+        result = variant.sync_product_to_flow
 
         next $stdout.print "\nVariant #{variant.sku} is synced, no need to update".green unless result
 
@@ -313,7 +313,7 @@ namespace :flowcommerce_spree do
     end
 
     thread_pool.shutdown
-    Spree::Variant.flow_truncate
+    Spree::Variant.truncate_flow_data
     t.reenable
   end
 
