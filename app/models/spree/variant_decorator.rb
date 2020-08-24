@@ -1,7 +1,6 @@
 # Flow specific methods for Spree::Variant
-# Spree save all the prices inside Variant object
-# we choose to have cache jsonb field named flow_data that will hold all important
-# flow sync data for specific
+# Spree save all the prices inside Variant object. We choose to have a cache jsonb field named flow_data that will
+# hold all important Flow sync data for specific experiences.
 module Spree
   Variant.class_eval do
     serialize :flow_data, ActiveRecord::Coders::JSON.new(symbolize_keys: true)
@@ -75,7 +74,7 @@ module Spree
 
     # creates object for flow api
     def flow_api_item(additional_attrs)
-      image_base = ENV.fetch('ASSET_HOST', 'staging.mejuri.com')
+      image_base = ENV.fetch('ASSET_HOST_PROTOCOL', 'https') + '://' + ENV.fetch('ASSET_HOST', 'staging.mejuri.com')
 
       # add product categories
       categories = []
