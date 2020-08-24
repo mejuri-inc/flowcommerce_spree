@@ -20,11 +20,26 @@ module Spree
     def flow_sync_product
       # initial Spree seed will fail, so skip unless we have Flow data field
       return if !respond_to?(:flow_data) || Flow::API_KEY.blank? || Flow::API_KEY == 'test_key'
-      # master is not sellable, if product has other variants
-      return { error: 'master not sellable, if product has other variants' } if is_master? && product.variants.size > 1
 
-      flow_item     = flow_api_item
-      flow_item_sh1 = Digest::SHA1.hexdigest(flow_api_item.to_json)
+      return { error: 'Price is 0' } if price == 0
+
+      # master is not sellable, if product has other variants
+      return { error: 'Master not sellable, if product has other variants' } if is_master? && product.variants.size > 1
+
+      additional_attrs = {}
+
+      if self.class.const_defined?('FLOW_ADDITIONAL_ATTRS')
+        FLOW_ADDITIONAL_ATTRS_KEYS.each do |key|
+          export_required = FLOW_ADDITIONAL_ATTRS[key][:export] == :required
+          attr_value = __send__(key)
+          return { error: "Variant with sku = #{sku} has no #{key}" } if export_required && attr_value.blank?
+
+          additional_attrs[key] = attr_value
+        end
+      end
+
+      flow_item     = flow_api_item(additional_attrs)
+      flow_item_sh1 = Digest::SHA1.hexdigest(flow_item.to_json)
 
       # skip if sync not needed
       return nil if flow_data[:last_sync_sh1] == flow_item_sh1
@@ -59,8 +74,7 @@ module Spree
     end
 
     # creates object for flow api
-    # TODO: Remove and use the one in rakefile
-    def flow_api_item
+    def flow_api_item(additional_attrs)
       image_base = ENV.fetch('ASSET_HOST', 'staging.mejuri.com')
 
       # add product categories
@@ -88,22 +102,26 @@ module Spree
         price:       price.to_f,
         images:      images,
         categories: categories,
-        attributes: {
-                       weight: weight.to_s,
-                       height: height.to_s,
-                       width: width.to_s,
-                       depth: depth.to_s,
-                       is_master: is_master ? 'true' : 'false',
-                       product_id: product_id.to_s,
-                       tax_category: product.tax_category_id.to_s,
-                       product_description: product.description,
-                       product_shipping_category: product.shipping_category_id ? shipping_category.name : nil,
-                       product_meta_title: taxon&.meta_title.to_s,
-                       product_meta_description: taxon&.meta_description.to_s,
-                       product_meta_keywords: taxon&.meta_keywords.to_s,
-                       product_slug: product.slug,
-                     }.select{ |k,v| v.present? }
+        attributes: common_attrs(taxon).merge!(additional_attrs)
       )
+    end
+
+    def common_attrs(taxon)
+      {
+        weight: weight.to_s,
+        height: height.to_s,
+        width: width.to_s,
+        depth: depth.to_s,
+        is_master: is_master ? 'true' : 'false',
+        product_id: product_id.to_s,
+        tax_category: product.tax_category_id.to_s,
+        product_description: product.description,
+        product_shipping_category: product.shipping_category_id ? shipping_category.name : nil,
+        product_meta_title: taxon&.meta_title.to_s,
+        product_meta_description: taxon&.meta_description.to_s,
+        product_meta_keywords: taxon&.meta_keywords.to_s,
+        product_slug: product.slug,
+      }.select{ |k,v| v.present? }
     end
 
     # gets flow catalog item, and imports it
