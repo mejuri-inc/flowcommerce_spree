@@ -7,17 +7,17 @@ module Spree
     serialize :flow_data, ActiveRecord::Coders::JSON.new(symbolize_keys: true)
 
     # after every save we sync product we generate sh1 checksums to update only when change happend
-    after_save :flow_sync_product
+    after_save :sync_product_to_flow
 
     # clears flow cache from all records
-    def self.flow_truncate
+    def self.truncate_flow_data
       all_records = all.size
       update_all(flow_data: '{}')
       puts "Truncated #{all_records} records"
     end
 
     # upload product variant to Flow's Product Catalog
-    def flow_sync_product
+    def sync_product_to_flow
       # initial Spree seed will fail, so skip unless we have Flow data field
       return if !respond_to?(:flow_data) || Flow::API_KEY.blank? || Flow::API_KEY == 'test_key'
 
