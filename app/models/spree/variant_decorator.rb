@@ -11,7 +11,7 @@ module Spree
     # clears flow cache from all records
     def self.truncate_flow_data
       all_records = all.size
-      update_all(flow_data: '{}')
+      update_all(flow_data: nil)
       puts "Truncated #{all_records} records"
     end
 
