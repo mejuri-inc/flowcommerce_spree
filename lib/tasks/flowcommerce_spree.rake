@@ -196,11 +196,7 @@ namespace :flowcommerce_spree do
 
     puts 'Sync needed, running ...'.yellow
 
-    # mark that sync happend
-    system 'curl -fsS --retry 3 https://hchk.io/93912c0e-65cd-4f5b-a912-8983448f370b > /dev/null'
-
     total = 0
-
     experiences = FlowCommerce.instance.experiences.get(Flow::ORGANIZATION)
 
     experiences.each do |experience|
@@ -221,11 +217,10 @@ namespace :flowcommerce_spree do
         items.each do |item|
           total += 1
           sku        = "p#{item.number}"
-          variant    = Spree::Variant.find_by(id: sku)
+          variant    = Spree::Variant.find_by(sku: sku)
           next unless variant
 
-          # if item is not included, mark it in product as excluded
-          # regardles if excluded or restricted
+          # if item is not included, mark it in product as excluded regardless if excluded or restricted
           unless item.local.status.value == 'included'
             print "[#{item.local.status.value.red}]:"
             if (product = variant.product)
@@ -313,6 +308,12 @@ namespace :flowcommerce_spree do
     end
 
     thread_pool.shutdown
+    t.reenable
+  end
+
+  # nillize flow_data for all the products in the DB
+  desc 'Purge flow_data from all the Products in the DB'
+  task purge_flow_data: :environment do |t|
     Spree::Variant.truncate_flow_data
     t.reenable
   end
