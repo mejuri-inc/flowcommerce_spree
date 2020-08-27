@@ -43,10 +43,10 @@ module Spree
       # skip if sync not needed
       return nil if flow_data[:last_sync_sh1] == flow_item_sh1
 
-      response = FlowCommerce.instance.items.put_by_number(Flow::ORGANIZATION, sku.downcase.split('p')[1], flow_item)
+      response = FlowCommerce.instance.items.put_by_number(Flow::ORGANIZATION, sku, flow_item)
 
       # after successful put, write cache
-      update_column(:flow_data, flow_data.merge('last_sync_sh1' => flow_item_sh1).to_json)
+      update_column(:flow_data, flow_data.merge(last_sync_sh1: flow_item_sh1).to_json)
 
       response
     rescue Net::OpenTimeout => e
@@ -58,7 +58,7 @@ module Spree
     end
 
     def flow_prices(flow_exp)
-      flow_data.dig('exp', flow_exp.key, 'prices') || []
+      flow_data.dig(:exp, flow_exp, :prices) || []
     end
 
     # returns price tied to local experience
@@ -66,7 +66,7 @@ module Spree
       price = flow_prices(flow_exp).first
 
       if flow_exp && price
-        price['label']
+        price[:label]
       else
         flow_spree_price
       end
@@ -92,7 +92,7 @@ module Spree
       ] : []
 
       Io::Flow::V0::Models::ItemForm.new(
-        number:      sku.downcase.split('p')[1],
+        number:      sku,
         locale:      'en_US',
         language:    'en',
         name:        product.name,
