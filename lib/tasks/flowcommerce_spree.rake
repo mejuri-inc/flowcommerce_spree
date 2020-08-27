@@ -216,7 +216,7 @@ namespace :flowcommerce_spree do
 
         items.each do |item|
           total += 1
-          sku        = "p#{item.number}"
+          sku        = item.number
           variant    = Spree::Variant.find_by(sku: sku)
           next unless variant
 
