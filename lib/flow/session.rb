@@ -9,7 +9,7 @@ class Flow::Session
   end
 
   # flow session can ve created via IP or local cached OrganizationSession dump
-  # Flow::Experience.all.first.key
+  # Flow::ExperienceService.all.first.key
   # Flow sessions need buest-guess visitor_id and
   def initialize ip:, visitor:
     ip = '127.0.0.1' if ip == '::1'
@@ -46,7 +46,7 @@ class Flow::Session
 
   # get local experience or return nil
   def experience
-    @session.local ? @session.local.experience : Flow::Experience.default
+    @session.local ? @session.local.experience : Flow::ExperienceService.default
   end
 
   def local
@@ -68,7 +68,7 @@ class Flow::Session
   def delivered_duty_options
     return nil unless experience
 
-    if flow_experience = Flow::Experience.get(experience.key)
+    if flow_experience = Flow::ExperienceService.get(experience.key)
       Hashie::Mash.new flow_experience.settings.delivered_duty.to_hash
     else
       nil

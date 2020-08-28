@@ -67,7 +67,7 @@ Classes that begin with Flow are responsible for comunicating with flow API.
 
 Helper class that offeres low level flow api access and few helper methods.
 
-### Flow::Experience
+### Flow::ExperienceService
 
 Responsible for selecting current experience. You have to define available experiences in flow console.
 
