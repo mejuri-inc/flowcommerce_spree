@@ -187,7 +187,7 @@ namespace :flowcommerce_spree do
     t.reenable
   end
 
-  desc 'Sync localized catalog items'
+  desc 'Sync localized product catalog items from Flow.io'
   task sync_localized_items: :environment do |t|
     # we have to log start, so that another process does not start while this one is running
     next unless FlowApiRefresh.needs_refresh?
@@ -315,13 +315,6 @@ namespace :flowcommerce_spree do
   desc 'Purge flow_data from all the Products in the DB'
   task purge_flow_data: :environment do |t|
     Spree::Variant.truncate_flow_data
-    t.reenable
-  end
-
-  # creates needed fields in DB for Flow to work
-  desc 'Run flowcommerce_spree DB migrations'
-  task migrate: :environment do |t|
-    Rake::Task['db:migrate'].invoke('SCOPE=flowcommerce_spree')
     t.reenable
   end
 

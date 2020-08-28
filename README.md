@@ -48,11 +48,8 @@ ApplicationController and FlowController that are present in ./app/controllers f
 - Run the `flowcommerce_spree:install:migrations` task to copy the DB migrations' file into the main application's
  `db/migrate` folder. 
 
-- Run the `flowcommerce_spree:migrate` task (or `bundle exec rake db:migrate SCOPE=flowcommerce_spree
-` from a terminal prompt). This will add a `flow_data
-` jsonb column to the Spree
-::CreditCard, Spree::Product, Spree::Variant, Spree::Order, Spree::Promotion models' DB tables.
-
+- Run `bundle exec rake db:migrate SCOPE=flowcommerce_spree
+` from a terminal prompt. This will add a `flow_data` jsonb column to the Spree::CreditCard, Spree::Product, Spree::Variant, Spree::Order, Spree::Promotion models' DB tables.
 
 - If the main application's Rails version is less than 4.2, add the JSON serializer for the `flow_data` column to the
  affected models' decorators (Spree
