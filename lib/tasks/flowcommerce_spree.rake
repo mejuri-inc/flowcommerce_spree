@@ -128,7 +128,7 @@ namespace :flowcommerce_spree do
 
     puts 'Tiers:'
     experiences.each do |exp|
-      exp_tiers = FlowCommerce.instance.tiers.get(Flow::ORGANIZATION, experience: exp.key)
+      exp_tiers = client.tiers.get(Flow::ORGANIZATION, experience: exp.key)
       count        = exp_tiers.length
       count_desc   = count == 0 ? '0 (error!)'.red : count.to_s.green
       print " Experience #{exp.key.yellow} has #{count_desc} delivery tiers defined, "
@@ -197,7 +197,8 @@ namespace :flowcommerce_spree do
     puts 'Sync needed, running ...'.yellow
 
     total = 0
-    experiences = FlowCommerce.instance.experiences.get(Flow::ORGANIZATION)
+    client = FlowCommerce.instance
+    experiences = client.experiences.get(Flow::ORGANIZATION)
 
     experiences.each do |experience|
       page_size  = 100
@@ -208,7 +209,7 @@ namespace :flowcommerce_spree do
         # show current list size
         puts "\nGetting items: #{experience.key.green}, rows #{offset} - #{offset + page_size}"
 
-        items = FlowCommerce.instance.experiences.get_items(
+        items = client.experiences.get_items(
           Flow::ORGANIZATION, experience: experience.key, limit: page_size, offset: offset
         )
 
