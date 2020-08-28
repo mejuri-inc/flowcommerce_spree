@@ -1,21 +1,15 @@
-# Flow.io (2017)
-# helper class to manage product sync scheduling
-
 require 'logger'
 require 'pathname'
 
+# Service class to manage product sync scheduling
 module FlowApiRefresh
   extend self
 
   SYNC_INTERVAL_IN_MINUTES = 60 unless defined?(SYNC_INTERVAL_IN_MINUTES)
-  LOGGER = Logger.new('log/flowcommerce.log', 3, 1024000) unless defined?(LOGGER)
-
-  def now
-    Time.now.to_i
-  end
+  LOGGER = Logger.new('log/flowcommerce.log', 3, 1024000)
 
   def settings
-    Flow::Settings.fetch('rake-products-refresh')
+    Flow::Settings.find_or_initialize_by(key: 'rake-products-refresh')
   end
 
   def data
@@ -31,10 +25,10 @@ module FlowApiRefresh
   def write
     yield data
     settings.update_attribute(:data, data)
-    data
+    @data = nil
   end
 
-  def log message
+  def log(message)
     $stdout.puts message
     LOGGER.info '%s (pid/ppid: %d/%d)' % [message, Process.pid, Process.ppid]
   end
@@ -46,64 +40,35 @@ module FlowApiRefresh
   end
 
   def needs_refresh?
+    now = Time.zone.now.to_i
     data[:end] ||= now - 10_000
 
-    # needs refresh if last refresh started more than treshold ago
+    # needs refresh if last refresh started more than threshold ago
     if data[:end] < (now - (60 * SYNC_INTERVAL_IN_MINUTES))
       puts 'Last refresh ended long time ago, needs refresh.'
-      return true
-
+      true
     elsif data[:force_refresh]
-      puts 'Force refresh schecduled, refreshing.'
+      puts 'Force refresh scheduled, refreshing.'
       true
     else
       puts 'No need for refresh, ended before %d seconds.' % (now - data[:end])
+      @data = nil
       false
     end
   end
 
-  # for start just call log_refresh! and end it with true statement
-  def log_refresh! has_ended=false
+  # for start just call log_refresh! and end it with has_ended: true statement
+  def log_refresh!(has_ended: false)
     data.delete(:force_refresh)
 
     write do |data|
       if has_ended
-        data[:start]   ||= now - 60
-        data[:end]       = now
+        data[:end]       = Time.zone.now.to_i
         data.delete(:in_progress)
       else
         data[:in_progress] = true
-        data[:start]       = now
+        data[:start]       = Time.zone.now.to_i
       end
     end
-  end
-
-  def refresh_info
-    return 'No last sync data' unless data[:end]
-
-    helper = Class.new
-    helper.extend ActionView::Helpers::DateHelper
-
-    info = []
-    info.push 'Sync started %d seconds ago (it is in progress).' % (Time.now.to_i - data[:start].to_i) if data[:started]
-    info.push 'Last sync finished %{finished} ago and lasted for %{duration}. We sync every %{every} minutes.' %
-      {
-        finished: helper.distance_of_time_in_words(Time.now, data[:end].to_i),
-        duration: helper.distance_of_time_in_words(duration),
-        every:    SYNC_INTERVAL_IN_MINUTES
-      }
-
-    info.join(' ')
-  end
-
-  def sync_products_if_needed
-    return unless needs_refresh?
-
-    log_refresh!
-
-    log 'Sync needed, running ...'
-    system 'bundle exec rake flow:sync_localized_items'
-
-    log_refresh
   end
 end
