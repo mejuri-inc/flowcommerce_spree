@@ -15,7 +15,7 @@ module FlowApiRefresh
   end
 
   def settings
-    FlowSettings.fetch('rake-products-refresh')
+    Flow::Settings.fetch('rake-products-refresh')
   end
 
   def data
@@ -23,9 +23,9 @@ module FlowApiRefresh
   end
 
   def duration
-    return '? (unknown)' if !data['start'] || !data['end'] || data['start'] > data['end']
+    return '? (unknown)' if !data[:start] || !data[:end] || data[:start] > data[:end]
 
-    (data['end'] - data['start'])/60
+    (data[:end] - data[:start])/60
   end
 
   def write
@@ -41,56 +41,54 @@ module FlowApiRefresh
 
   def schedule_refresh!
     write do |data|
-      data['force_refresh'] = true
+      data[:force_refresh] = true
     end
   end
 
   def needs_refresh?
-    data['end'] ||= now - 10_000
+    data[:end] ||= now - 10_000
 
     # needs refresh if last refresh started more than treshold ago
-    if data['end'] < (now - (60 * SYNC_INTERVAL_IN_MINUTES))
+    if data[:end] < (now - (60 * SYNC_INTERVAL_IN_MINUTES))
       puts 'Last refresh ended long time ago, needs refresh.'
       return true
 
-    elsif data['force_refresh']
+    elsif data[:force_refresh]
       puts 'Force refresh schecduled, refreshing.'
       true
-
     else
-      puts 'No need for refresh, ended before %d seconds.' % (now - data['end'])
+      puts 'No need for refresh, ended before %d seconds.' % (now - data[:end])
       false
-
     end
   end
 
   # for start just call log_refresh! and end it with true statement
   def log_refresh! has_ended=false
-    data.delete('force_refresh')
+    data.delete(:force_refresh)
 
     write do |data|
       if has_ended
-        data['start']   ||= now - 60
-        data['end']       = now
-        data.delete('in_progress')
+        data[:start]   ||= now - 60
+        data[:end]       = now
+        data.delete(:in_progress)
       else
-        data['in_progress'] = true
-        data['start']       = now
+        data[:in_progress] = true
+        data[:start]       = now
       end
     end
   end
 
   def refresh_info
-    return 'No last sync data' unless data['end']
+    return 'No last sync data' unless data[:end]
 
     helper = Class.new
     helper.extend ActionView::Helpers::DateHelper
 
     info = []
-    info.push 'Sync started %d seconds ago (it is in progress).' % (Time.now.to_i - data['start'].to_i) if data['started']
+    info.push 'Sync started %d seconds ago (it is in progress).' % (Time.now.to_i - data[:start].to_i) if data[:started]
     info.push 'Last sync finished %{finished} ago and lasted for %{duration}. We sync every %{every} minutes.' %
       {
-        finished: helper.distance_of_time_in_words(Time.now, data['end'].to_i),
+        finished: helper.distance_of_time_in_words(Time.now, data[:end].to_i),
         duration: helper.distance_of_time_in_words(duration),
         every:    SYNC_INTERVAL_IN_MINUTES
       }
