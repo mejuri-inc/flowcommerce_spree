@@ -190,7 +190,7 @@ namespace :flowcommerce_spree do
   desc 'Sync localized product catalog items from Flow.io'
   task sync_localized_items: :environment do |t|
     # we have to log start, so that another process does not start while this one is running
-    next unless FlowApiRefresh.needs_refresh?
+    next t.reenable unless FlowApiRefresh.needs_refresh?
 
     FlowApiRefresh.log_refresh!
 
