@@ -51,7 +51,7 @@ window.promotion_set_option = function(key_name, value) {
 
   <p>Promotion will be enabled for all experiences unless a selection is made.</p>
 
-  <% for experience in Flow::Experience.all %>
+  <% for experience in Flow::ExperienceService.all %>
     <p><label><input type="checkbox" onclick="promotion_set_option('<%= experience.key %>', this.checked);" <%= @promotion_keys.include?(experience.key) ? 'checked="1"' : '' %> /> <%= experience.key %></label></p>
   <% end %>
 </fieldset>

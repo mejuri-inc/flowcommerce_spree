@@ -76,7 +76,7 @@ class Flow::Webhook
 
   # we should consume only localized_item_upserted
   def hook_subcatalog_item_upserted
-    experience = Flow::Experience.get_by_subcatalog_id @data['subcatalog_id']
+    experience = Flow::ExperienceService.get_by_subcatalog_id @data['subcatalog_id']
     return unless experience
 
     @data['local'] = {
