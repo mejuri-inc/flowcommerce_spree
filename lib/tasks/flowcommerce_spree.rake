@@ -187,7 +187,7 @@ namespace :flowcommerce_spree do
     t.reenable
   end
 
-  desc 'Sync localized product catalog items from Flow.io'
+  desc 'Sync experiences and localized product catalog items from Flow.io'
   task sync_localized_items: :environment do |t|
     # we have to log start, so that another process does not start while this one is running
     next t.reenable unless FlowApiRefresh.needs_refresh?
@@ -201,16 +201,18 @@ namespace :flowcommerce_spree do
     experiences = client.experiences.get(Flow::ORGANIZATION)
 
     experiences.each do |experience|
+      exp_key = experience.key
+      Flow::Experience.find_or_initialize_by(key: exp_key).upsert_data(experience)
       page_size  = 100
       offset     = 0
       items      = []
 
       while offset == 0 || items.length == 100
         # show current list size
-        puts "\nGetting items: #{experience.key.green}, rows #{offset} - #{offset + page_size}"
+        puts "\nGetting items: #{exp_key.green}, rows #{offset} - #{offset + page_size}"
 
         items = client.experiences.get_items(
-          Flow::ORGANIZATION, experience: experience.key, limit: page_size, offset: offset
+          Flow::ORGANIZATION, experience: exp_key, limit: page_size, offset: offset
         )
 
         offset += page_size
@@ -225,7 +227,7 @@ namespace :flowcommerce_spree do
           unless item.local.status.value == 'included'
             print "[#{item.local.status.value.red}]:"
             if (product = variant.product)
-              product.flow_data["#{experience.key}.excluded"] = 1
+              product.flow_data["#{exp_key}.excluded"] = 1
               product.update_column(:flow_data, product.flow_data.to_json)
             end
           end
@@ -238,7 +240,7 @@ namespace :flowcommerce_spree do
     end
 
     # Log sync end time
-    FlowApiRefresh.log_refresh! true
+    FlowApiRefresh.log_refresh!(has_ended: true)
 
     puts "Finished with total of #{total.to_s.green} rows."
 

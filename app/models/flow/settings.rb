@@ -6,27 +6,22 @@ module Flow
 
     class << self
       # create or set value with timestamp
-      def set key, value
-        settings            = find_or_initialize_by key: key
-        settings.data       = value
-        settings.created_at = DateTime.new
-        settings.save
+      def set(key, value)
+        setting            = find_or_initialize_by(key: key)
+        setting.data       = value
+        setting.save
 
         value
       end
       alias :[]= :set
 
-      def fetch key
-        find_or_initialize_by key: key
-      end
-
-      def get key
-        settings = find_by key: key
-        settings ? settings.data : nil
+      def get(key)
+        setting = find_by(key: key)
+        setting ? setting.data : nil
       end
       alias :[] :get
 
-      def delete key
+      def delete(key)
         where(key: key).delete_all
       end
     end
