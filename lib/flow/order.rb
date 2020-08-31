@@ -36,7 +36,7 @@ class Flow::Order
     # when sending email, we do not have experience defined
     unless experience
       if order.flow_order
-        experience = Flow::ExperienceService.get(order.flow_order['experience']['key'])
+        experience = FlowcommerceSpree::ExperienceService.get(order.flow_order['experience']['key'])
       else
         raise(ArgumentError, 'Experience not defined and not found in flow data')
       end
