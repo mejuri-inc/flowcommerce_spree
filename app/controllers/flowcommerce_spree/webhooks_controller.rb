@@ -2,8 +2,6 @@ module FlowcommerceSpree
   class WebhooksController < ActionController::Base
     respond_to :json
 
-    protect_from_forgery with: :exception
-
     # forward all incoming requests to Flow Webhook service object
     # /flow/event-target
     def handle_flow_web_hook_event
@@ -11,10 +9,12 @@ module FlowcommerceSpree
       data     = Oj.load request.body.read
 
       # log web hook post to separate log file
-      Flow::Webhook::LOGGER.info data
+      Flow::Webhook::LOGGER.info(data)
 
-      response = Flow::Webhook.process data
-
+      response = Flow::Webhook.process(data)
+    rescue StandardError => e
+      response = { error: e.class.to_s, message: e.message }
+    ensure
       response_status = response[:error] ? :unprocessable_entity : :ok
       render json: response, status: response_status
     end
