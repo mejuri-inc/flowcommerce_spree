@@ -1,7 +1,7 @@
-# Communicates with flow.io api, easy access
+# Communicates with flow.io API, easy access
 # to basic shop frontend and backend needs
-module Flow
-  class ExperienceService
+module FlowcommerceSpree
+  module ExperienceService
     extend self
 
     def all(no_world = nil)
@@ -33,7 +33,7 @@ module Flow
     end
 
     def default
-      Flow::ExperienceService.all.select{ |exp| exp.key.downcase == ENV.fetch('FLOW_BASE_COUNTRY').downcase }.first
+      FlowcommerceSpree::ExperienceService.all.select{ |exp| exp.key.downcase == ENV.fetch('FLOW_BASE_COUNTRY').downcase }.first
     end
 
     private

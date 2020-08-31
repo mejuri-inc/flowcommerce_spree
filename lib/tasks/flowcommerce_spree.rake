@@ -203,38 +203,41 @@ namespace :flowcommerce_spree do
     experiences.each do |experience|
       exp_key = experience.key
       Flow::Experience.find_or_initialize_by(key: exp_key).upsert_data(experience)
-      page_size  = 100
-      offset     = 0
-      items      = []
 
-      while offset == 0 || items.length == 100
-        # show current list size
-        puts "\nGetting items: #{exp_key.green}, rows #{offset} - #{offset + page_size}"
+      if experience.status.value == 'active'
+        page_size  = 100
+        offset     = 0
+        items      = []
 
-        items = client.experiences.get_items(
-          Flow::ORGANIZATION, experience: exp_key, limit: page_size, offset: offset
-        )
+        while offset == 0 || items.length == 100
+          # show current list size
+          puts "\nGetting items: #{exp_key.green}, rows #{offset} - #{offset + page_size}"
 
-        offset += page_size
+          items = client.experiences.get_items(
+            Flow::ORGANIZATION, experience: exp_key, limit: page_size, offset: offset
+          )
 
-        items.each do |item|
-          total += 1
-          sku        = item.number
-          variant    = Spree::Variant.find_by(sku: sku)
-          next unless variant
+          offset += page_size
 
-          # if item is not included, mark it in product as excluded regardless if excluded or restricted
-          unless item.local.status.value == 'included'
-            print "[#{item.local.status.value.red}]:"
-            if (product = variant.product)
-              product.flow_data["#{exp_key}.excluded"] = 1
-              product.update_column(:flow_data, product.flow_data.to_json)
+          items.each do |item|
+            total += 1
+            sku        = item.number
+            variant    = Spree::Variant.find_by(sku: sku)
+            next unless variant
+
+            # if item is not included, mark it in product as excluded regardless if excluded or restricted
+            unless item.local.status.value == 'included'
+              print "[#{item.local.status.value.red}]:"
+              if (product = variant.product)
+                product.flow_data["#{exp_key}.excluded"] = 1
+                product.update_column(:flow_data, product.flow_data.to_json)
+              end
             end
+
+            variant.flow_import_item(item)
+
+            print "#{sku}, "
           end
-
-          variant.flow_import_item(item)
-
-          print "#{sku}, "
         end
       end
     end
