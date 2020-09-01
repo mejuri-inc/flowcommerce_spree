@@ -34,6 +34,11 @@ module FlowcommerceSpree
       Flow::Experience.find_or_initialize_by(key: @data['key']).upsert_data(@data)
     end
 
+    def hook_experience_upserted_v2
+      exp = @data['experience']
+      Flow::Experience.find_or_initialize_by(key: exp['key']).upsert_data(exp)
+    end
+
     def hook_localized_item_upserted
       raise ArgumentError, 'number not found' unless @data['number']
       raise ArgumentError, 'local not found' unless @data['local']
