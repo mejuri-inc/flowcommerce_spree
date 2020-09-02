@@ -31,12 +31,12 @@ module FlowcommerceSpree
     private
 
     def hook_experience_upserted
-      Flow::Experience.find_or_initialize_by(key: @data['key']).upsert_data(@data)
+      FlowcommerceSpree::Experience.find_or_initialize_by(key: @data['key']).upsert_data(@data)
     end
 
     def hook_experience_upserted_v2
       exp = @data['experience']
-      Flow::Experience.find_or_initialize_by(key: exp['key']).upsert_data(exp)
+      FlowcommerceSpree::Experience.find_or_initialize_by(key: exp['key']).upsert_data(exp)
     end
 
     def hook_local_item_upserted

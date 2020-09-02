@@ -1,4 +1,4 @@
-module Flow
+module FlowcommerceSpree
   class Settings < ActiveRecord::Base
     self.table_name ='flow_settings'
 
