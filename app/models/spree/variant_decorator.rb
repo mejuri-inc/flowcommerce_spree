@@ -5,6 +5,8 @@ module Spree
   Variant.class_eval do
     serialize :flow_data, ActiveRecord::Coders::JSON.new(symbolize_keys: true)
 
+    store_accessor :flow_data, :exp
+
     # after every save we sync product we generate sh1 checksums to update only when change happend
     after_save :sync_product_to_flow
 
