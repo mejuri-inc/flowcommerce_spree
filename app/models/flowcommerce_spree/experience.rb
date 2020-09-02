@@ -1,4 +1,4 @@
-module Flow
+module FlowcommerceSpree
   class Experience < Settings
     store_accessor :data, :country, :currency, :delivered_duty, :language, :measurement_system,
                    :name, :position, :region, :settings, :status, :subcatalog

@@ -202,7 +202,7 @@ namespace :flowcommerce_spree do
 
     experiences.each do |experience|
       exp_key = experience.key
-      Flow::Experience.find_or_initialize_by(key: exp_key).upsert_data(experience)
+      FlowcommerceSpree::Experience.find_or_initialize_by(key: exp_key).upsert_data(experience)
 
       if experience.status.value == 'active'
         page_size  = 100

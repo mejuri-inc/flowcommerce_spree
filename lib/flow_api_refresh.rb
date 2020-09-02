@@ -9,7 +9,7 @@ module FlowApiRefresh
   LOGGER = Logger.new('log/flowcommerce.log', 3, 1024000)
 
   def settings
-    Flow::Settings.find_or_initialize_by(key: 'rake-products-refresh')
+    FlowcommerceSpree::Settings.find_or_initialize_by(key: 'rake-products-refresh')
   end
 
   def data
