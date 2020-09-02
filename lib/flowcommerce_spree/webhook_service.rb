@@ -42,17 +42,18 @@ module FlowcommerceSpree
     def hook_local_item_upserted
       local_item = @data['local_item']
       return { error: 'Unprocessable entity', message: 'Local item param missing' } unless local_item
-      sku = local_item.dig('item', 'number')
-      return { error: 'Unprocessable entity', message: 'SKU not param missing' } unless sku
+
+      received_sku = local_item.dig('item', 'number')
+      return { error: 'Unprocessable entity', message: 'SKU not param missing' } unless received_sku
 
       exp_key = local_item.dig('experience', 'key')
 
       # TODO: Check if this is really necessary
       # for testing we need ability to inject dependency for variant class
       variant_class = @opts[:variant_class] || Spree::Variant
-      @variant      = variant_class.find_by(sku: sku)
+      @variant      = variant_class.find_by(sku: received_sku)
 
-      return { error: 'Unprocessable entity', message: "Variant with sku [#{sku}] not found!" } unless @variant
+      return { error: 'Unprocessable entity', message: "Variant with sku [#{received_sku}] not found!" } unless @variant
 
       @variant.exp[exp_key] = {} unless @variant.exp[exp_key]
       variant_experience = @variant.exp[exp_key]
