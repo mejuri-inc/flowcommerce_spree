@@ -1,6 +1,6 @@
 module Flow
   class Experience < Settings
-    store_accessor :data, :country, :currency, :delivered_duty, :digest, :discriminator, :language, :measurement_system,
+    store_accessor :data, :country, :currency, :delivered_duty, :language, :measurement_system,
                    :name, :position, :region, :settings, :status, :subcatalog
 
     def upsert_data(received_experience)
