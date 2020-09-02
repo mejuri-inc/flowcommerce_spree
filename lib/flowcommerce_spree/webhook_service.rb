@@ -39,33 +39,29 @@ module FlowcommerceSpree
       Flow::Experience.find_or_initialize_by(key: exp['key']).upsert_data(exp)
     end
 
-    def hook_localized_item_upserted
-      raise ArgumentError, 'number not found' unless @data['number']
-      raise ArgumentError, 'local not found' unless @data['local']
+    def hook_local_item_upserted
+      local_item = @data['local_item']
+      return { error: 'Unprocessable entity', message: 'Local item param missing' } unless local_item
+      sku = local_item.dig('item', 'number')
+      return { error: 'Unprocessable entity', message: 'SKU not param missing' } unless sku
 
-      number  = @data['number']
-      exp_key = @data['local']['experience']['key']
+      exp_key = local_item.dig('experience', 'key')
 
+      # TODO: Check if this is really necessary
       # for testing we need ability to inject dependency for variant class
       variant_class = @opts[:variant_class] || Spree::Variant
-      @variant      = variant_class.find_by id: number
+      @variant      = variant_class.find_by(sku: sku)
 
-      unless @variant
-        error_message = 'Product variant with number [%s] not found: %s' % [number, @data.to_json]
-        # raise Flow::Error.new(error_message)
-        return error_message
-      end
+      return { error: 'Unprocessable entity', message: "Variant with sku [#{sku}] not found!" } unless @variant
 
-      @product      = @variant.product
-      is_included   = @data['local']['status'] == 'included'
+      @variant.exp[exp_key] = {} unless @variant.exp[exp_key]
+      variant_experience = @variant.exp[exp_key]
+      variant_experience['prices'] = [local_item.dig('pricing', 'price')]
+      variant_experience['status'] = local_item['status']
 
-      @product.flow_data['%s.excluded' % exp_key] = is_included ? 0 : 1
+      @variant.update_column(:flow_data, @variant.flow_data.to_json)
 
-      @product.save!
-
-      message = is_included ? 'included in' : 'excluded from'
-
-      'Product id:%s - "%s" (from variant %s) %s experience "%s"' % [@product.id, @product.name, @variant.id, message, exp_key]
+      local_item
     end
 
     # we should consume only localized_item_upserted
