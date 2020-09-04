@@ -6,8 +6,7 @@ I plan to be concise as possible, but cover all important topics.
 
 ## Instalation
 
-In ```./config/application.rb``` this is the only peace of code that is needed to
-init complete flow app.
+Add the following lines to `./config/application.rb` :
 
 ```
   config.to_prepare do
@@ -22,13 +21,28 @@ init complete flow app.
   end
 ```
 
+Additional configuration could be adjusted in the gem's initializer. For example, the following file could be created in the main application:
+
+```
+# ./config/initializers/flowcommerce_spree.rb
+
+FlowcommerceSpree.configure do |c|
+  c.experience_associator = FlowcommerceSpree::ExperienceAssociator
+end
+```
+
+### Configurable settings
+
+1. experience_associator - this attribute could be assigned, if necessary, a service object to perform some
+ additional association actions when upserting a FlowcommerceSpree::Experience model
+
 ## Things to take into account
 
-ActiveMerchent is not supporting sessions and orders, natively. If one wants
+ActiveMerchant is not supporting sessions and orders, natively. If one wants
 to maintain sessions and orders in Flow, you have to do it outside the ActiveMerchant
 terminology which focuses around purchases, voids and refunds.
 
-Another thing to have in mind is that Spree can't work with ActiveMerchent directly, it has to have
+Another thing to have in mind is that Spree can't work with ActiveMerchant directly, it has to have
 an adapter. Adapter can be "stupid" and light, and can forward all the "heavy lifting" to ActiveMerchant gem
 but it can also have all the logic localy.
 
