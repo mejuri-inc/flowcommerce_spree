@@ -8,6 +8,9 @@ module FlowcommerceSpree
 
       new_record? ? update_attribute(:data, exp_hash) : update_column(:data, exp_hash.to_json)
 
+      experience_associator = FlowcommerceSpree.experience_associator
+      experience_associator.run(self) if experience_associator
+
       exp_hash
     end
   end
