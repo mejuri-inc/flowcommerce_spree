@@ -10,8 +10,13 @@ module FlowcommerceSpree
     rescue StandardError => e
       result = { error: e.class.to_s, message: e.message, backtrace: e.backtrace }
     ensure
-      response_status = result[:error] ? :unprocessable_entity : :ok
-      WebhookService::LOGGER.info(params_hash)
+      response_status = if result[:error]
+                          WebhookService::LOGGER.info(params_hash)
+                          WebhookService::LOGGER.info(result)
+                          :unprocessable_entity
+                        else
+                          :ok
+                        end
       render json: result.except(:backtrace), status: response_status
     end
   end
