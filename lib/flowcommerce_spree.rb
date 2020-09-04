@@ -8,6 +8,6 @@ module FlowcommerceSpree
   mattr_accessor :experience_associator
 
   def self.configure
-    yield self
+    yield self if block_given?
   end
 end
