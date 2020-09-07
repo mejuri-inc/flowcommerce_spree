@@ -11,10 +11,8 @@ module FlowcommerceSpree
 
       new_record? ? update_attribute(:data, data) : update_column(:data, data.to_json)
 
-      if (experience_associator = FlowcommerceSpree.experience_associator)
-        result = experience_associator.run(self)
-        return result if result[:error]
-      end
+      associator = FlowcommerceSpree.experience_associator
+      return associator.run(self) if associator
 
       data
     end
