@@ -1,5 +1,5 @@
 module FlowcommerceSpree
-  class Settings < ActiveRecord::Base
+  class Setting < ActiveRecord::Base
     self.table_name ='flow_settings'
 
     serialize :data, ActiveRecord::Coders::JSON.new(symbolize_keys: true)
