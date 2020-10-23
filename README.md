@@ -49,11 +49,11 @@ ApplicationController and FlowController that are present in ./app/controllers f
  `db/migrate` folder. 
 
 - Run `bundle exec rake db:migrate SCOPE=flowcommerce_spree
-` from a terminal prompt. This will add a `flow_data` jsonb column to the Spree::CreditCard, Spree::Product, Spree::Variant, Spree::Order, Spree::Promotion models' DB tables.
+` from a terminal prompt. This will add an `options` jsonb column to the Spree::CreditCard, Spree::Product, 
+  Spree::Variant, Spree::Order, Spree::Promotion models' DB tables, if there is not yet such a column defined.
 
-- If the main application's Rails version is less than 4.2, add the JSON serializer for the `flow_data` column to the
- affected models' decorators (Spree
-                                                                                           ::CreditCard, Spree::Product, Spree::Variant, Spree::Order, Spree::Promotion models):
+- If the main application's Rails version is less than 4.2, add the JSON serializer for the `options` column to the
+ affected models' decorators (Spree::CreditCard, Spree::Product, Spree::Variant, Spree::Order, Spree::Promotion models):
   
   `serialize :flow_data, ActiveRecord::Coders::JSON.new(symbolize_keys: true)`
  
