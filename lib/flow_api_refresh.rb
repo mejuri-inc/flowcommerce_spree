@@ -1,4 +1,3 @@
-require 'logger'
 require 'pathname'
 
 # Service class to manage product sync scheduling
@@ -6,7 +5,6 @@ module FlowApiRefresh
   extend self
 
   SYNC_INTERVAL_IN_MINUTES = 60 unless defined?(SYNC_INTERVAL_IN_MINUTES)
-  LOGGER = Logger.new('log/flowcommerce.log', 3, 1024000)
 
   def settings
     FlowcommerceSpree::Setting.find_or_initialize_by(key: 'rake-products-refresh')
@@ -30,7 +28,7 @@ module FlowApiRefresh
 
   def log(message)
     $stdout.puts message
-    LOGGER.info '%s (pid/ppid: %d/%d)' % [message, Process.pid, Process.ppid]
+    FlowcommerceSpree::LOGGER.info '%s (pid/ppid: %d/%d)' % [message, Process.pid, Process.ppid]
   end
 
   def schedule_refresh!
