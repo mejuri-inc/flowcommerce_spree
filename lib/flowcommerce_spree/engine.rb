@@ -7,6 +7,7 @@ module FlowcommerceSpree
       # init Flow payments as an option
       # app.config.spree.payment_methods << Spree::Gateway::Flow
 
+      FlowcommerceSpree::Config = FlowcommerceSpree::Settings.new
       Flow::SimpleGateway.clear_zero_amount_payments = true
     end
 
