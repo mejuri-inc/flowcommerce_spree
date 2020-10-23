@@ -1,8 +1,6 @@
 # communicates with flow api, responds to webhook events
 module FlowcommerceSpree
   class WebhookService
-    LOGGER = Logger.new('log/flowcommerce_webhooks.log', 3, 1024000)
-
     attr_accessor :product
     attr_accessor :variant
 
