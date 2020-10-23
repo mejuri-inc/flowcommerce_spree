@@ -190,9 +190,9 @@ namespace :flowcommerce_spree do
   desc 'Sync experiences and localized product catalog items from Flow.io'
   task sync_localized_items: :environment do |t|
     # we have to log start, so that another process does not start while this one is running
-    next t.reenable unless FlowApiRefresh.needs_refresh?
+    next t.reenable unless FlowcommerceSpree::ApiRefresh.needs_refresh?
 
-    FlowApiRefresh.log_refresh!
+    FlowcommerceSpree::ApiRefresh.log_refresh!
 
     puts 'Sync needed, running ...'.yellow
 
@@ -202,7 +202,9 @@ namespace :flowcommerce_spree do
 
     experiences.each do |experience|
       exp_key = experience.key
-      FlowcommerceSpree::Experience.find_or_initialize_by(key: exp_key).upsert_data(experience)
+      zone = Spree::Zones::Product.find_or_initialize_by(name: exp_key)
+      zone.import_flowcommerce(experience)
+      # zone.save!
 
       if experience.status.value == 'active'
         page_size  = 100
@@ -230,7 +232,7 @@ namespace :flowcommerce_spree do
               print "[#{item.local.status.value.red}]:"
               if (product = variant.product)
                 product.flow_data["#{exp_key}.excluded"] = 1
-                product.update_column(:flow_data, product.flow_data.to_json)
+                product.update_column(:optionms, product.options.to_json)
               end
             end
 
@@ -243,7 +245,7 @@ namespace :flowcommerce_spree do
     end
 
     # Log sync end time
-    FlowApiRefresh.log_refresh!(has_ended: true)
+    FlowcommerceSpree::ApiRefresh.log_refresh!(has_ended: true)
 
     puts "Finished with total of #{total.to_s.green} rows."
 
