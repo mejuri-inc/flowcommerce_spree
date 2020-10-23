@@ -3,7 +3,9 @@
 # Added flow specific methods to Spree::Order
 module Spree
   Order.class_eval do
-    serialize :flow_data, ActiveRecord::Coders::JSON.new(symbolize_keys: true)
+    serialize :options, ActiveRecord::Coders::JSON.new(symbolize_keys: true)
+
+    store_accessor :options, :flow_data
 
     def display_total
       price = Flow.format_default_price total
