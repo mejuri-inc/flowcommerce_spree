@@ -1,8 +1,8 @@
 # Flow specific methods for Spree::Promotion
 module Spree
   Promotion.class_eval do
-    serialize :options, ActiveRecord::Coders::JSON.new(symbolize_keys: true)
+    serialize :meta, ActiveRecord::Coders::JSON.new(symbolize_keys: true)
 
-    store_accessor :options, :flow_data
+    store_accessor :meta, :flow_data
   end
 end

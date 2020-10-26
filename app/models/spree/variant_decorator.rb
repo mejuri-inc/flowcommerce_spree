@@ -3,9 +3,9 @@
 # hold all important Flow sync data for specific experiences.
 module Spree
   Variant.class_eval do
-    serialize :options, ActiveRecord::Coders::JSON.new(symbolize_keys: true)
+    serialize :meta, ActiveRecord::Coders::JSON.new(symbolize_keys: true)
 
-    store_accessor :options, :flow_data
+    store_accessor :meta, :flow_data
 
     # after every save we sync product we generate sh1 checksums to update only when change happend
     after_save :sync_product_to_flow
@@ -127,8 +127,9 @@ module Spree
 
     # gets flow catalog item, and imports it
     # called from flow:sync_localized_items rake task
-    def flow_import_item(item)
-      experience_key = item.local.experience.key.to_sym
+    def flow_import_item(item, experience_key: nil)
+      experience_key = item.local.experience.key.to_sym unless experience_key
+      meta[:flow_data] = {} unless meta.key?(:flow_data)
       flow_data[:exp] ||= {}
       flow_data[:exp][experience_key] = { status: item.local.status.value }
       flow_data[:exp][experience_key][:prices] = item.local.prices.map do |price|
@@ -137,7 +138,7 @@ module Spree
         price
       end
 
-      update_column(:flow_data, flow_data.to_json)
+      update_column(:meta, meta.to_json)
     end
   end
 end
