@@ -1,6 +1,6 @@
 module Spree
   Zone.class_eval do
-    store_accessor :options, :flow_data
+    store_accessor :meta, :flow_data
 
     after_initialize :redefine_available_currencies
 
@@ -23,9 +23,9 @@ module Spree
 
       self.status = flow_data['status']
       if new_record?
-        update_attributes(options: options, status: status)
+        update_attributes(meta: meta, status: status)
       else
-        update_columns(options: options.to_json, status: status)
+        update_columns(meta: meta.to_json, status: status)
       end
     end
   end

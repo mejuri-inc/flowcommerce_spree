@@ -232,11 +232,11 @@ namespace :flowcommerce_spree do
               print "[#{item.local.status.value.red}]:"
               if (product = variant.product)
                 product.flow_data["#{exp_key}.excluded"] = 1
-                product.update_column(:optionms, product.options.to_json)
+                product.update_column(:meta, product.meta.to_json)
               end
             end
 
-            variant.flow_import_item(item)
+            variant.flow_import_item(item, experience_key: exp_key)
 
             print "#{sku}, "
           end
