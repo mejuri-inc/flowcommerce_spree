@@ -10,11 +10,10 @@ module Spree
     # after every save we sync product we generate sh1 checksums to update only when change happend
     after_save :sync_product_to_flow
 
-    # clears flow cache from all records
-    def self.truncate_flow_data
-      all_records = all.size
-      update_all(flow_data: nil)
-      puts "Truncated #{all_records} records"
+    # clears flow_data from the records
+    def truncate_flow_data
+      meta.delete(:flow_data)
+      update_column(:meta, meta.to_json)
     end
 
     # upload product variant to Flow's Product Catalog
@@ -128,8 +127,8 @@ module Spree
     # gets flow catalog item, and imports it
     # called from flow:sync_localized_items rake task
     def flow_import_item(item, experience_key: nil)
-      experience_key = item.local.experience.key.to_sym unless experience_key
-      meta[:flow_data] = {} unless meta.key?(:flow_data)
+      experience_key = item.local.experience.key unless experience_key
+      flow_data ||= {}
       flow_data[:exp] ||= {}
       flow_data[:exp][experience_key] = { status: item.local.status.value }
       flow_data[:exp][experience_key][:prices] = item.local.prices.map do |price|

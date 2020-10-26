@@ -204,7 +204,6 @@ namespace :flowcommerce_spree do
       exp_key = experience.key
       zone = Spree::Zones::Product.find_or_initialize_by(name: exp_key)
       zone.import_flowcommerce(experience)
-      # zone.save!
 
       if experience.status.value == 'active'
         page_size  = 100
@@ -319,17 +318,17 @@ namespace :flowcommerce_spree do
     t.reenable
   end
 
-  # nillize flow_data for all the products in the DB
-  desc 'Purge flow_data from all the Products in the DB'
+  desc 'Purge flow_data from all the Variants in the DB'
   task purge_flow_data: :environment do |t|
-    Spree::Variant.truncate_flow_data
-    t.reenable
-  end
+    record_counter = 0
+    Spree::Variant.where("meta->>'flow_data' IS NOT NULL").each do |v|
+      v.truncate_flow_data
+      record_counter +=1
+      print '.'
+      $stdout.flush
+    end
+    puts "\nTruncated flow_data on #{record_counter} records"
 
-  desc 'Pretty print flow_data of last updated product variant'
-  task sync_check: :environment do |t|
-    data = Spree::Variant.order('updated_at desc').first.flow_data
-    puts JSON.pretty_generate(data).gsub(/"(\w+)":/) { "\"#{$1.yellow}\":" }
     t.reenable
   end
 
