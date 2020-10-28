@@ -16,7 +16,7 @@ module FlowcommerceSpree
 
     def process
       org = @data['organization']
-      return { error: 'NoMethodError', message: "Organization name mismatch for #{org}" } if org != Flow::ORGANIZATION
+      return { error: 'NoMethodError', message: "Organization name mismatch for #{org}" } if org != ORGANIZATION
 
       discriminator = @data['discriminator']
       hook_method = "hook_#{discriminator}"

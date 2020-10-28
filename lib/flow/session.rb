@@ -29,7 +29,7 @@ class Flow::Session
     }
 
     session_model = ::Io::Flow::V0::Models::SessionForm.new data
-    @session      = FlowCommerce.instance.sessions.post_organizations_by_organization Flow::ORGANIZATION, session_model
+    @session      = FlowCommerce.instance.sessions.post_organizations_by_organization FlowcommerceSpree::ORGANIZATION, session_model
   end
 
   # if we want to manualy switch to specific country or experience

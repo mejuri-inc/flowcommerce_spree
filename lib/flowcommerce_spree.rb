@@ -1,7 +1,7 @@
+require 'flowcommerce_spree/api'
 require 'flowcommerce_spree/api_refresh'
 require 'flowcommerce_spree/engine'
 require 'flowcommerce_spree/webhook_service'
-require 'flow'
 require 'flow/simple_gateway'
 
 module FlowcommerceSpree

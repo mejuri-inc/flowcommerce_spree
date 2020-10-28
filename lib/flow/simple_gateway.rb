@@ -12,7 +12,7 @@ module Flow
     # authorises credit card and prepares for capture
     def cc_authorization
       auth_form      = get_authorization_form
-      response       = FlowCommerce.instance.authorizations.post(Flow::ORGANIZATION, auth_form)
+      response       = FlowCommerce.instance.authorizations.post(FlowcommerceSpree::ORGANIZATION, auth_form)
       status_message = response.result.status.value
       status         = status_message == ::Io::Flow::V0::Models::AuthorizationStatus.authorized.value
 
@@ -42,7 +42,7 @@ module Flow
       raise ArgumentError, 'No Authorization data, please authorize first' unless data
 
       capture_form = ::Io::Flow::V0::Models::CaptureForm.new(data)
-      response     = FlowCommerce.instance.captures.post(Flow::ORGANIZATION, capture_form)
+      response     = FlowCommerce.instance.captures.post(FlowcommerceSpree::ORGANIZATION, capture_form)
 
       if response.id
         @order.update_column :flow_data, @order.flow_data.merge('capture': response.to_hash)
@@ -62,7 +62,7 @@ module Flow
       # we allways have capture ID, so we use it
       refund_data = { capture_id: @order.flow_data['capture']['id'] }
       refund_form = ::Io::Flow::V0::Models::RefundForm.new(refund_data)
-      response    = FlowCommerce.instance.refunds.post(Flow::ORGANIZATION, refund_form)
+      response    = FlowCommerce.instance.refunds.post(FlowcommerceSpree::ORGANIZATION, refund_form)
 
       if response.id
         @order.update_column :flow_data, @order.flow_data.merge('refund': response.to_hash)

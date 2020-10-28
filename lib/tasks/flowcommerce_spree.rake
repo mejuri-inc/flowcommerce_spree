@@ -81,32 +81,33 @@ namespace :flowcommerce_spree do
     puts 'Environment check'
     required_env_vars = %w[FLOW_API_KEY FLOW_ORGANIZATION FLOW_BASE_COUNTRY]
     required_env_vars.each { |el| puts " ENV: #{el} - #{ENV[el].present? ? 'present'.green : 'MISSING'.red} " }
+    organization = FlowcommerceSpree::ORGANIZATION
 
     puts 'Experiences:'
-    puts " Getting experiences for flow org: #{Flow::ORGANIZATION}"
+    puts " Getting experiences for flow org: #{organization}"
     client      = FlowCommerce.instance
-    experiences = client.experiences.get(Flow::ORGANIZATION)
+    experiences = client.experiences.get(organization)
     puts " Got %d experiences - #{experiences.map(&:country).join(', ')}".green % experiences.length
 
     # create default experience unless one exists
     puts 'Centers:'
     center_name     = 'default'
-    current_centers = client.centers.get(Flow::ORGANIZATION).map(&:key)
+    current_centers = client.centers.get(organization).map(&:key)
     if current_centers.include?(center_name)
       puts " Default center: #{'present'.green}"
     else
-      Flow.api :put, "/:organization/centers/#{center_name}", {},
+      FlowcommerceSpree::Api.run :put, "/:organization/centers/#{center_name}", {},
                {'key': center_name,
                 'address': { 'contact': { 'name': { 'first': 'Kinto',
                                                     'last':'Doe' },
-                                          'company': Flow::ORGANIZATION,
+                                          'company': organization,
                                           'email': 'dcone@test.flow.io',
                                           'phone': '1-555-444-0001' },
                              'location': { 'streets': ['88 East Broad Street'],
                                            'city': 'Columbus',
                                            'province': 'OH',
                                            'postal': '43215',
-                                           'country': Flow::BASE_COUNTRY } },
+                                           'country': FlowcommerceSpree::BASE_COUNTRY } },
                 'packaging': [{ 'dimensions': { 'packaging': { 'depth':  { 'value': '9',  'units': 'inch' },
                                                                'length': { 'value': '13', 'units': 'inch' },
                                                                'weight': { 'value': '1',  'units': 'pound' },
@@ -128,7 +129,7 @@ namespace :flowcommerce_spree do
 
     puts 'Tiers:'
     experiences.each do |exp|
-      exp_tiers = client.tiers.get(Flow::ORGANIZATION, experience: exp.key)
+      exp_tiers = client.tiers.get(FlowcommerceSpree::ORGANIZATION, experience: exp.key)
       count        = exp_tiers.length
       count_desc   = count == 0 ? '0 (error!)'.red : count.to_s.green
       print " Experience #{exp.key.yellow} has #{count_desc} delivery tiers defined, "
@@ -155,9 +156,9 @@ namespace :flowcommerce_spree do
     ratecard_estimates_path = '/:organization/ratecard_estimates/summaries'
     origins = []
     errors = []
-    ratecards = client.ratecards.get(Flow::ORGANIZATION).each do |rc|
+    ratecards = client.ratecards.get(FlowcommerceSpree::ORGANIZATION).each do |rc|
       rc.origination_zones.each do |oz|
-        data = Flow.api :post, ratecard_estimates_path, {}, { origin: oz.country, destination: origins.last || 'MDA' }
+        data = FlowcommerceSpree::Api.run :post, ratecard_estimates_path, {}, { origin: oz.country, destination: origins.last || 'MDA' }
 
         if data.is_a?(Hash) && data['code'] == 'generic_error'
           errors << { origin: oz.country, messages: data['messages'] }
@@ -196,9 +197,10 @@ namespace :flowcommerce_spree do
 
     puts 'Sync needed, running ...'.yellow
 
+    organization = FlowcommerceSpree::ORGANIZATION
     total = 0
     client = FlowCommerce.instance
-    experiences = client.experiences.get(Flow::ORGANIZATION)
+    experiences = client.experiences.get(organization)
 
     experiences.each do |experience|
       exp_key = experience.key
@@ -215,7 +217,7 @@ namespace :flowcommerce_spree do
           puts "\nGetting items: #{exp_key.green}, rows #{offset} - #{offset + page_size}"
 
           items = client.experiences.get_items(
-            Flow::ORGANIZATION, experience: exp_key, limit: page_size, offset: offset
+            organization, experience: exp_key, limit: page_size, offset: offset
           )
 
           offset += page_size
@@ -263,7 +265,7 @@ namespace :flowcommerce_spree do
     thread_pool = Thread.pool(5)
 
     while offset == 0 || items.length == 100
-      items = Flow.api :get, '/:organization/catalog/items', limit: page_size, offset: offset
+      items = FlowcommerceSpree::Api.run :get, '/:organization/catalog/items', limit: page_size, offset: offset
       offset += page_size
 
       items.each do |item|
@@ -280,7 +282,7 @@ namespace :flowcommerce_spree do
         next unless do_remove
 
         thread_pool.process do
-          Flow.api :delete, "/:organization/catalog/items/#{sku}"
+          FlowcommerceSpree::Api.run :delete, "/:organization/catalog/items/#{sku}"
           $stdout.puts "Removed item: #{sku.red}"
         end
       end
@@ -301,14 +303,14 @@ namespace :flowcommerce_spree do
     thread_pool = Thread.pool(5)
 
     while offset == 0 || items.length == 100
-      items = Flow.api :get, '/:organization/catalog/items', limit: page_size, offset: offset
+      items = FlowcommerceSpree::Api.run :get, '/:organization/catalog/items', limit: page_size, offset: offset
       offset += page_size
 
       items.each do |item|
         sku = item['number']
 
         thread_pool.process do
-          Flow.api :delete, "/:organization/catalog/items/#{sku}"
+          FlowcommerceSpree::Api.run :delete, "/:organization/catalog/items/#{sku}"
           $stdout.puts "Removed item: #{sku.red}"
         end
       end

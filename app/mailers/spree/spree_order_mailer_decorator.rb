@@ -7,7 +7,7 @@ module Spree
 
       raise Flow::Error.new('authorization key not found in WebHookEvent [refund_capture_upserted_v2]') unless auth_id
 
-      authorization = FlowCommerce.instance.authorizations.get_by_key Flow::ORGANIZATION, auth_id
+      authorization = FlowCommerce.instance.authorizations.get_by_key FlowcommerceSpree::ORGANIZATION, auth_id
 
       @mail_to   = authorization.customer.email
       @full_name = '%s %s' % [authorization.customer.name.first, authorization.customer.name.last]
