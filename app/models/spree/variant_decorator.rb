@@ -131,9 +131,11 @@ module Spree
       experience_key = item.local.experience.key unless experience_key
       self.flow_data ||= {}
       item_hash = item.to_hash
+      current_experience_meta = item_hash.delete(:local)
+      # Do not repeatedly store Experience data - this is stored in Spree::Zones::Product
+      current_experience_meta.delete(:experience)
       self.flow_data[:exp] ||= {}
-      self.flow_data[:exp][experience_key] = item_hash.delete(:local)
-      item_hash.delete(:experience)
+      self.flow_data[:exp][experience_key] = current_experience_meta
       self.flow_data.merge!(item_hash)
 
       update_column(:meta, meta.to_json)

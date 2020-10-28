@@ -35,6 +35,8 @@ module FlowcommerceSpree
     end
 
     def needs_refresh?
+      return false if in_progress?
+
       now = Time.zone.now.to_i
       data[:end] ||= now - 10_000
 
@@ -50,6 +52,12 @@ module FlowcommerceSpree
         @data = nil
         false
       end
+    end
+
+    def in_progress?
+      return false unless data[:in_progress]
+
+      puts 'Could not be run, another refresh is still in progress, quitting'
     end
 
     # for start just call log_refresh! and end it with has_ended: true statement
