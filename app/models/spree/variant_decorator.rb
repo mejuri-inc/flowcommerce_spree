@@ -126,11 +126,10 @@ module Spree
 
     # gets flow catalog item, and imports it
     # called from flow:sync_localized_items rake task
-    def flow_import_item(item, experience_key: nil)
+    def flow_import_item(item_hash, experience_key: nil)
       # If experience not specified, get it from the local hash of imported variant
-      experience_key = item.local.experience.key unless experience_key
+      experience_key = item_hash.dig(:local, :experience, :key) unless experience_key
       self.flow_data ||= {}
-      item_hash = item.to_hash
       current_experience_meta = item_hash.delete(:local)
       # Do not repeatedly store Experience data - this is stored in Spree::Zones::Product
       current_experience_meta.delete(:experience)

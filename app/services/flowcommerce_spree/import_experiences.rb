@@ -12,8 +12,8 @@ module FlowcommerceSpree
       experiences = @client.experiences.get(@organization)
 
       experiences.each do |experience|
-        exp_key = experience.key
-        zone = Spree::Zones::Product.find_or_initialize_by(name: exp_key)
+        experience_key = experience.key
+        zone = Spree::Zones::Product.find_or_initialize_by(name: experience_key)
         zone.import_flowcommerce(experience)
 
         if experience.status.value == 'active'
@@ -23,32 +23,33 @@ module FlowcommerceSpree
 
           while offset == 0 || items.length == 100
             # show current list size
-            puts "\nGetting items: #{exp_key.green}, rows #{offset} - #{offset + page_size}"
+            puts "\nGetting items: #{experience_key.green}, rows #{offset} - #{offset + page_size}"
 
             items = @client.experiences.get_items(
-              @organization, experience: exp_key, limit: page_size, offset: offset
+              @organization, experience: experience_key, limit: page_size, offset: offset
             )
 
             offset += page_size
 
             items.each do |item|
               total += 1
-              sku        = item.number
-              variant    = Spree::Variant.find_by(sku: sku)
-              next unless variant
+              item_hash = item.to_hash
+              next unless (variant = Spree::Variant.find_by(sku: item_hash.delete(:number)))
 
               # if item is not included, mark it in product as excluded regardless if excluded or restricted
-              unless item.local.status.value == 'included'
-                print "[#{item.local.status.value.red}]:"
+              status_in_experience = item_hash.dig(:local, :status)
+              unless status_in_experience == 'included'
+                print "[#{status_in_experience.red}]:"
                 if (product = variant.product)
-                  product.flow_data["#{exp_key}.excluded"] = 1
+                  product.flow_data ||= {}
+                  product.flow_data["#{experience_key}.excluded"] = 1
                   product.update_column(:meta, product.meta.to_json)
                 end
               end
 
-              variant.flow_import_item(item, experience_key: exp_key)
+              variant.flow_import_item(item_hash, experience_key: experience_key)
 
-              print "#{sku}, "
+              print "#{variant.sku}, "
             end
           end
         end
