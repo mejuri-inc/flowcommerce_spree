@@ -19,7 +19,7 @@ module Spree
     # upload product variant to Flow's Product Catalog
     def sync_product_to_flow
       # initial Spree seed will fail, so skip unless we have Flow data field
-      return if !respond_to?(:flow_data) || Flow::API_KEY.blank? || Flow::API_KEY == 'test_key'
+      return if !respond_to?(:flow_data) || FlowcommerceSpree::API_KEY.blank? || FlowcommerceSpree::API_KEY == 'test_key'
 
       return { error: 'Price is 0' } if price == 0
 
@@ -44,7 +44,7 @@ module Spree
       # skip if sync not needed
       return nil if flow_data[:last_sync_sh1] == flow_item_sh1
 
-      response = FlowCommerce.instance.items.put_by_number(Flow::ORGANIZATION, sku, flow_item)
+      response = FlowCommerce.instance.items.put_by_number(FlowcommerceSpree::ORGANIZATION, sku, flow_item)
 
       # after successful put, write cache
       update_column(:flow_data, flow_data.merge(last_sync_sh1: flow_item_sh1).to_json)
@@ -127,15 +127,14 @@ module Spree
     # gets flow catalog item, and imports it
     # called from flow:sync_localized_items rake task
     def flow_import_item(item, experience_key: nil)
+      # If experience not specified, get it from the local hash of imported variant
       experience_key = item.local.experience.key unless experience_key
-      flow_data ||= {}
-      flow_data[:exp] ||= {}
-      flow_data[:exp][experience_key] = { status: item.local.status.value }
-      flow_data[:exp][experience_key][:prices] = item.local.prices.map do |price|
-        price = price.to_hash
-        [:includes, :adjustment].each { |el| price.delete(el) unless price[el] }
-        price
-      end
+      self.flow_data ||= {}
+      item_hash = item.to_hash
+      self.flow_data[:exp] ||= {}
+      self.flow_data[:exp][experience_key] = item_hash.delete(:local)
+      item_hash.delete(:experience)
+      self.flow_data.merge!(item_hash)
 
       update_column(:meta, meta.to_json)
     end

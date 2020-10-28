@@ -15,9 +15,9 @@ module Flow::PayPal
         currency:      order.flow_order.total.currency,
       }
 
-      # Flow.api :post, '/:organization/payments', {}, body
+      # FlowcommerceSpree::Api.run :post, '/:organization/payments', {}, body
       form     = ::Io::Flow::V0::Models::MerchantOfRecordPaymentForm.new body
-      FlowCommerce.instance.payments.post Flow::ORGANIZATION, form
+      FlowCommerce.instance.payments.post FlowcommerceSpree::ORGANIZATION, form
     else
       # to do
       raise 'PayPal only supported while using flow'
