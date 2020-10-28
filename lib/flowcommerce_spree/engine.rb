@@ -16,6 +16,11 @@ module FlowcommerceSpree
 
       FlowcommerceSpree::Config = FlowcommerceSpree::Settings.new
       Flow::SimpleGateway.clear_zero_amount_payments = true
+
+      # Redefine :available_currencies dynamically here, to override the one, defined in class_eval
+      Spree::Zone.__send__(:define_method, :available_currencies) do
+        ((currencies || []) + [flow_data&.[]('currency')]).compact.uniq
+      end
     end
 
     def self.activate
