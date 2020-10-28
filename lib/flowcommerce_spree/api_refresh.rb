@@ -8,7 +8,7 @@ module FlowcommerceSpree
     SYNC_INTERVAL_IN_MINUTES = 60 unless defined?(SYNC_INTERVAL_IN_MINUTES)
 
     def data
-      @data ||= FlowcommerceSpree::Config.product_catalog_upload
+      @data ||= FlowcommerceSpree::Config.product_catalog_upload || {}
     end
 
     def duration
