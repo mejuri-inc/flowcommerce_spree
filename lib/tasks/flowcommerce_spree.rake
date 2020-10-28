@@ -190,63 +190,22 @@ namespace :flowcommerce_spree do
 
   desc 'Sync experiences and localized product catalog items from Flow.io'
   task sync_localized_items: :environment do |t|
-    # we have to log start, so that another process does not start while this one is running
     next t.reenable unless FlowcommerceSpree::ApiRefresh.needs_refresh?
-
-    FlowcommerceSpree::ApiRefresh.log_refresh!
 
     puts 'Sync needed, running ...'.yellow
 
-    organization = FlowcommerceSpree::ORGANIZATION
-    total = 0
-    client = FlowCommerce.instance
-    experiences = client.experiences.get(organization)
+    total = FlowcommerceSpree::ImportExperiences.new.run
 
-    experiences.each do |experience|
-      exp_key = experience.key
-      zone = Spree::Zones::Product.find_or_initialize_by(name: exp_key)
-      zone.import_flowcommerce(experience)
+    puts "Finished with total of #{total.to_s.green} rows."
 
-      if experience.status.value == 'active'
-        page_size  = 100
-        offset     = 0
-        items      = []
+    t.reenable
+  end
 
-        while offset == 0 || items.length == 100
-          # show current list size
-          puts "\nGetting items: #{exp_key.green}, rows #{offset} - #{offset + page_size}"
+  desc 'Force sync (no timeout) experiences and localized product catalog items from Flow.io'
+  task sync_localized_items_forced: :environment do |t|
+    next t.reenable if FlowcommerceSpree::ApiRefresh.in_progress?
 
-          items = client.experiences.get_items(
-            organization, experience: exp_key, limit: page_size, offset: offset
-          )
-
-          offset += page_size
-
-          items.each do |item|
-            total += 1
-            sku        = item.number
-            variant    = Spree::Variant.find_by(sku: sku)
-            next unless variant
-
-            # if item is not included, mark it in product as excluded regardless if excluded or restricted
-            unless item.local.status.value == 'included'
-              print "[#{item.local.status.value.red}]:"
-              if (product = variant.product)
-                product.flow_data["#{exp_key}.excluded"] = 1
-                product.update_column(:meta, product.meta.to_json)
-              end
-            end
-
-            variant.flow_import_item(item, experience_key: exp_key)
-
-            print "#{sku}, "
-          end
-        end
-      end
-    end
-
-    # Log sync end time
-    FlowcommerceSpree::ApiRefresh.log_refresh!(has_ended: true)
+    total = FlowcommerceSpree::ImportExperiences.new.run
 
     puts "Finished with total of #{total.to_s.green} rows."
 
@@ -256,7 +215,7 @@ namespace :flowcommerce_spree do
   # checks existance of every item in local product catalog
   # remove product from flow unless exists localy
   desc 'Remove unused items from flow catalog'
-  task clean_catalog: :environment do |t|
+  task clean_flow_catalog: :environment do |t|
 
     page_size  = 100
     offset     = 0
