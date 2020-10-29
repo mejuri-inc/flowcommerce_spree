@@ -10,11 +10,14 @@ module FlowcommerceSpree
     require 'spree/core'
     isolate_namespace FlowcommerceSpree
 
+    config.before_initialize do
+      FlowcommerceSpree::Config = FlowcommerceSpree::Settings.new
+    end
+
     config.after_initialize do
       # init Flow payments as an option
       # app.config.spree.payment_methods << Spree::Gateway::Flow
 
-      FlowcommerceSpree::Config = FlowcommerceSpree::Settings.new
       Flow::SimpleGateway.clear_zero_amount_payments = true
 
       # Redefine :available_currencies dynamically here, to override the one, defined in class_eval
