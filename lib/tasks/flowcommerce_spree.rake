@@ -49,7 +49,7 @@ namespace :flowcommerce_spree do
       current_page += 1
       variants = Spree::Variant.order('updated_at desc').page(current_page).per(100).all
 
-      variants.each_with_index do |variant, i|
+      variants.each do |variant|
         total_sum    += 1
 
         # multiprocess upload
@@ -232,11 +232,8 @@ namespace :flowcommerce_spree do
 
         do_remove = false
 
-        # sku has to be an integer
-        do_remove = true if sku.to_i == 0 || sku.to_i.to_s != sku
-
         # remove if variant not found
-        do_remove ||= true unless Spree::Variant.find_by(id: sku.to_i)
+        do_remove ||= true unless Spree::Variant.find_by(id: sku)
 
         next unless do_remove
 
