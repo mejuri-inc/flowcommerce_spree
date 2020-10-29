@@ -24,7 +24,7 @@ module Spree
       return { error: 'Price is 0' } if price == 0
 
       # master is not sellable, if product has other variants
-      return { error: 'Master not sellable, if product has other variants' } if is_master? && product.variants.size > 1
+      # return { error: 'Master not sellable, if product has other variants' } if is_master? && product.variants.size > 1
 
       additional_attrs = {}
 
@@ -38,7 +38,7 @@ module Spree
         end
       end
 
-      flow_item     = flow_api_item(additional_attrs)
+      flow_item     = to_flowcommerce_item(additional_attrs)
       flow_item_sh1 = Digest::SHA1.hexdigest(flow_item.to_json)
 
       # skip if sync not needed
@@ -74,7 +74,7 @@ module Spree
     end
 
     # creates object for flow api
-    def flow_api_item(additional_attrs)
+    def to_flowcommerce_item(additional_attrs)
       image_base = ENV.fetch('ASSET_HOST_PROTOCOL', 'https') + '://' + ENV.fetch('ASSET_HOST', 'staging.mejuri.com')
 
       # add product categories
