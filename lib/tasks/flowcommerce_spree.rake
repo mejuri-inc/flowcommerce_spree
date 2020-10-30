@@ -1,5 +1,4 @@
 require 'flowcommerce'
-require 'thread/pool'
 require 'digest/sha1'
 require 'colorize'
 
@@ -32,18 +31,15 @@ namespace :flowcommerce_spree do
     end
   end
 
-  # uploads catalog to Flow API
-  # using local Spree database
-  # run like 'rake flow:upload_catalog[:force]'
-  # if you want to force update all products
+  # uploads catalog to Flow API using local Spree database
   desc 'Upload catalog'
   task upload_catalog: :environment do |t|
-    # do reqests in paralel
-    # thread_pool  = Thread.pool(5)
-    update_sum   = 0
+    $update_sum   = 0
     total_sum    = 0
     current_page = 0
     variants     = []
+    promises = []
+    thread_pool = Concurrent::FixedThreadPool.new(5)
 
     while current_page == 0 || variants.length > 0
       current_page += 1
@@ -52,27 +48,32 @@ namespace :flowcommerce_spree do
       variants.each do |variant|
         total_sum    += 1
 
-        # multiprocess upload
-        # thread_pool.process do
-          # skip if sync not needed
-        result = variant.sync_product_to_flow
+        # multithread upload - perform requests in parallel
+        promises << Concurrent::Promises.future_on(thread_pool, variant) do |variant|
+          ActiveRecord::Base.connection_pool.with_connection do
+            result = variant.sync_product_to_flow
 
-        next $stdout.print "\nVariant #{variant.sku} is synced, no need to update".green unless result
+            # skip if sync not needed
+            next $stdout.print "\nVariant #{variant.sku} is synced, no need to update".green unless result
 
-        if result.is_a?(Hash) && result[:error]
-          $stdout.print "\nError uploading #{variant.sku}. Reason: #{result[:error]}".red
-        else
-          update_sum += 1
-          $stdout.print "\n#{variant.sku}: #{variant.product.name} (#{variant.price} #{variant.cost_currency})"
+            if result.is_a?(Hash) && result[:error]
+              $stdout.print "\nError uploading #{variant.sku}. Reason: #{result[:error]}".red
+            else
+              $update_sum += 1
+              $stdout.print "\n#{variant.sku}: #{variant.product.name} (#{variant.price} #{variant.cost_currency})"
+            end
+          end
         end
-        # end
       end
     end
 
-    # thread_pool.shutdown
+    Concurrent::Promises.zip(*promises).value!
+    thread_pool.shutdown
+    thread_pool.wait_for_termination
 
-    needed_update = (update_sum == 0 ? 'none' : update_sum).to_s.green
+    needed_update = ($update_sum == 0 ? 'none' : $update_sum).to_s.green
     puts "\nFor total of #{total_sum.to_s.blue} products, #{needed_update} needed update"
+    $update_sum = nil
     t.reenable
   end
 
@@ -212,16 +213,14 @@ namespace :flowcommerce_spree do
     t.reenable
   end
 
-  # checks existance of every item in local product catalog
-  # remove product from flow unless exists localy
+  # checks existence of every item in local product catalog - remove product from flow unless exists locally
   desc 'Remove unused items from flow catalog'
   task clean_flow_catalog: :environment do |t|
-
     page_size  = 100
     offset     = 0
     items      = []
-
-    thread_pool = Thread.pool(5)
+    promises = []
+    thread_pool = Concurrent::FixedThreadPool.new(5)
 
     while offset == 0 || items.length == 100
       items = FlowcommerceSpree::Api.run :get, '/:organization/catalog/items', limit: page_size, offset: offset
@@ -230,33 +229,29 @@ namespace :flowcommerce_spree do
       items.each do |item|
         sku = item['number']
 
-        do_remove = false
+        next if Spree::Variant.exists?(sku: sku)
 
-        # remove if variant not found
-        do_remove ||= true unless Spree::Variant.find_by(sku: sku)
-
-        next unless do_remove
-
-        thread_pool.process do
-          FlowcommerceSpree::Api.run :delete, "/:organization/catalog/items/#{sku}"
-          $stdout.puts "Removed item: #{sku.red}"
+        promises << Concurrent::Promises.future_on(thread_pool, sku) do |number|
+          FlowcommerceSpree::Api.run :delete, "/:organization/catalog/items/#{number}"
+          $stdout.puts "Removed item: #{number.red}"
         end
       end
     end
 
+    Concurrent::Promises.zip(*promises).value!
     thread_pool.shutdown
+    thread_pool.wait_for_termination
     t.reenable
   end
 
   # remove all the products from flow.io
   desc 'Purge Product Catalog on flow.io'
   task purge_catalog: :environment do |t|
-
     page_size  = 100
     offset     = 0
     items      = []
-
-    thread_pool = Thread.pool(5)
+    promises = []
+    thread_pool = Concurrent::FixedThreadPool.new(5)
 
     while offset == 0 || items.length == 100
       items = FlowcommerceSpree::Api.run :get, '/:organization/catalog/items', limit: page_size, offset: offset
@@ -265,14 +260,16 @@ namespace :flowcommerce_spree do
       items.each do |item|
         sku = item['number']
 
-        thread_pool.process do
+        promises << Concurrent::Promises.future_on(thread_pool, sku) do |sku|
           FlowcommerceSpree::Api.run :delete, "/:organization/catalog/items/#{sku}"
           $stdout.puts "Removed item: #{sku.red}"
         end
       end
     end
 
+    Concurrent::Promises.zip(*promises).value!
     thread_pool.shutdown
+    thread_pool.wait_for_termination
     t.reenable
   end
 
