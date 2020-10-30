@@ -24,7 +24,7 @@ Gem::Specification.new do |s|
   s.add_dependency 'flowcommerce-reference'
   s.add_dependency 'oj'
   s.add_dependency 'spree_backend', '~> 2.3.0'
-  s.add_dependency 'thread'
+  s.add_dependency 'concurrent-ruby', '~> 1.0', '>= 1.1.7'
 
   s.add_development_dependency 'sqlite3'
 end
