@@ -27,27 +27,30 @@ module Spree
       # return { error: 'Master not sellable, if product has other variants' } if is_master? && product.variants.size > 1
 
       additional_attrs = {}
+      attr_name = nil
+      FlowcommerceSpree::Config.additional_attributes[self.class.name.tableize.tr('/', '_').to_sym].each do |attr_item|
+        attr_name = attr_item[0]
+        export_required = attr_item[1][:export] == :required
+        attr_value = __send__(attr_name)
+        break if export_required && attr_value.blank?
 
-      if self.class.const_defined?('FLOW_ADDITIONAL_ATTRS')
-        FLOW_ADDITIONAL_ATTRS_KEYS.each do |key|
-          export_required = FLOW_ADDITIONAL_ATTRS[key][:export] == :required
-          attr_value = __send__(key)
-          return { error: "Variant with sku = #{sku} has no #{key}" } if export_required && attr_value.blank?
-
-          additional_attrs[key] = attr_value
-        end
+        additional_attrs[attr_name] = attr_value
       end
+
+      return { error: "Variant with sku = #{sku} has no #{attr_name}" } if additional_attrs.blank?
 
       flow_item     = to_flowcommerce_item(additional_attrs)
       flow_item_sh1 = Digest::SHA1.hexdigest(flow_item.to_json)
 
       # skip if sync not needed
-      return nil if flow_data[:last_sync_sh1] == flow_item_sh1
+      return nil if flow_data&.[](:last_sync_sh1) == flow_item_sh1
 
       response = FlowCommerce.instance.items.put_by_number(FlowcommerceSpree::ORGANIZATION, sku, flow_item)
+      self.flow_data ||= {}
+      self.flow_data[:last_sync_sh1] = flow_item_sh1
 
       # after successful put, write cache
-      update_column(:flow_data, flow_data.merge(last_sync_sh1: flow_item_sh1).to_json)
+      update_column(:meta, meta.to_json)
 
       response
     rescue Net::OpenTimeout => e

@@ -233,7 +233,7 @@ namespace :flowcommerce_spree do
         do_remove = false
 
         # remove if variant not found
-        do_remove ||= true unless Spree::Variant.find_by(id: sku)
+        do_remove ||= true unless Spree::Variant.find_by(sku: sku)
 
         next unless do_remove
 
