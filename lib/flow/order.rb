@@ -210,7 +210,7 @@ class Flow::Order
       # @body[:items].map! { |item| ::Io::Flow::V0::Models::LineItemForm.new(item) }
       # opts[:experience] = @experience.key
       # order_put_form = ::Io::Flow::V0::Models::OrderPutForm.new(@body)
-      # r FlowCommerce.instance.orders.put_by_number(FlowcommerceSpree::ORGANIZATION, @order.flow_number, order_put_form, opts)
+      # r FlowcommerceSpree::CLIENT.orders.put_by_number(FlowcommerceSpree::ORGANIZATION, @order.flow_number, order_put_form, opts)
 
       # cache last order/put for debug purposes
       FlowSettings.set 'flow-order-put-body-%s' % @body[:number], @body.to_json

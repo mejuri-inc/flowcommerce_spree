@@ -17,7 +17,7 @@ module Flow::PayPal
 
       # FlowcommerceSpree::Api.run :post, '/:organization/payments', {}, body
       form     = ::Io::Flow::V0::Models::MerchantOfRecordPaymentForm.new body
-      FlowCommerce.instance.payments.post FlowcommerceSpree::ORGANIZATION, form
+      FlowcommerceSpree::CLIENT.payments.post FlowcommerceSpree::ORGANIZATION, form
     else
       # to do
       raise 'PayPal only supported while using flow'
