@@ -86,7 +86,7 @@ namespace :flowcommerce_spree do
 
     puts 'Experiences:'
     puts " Getting experiences for flow org: #{organization}"
-    client      = FlowCommerce.instance
+    client      = FlowcommerceSpree::CLIENT
     experiences = client.experiences.get(organization)
     puts " Got %d experiences - #{experiences.map(&:country).join(', ')}".green % experiences.length
 

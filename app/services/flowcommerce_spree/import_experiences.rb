@@ -62,7 +62,7 @@ module FlowcommerceSpree
 
     private
 
-    def initialize(client: FlowCommerce.instance, organization: FlowcommerceSpree::ORGANIZATION)
+    def initialize(client: FlowcommerceSpree::CLIENT, organization: FlowcommerceSpree::ORGANIZATION)
       @client = client
       @organization = organization
     end

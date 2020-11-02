@@ -1,8 +1,5 @@
 # module for communication and customization based on Flow API
 # for now all in same class
-
-require 'logger'
-
 module FlowcommerceSpree
   module Api
     extend self

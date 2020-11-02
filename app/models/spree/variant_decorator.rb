@@ -45,7 +45,7 @@ module Spree
       # skip if sync not needed
       return nil if flow_data&.[](:last_sync_sh1) == flow_item_sh1
 
-      response = FlowCommerce.instance.items.put_by_number(FlowcommerceSpree::ORGANIZATION, sku, flow_item)
+      response = FlowcommerceSpree::CLIENT.items.put_by_number(FlowcommerceSpree::ORGANIZATION, sku, flow_item)
       self.flow_data ||= {}
       self.flow_data[:last_sync_sh1] = flow_item_sh1
 
