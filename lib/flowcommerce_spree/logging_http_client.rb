@@ -2,9 +2,9 @@ module FlowcommerceSpree
   class LoggingHttpClient < ::Io::Flow::V0::HttpClient::DefaultHttpHandlerInstance
     attr_reader :error
 
-    def initialize(base_uri, logfile_path)
+    def initialize(base_uri, logger: FlowcommerceSpree.logger)
       super(base_uri)
-      @logger = Logger.new(logfile_path, 3, 10_485_760)
+      @logger = logger
     end
 
     def execute(request)

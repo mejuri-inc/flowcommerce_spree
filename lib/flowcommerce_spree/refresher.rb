@@ -2,10 +2,14 @@ require 'pathname'
 
 # Service class to manage product sync scheduling
 module FlowcommerceSpree
-  module ApiRefresh
-    extend self
-
+  class Refresher
     SYNC_INTERVAL_IN_MINUTES = 60 unless defined?(SYNC_INTERVAL_IN_MINUTES)
+
+    attr_reader :logger
+
+    def initialize(logger: FlowcommerceSpree.logger)
+      @logger = logger
+    end
 
     def data
       @data ||= FlowcommerceSpree::Config.product_catalog_upload || {}
@@ -23,11 +27,6 @@ module FlowcommerceSpree
       @data = nil
     end
 
-    def log(message)
-      $stdout.puts message
-      FlowcommerceSpree::LOGGER.info '%s (pid/ppid: %d/%d)' % [message, Process.pid, Process.ppid]
-    end
-
     def schedule_refresh!
       write do |data|
         data[:force_refresh] = true
@@ -42,22 +41,24 @@ module FlowcommerceSpree
 
       # needs refresh if last refresh started more than threshold ago
       if data[:end] < (now - (60 * SYNC_INTERVAL_IN_MINUTES))
-        puts 'Last refresh ended long time ago, needs refresh.'
+        logger.info 'Last refresh ended long time ago, needs refresh.'
         true
       elsif data[:force_refresh]
-        puts 'Force refresh scheduled, refreshing.'
+        logger.info 'Force refresh scheduled, refreshing.'
         true
       else
-        puts 'No need for refresh, ended before %d seconds.' % (now - data[:end])
+        logger.info 'No need for refresh, ended before %d seconds.' % (now - data[:end])
         @data = nil
         false
       end
     end
 
     def in_progress?
+      # This method needs fresh data, that's why not using the memoized `data` method
+      @data = FlowcommerceSpree::Config.product_catalog_upload || {}
       return false unless data[:in_progress]
 
-      puts 'Could not be run, another refresh is still in progress, quitting'
+      logger.info 'Could not be run, another refresh is still in progress, quitting'
     end
 
     # for start just call log_refresh! and end it with has_ended: true statement
