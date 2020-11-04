@@ -10,6 +10,14 @@ module Spree
     # after every save we sync product we generate sh1 checksums to update only when change happend
     after_save :sync_product_to_flow
 
+    def experience
+      flow_data['exp']
+    end
+
+    def experience=(value)
+      flow_data['exp'] = value
+    end
+
     # clears flow_data from the records
     def truncate_flow_data
       meta.delete(:flow_data)

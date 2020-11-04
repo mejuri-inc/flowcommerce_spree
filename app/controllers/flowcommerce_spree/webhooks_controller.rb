@@ -5,14 +5,14 @@ module FlowcommerceSpree
     # forward all incoming requests to Flow WebhookService object
     # /flow/event-target endpoint
     def handle_flow_web_hook_event
-      params_hash = params[:webhook]
-      result = WebhookService.process(params_hash)
+      webhook_result_errors = WebhookService.process(params[:webhook]).errors
+      result = {}
+      result[:error] = webhook_result_errors.full_messages.join("\n") if webhook_result_errors.any?
     rescue StandardError => e
       result = { error: e.class.to_s, message: e.message, backtrace: e.backtrace }
     ensure
       response_status = if result[:error]
-                          WebhookService::LOGGER.info(params_hash)
-                          WebhookService::LOGGER.info(result)
+                          logger.info(result)
                           :unprocessable_entity
                         else
                           :ok
