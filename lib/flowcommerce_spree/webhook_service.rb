@@ -1,48 +1,57 @@
 # communicates with flow api, responds to webhook events
 module FlowcommerceSpree
   class WebhookService
-    attr_accessor :product
-    attr_accessor :variant
+    attr_accessor :errors, :product, :variant
+    alias :full_messages :errors
 
     def self.process(data, opts={})
-      web_hook = new(data, opts)
-      web_hook.process
+      new(data, opts).process
     end
 
     def initialize(data, opts={})
       @data = data
       @opts = opts
+      @errors = []
     end
 
     def process
       org = @data['organization']
-      return { error: 'NoMethodError', message: "Organization name mismatch for #{org}" } if org != ORGANIZATION
+      if org != ORGANIZATION
+        errors << { message: "Organization name mismatch for #{org}" }
+      else
+        discriminator = @data['discriminator']
+        hook_method = "hook_#{discriminator}"
+        if respond_to?(hook_method, true)
+          hook_processor_result = __send__(hook_method)
 
-      discriminator = @data['discriminator']
-      hook_method = "hook_#{discriminator}"
+          # If hook processing method registered an error, return self.object of WebhookService with this error, else
+          # return hook_processor_result, which will be an ActiveRecord object
+          return hook_processor_result unless errors.any?
+        else
+          errors << { message: "No hook for #{discriminator}" }
+        end
+      end
 
-      return { error: 'NoMethodError', message: "No hook for #{discriminator}" } unless respond_to?(hook_method, true)
+      self
+    end
 
-      __send__(hook_method)
+    def full_messages
+
     end
 
     private
 
-    def hook_experience_upserted
-      FlowcommerceSpree::Experience.find_or_initialize_by(key: @data['key']).upsert_data(@data)
-    end
-
     def hook_experience_upserted_v2
-      exp = @data['experience']
-      FlowcommerceSpree::Experience.find_or_initialize_by(key: exp['key']).upsert_data(exp)
+      experience = @data['experience']
+      Spree::Zones::Product.find_or_initialize_by(name: experience['key'].titleize).store_flow_io_data(experience)
     end
 
     def hook_local_item_upserted
       local_item = @data['local_item']
-      return { error: 'Unprocessable entity', message: 'Local item param missing' } unless local_item
+      return errors << { message: 'Local item param missing' } unless local_item
 
       received_sku = local_item.dig('item', 'number')
-      return { error: 'Unprocessable entity', message: 'SKU not param missing' } unless received_sku
+      return errors << { message: 'SKU not param missing' } unless received_sku
 
       exp_key = local_item.dig('experience', 'key')
 
@@ -51,29 +60,16 @@ module FlowcommerceSpree
       variant_class = @opts[:variant_class] || Spree::Variant
       @variant      = variant_class.find_by(sku: received_sku)
 
-      return { error: 'Unprocessable entity', message: "Variant with sku [#{received_sku}] not found!" } unless @variant
+      return errors << { message: "Variant with sku [#{received_sku}] not found!" } unless @variant
 
-      @variant.exp[exp_key] = {} unless @variant.exp[exp_key]
-      variant_experience = @variant.exp[exp_key]
+      @variant.experience[exp_key] ||= {}
+      variant_experience = @variant.experience[exp_key]
       variant_experience['prices'] = [local_item.dig('pricing', 'price')]
       variant_experience['status'] = local_item['status']
 
-      @variant.update_column(:flow_data, @variant.flow_data.to_json)
+      @variant.update_column(:meta, @variant.meta.to_json)
 
-      local_item
-    end
-
-    # we should consume only localized_item_upserted
-    def hook_subcatalog_item_upserted
-      experience = FlowcommerceSpree::ExperienceService.get_by_subcatalog_id @data['subcatalog_id']
-      return unless experience
-
-      @data['local'] = {
-        'experience' => { 'key'=> experience.key },
-        'status'     => @data['status']
-      }
-
-      hook_localized_item_upserted
+      @variant
     end
 
     # send en email when order is refunded
