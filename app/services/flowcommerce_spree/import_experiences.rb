@@ -14,7 +14,9 @@ module FlowcommerceSpree
       experiences.each do |experience|
         experience_key = experience.key
         zone = Spree::Zones::Product.find_or_initialize_by(name: experience_key.titleize)
-        zone.import_flowcommerce(experience, logger: @refresher.logger)
+        zone.store_flow_io_data(experience, logger: @refresher.logger)
+
+        next @refresher.logger.info "Error: storing flow.io experience #{experience_key}" if zone.errors.any?
 
         ImportExperienceItems.run(experience_key, client: @client) if @with_items
       end
