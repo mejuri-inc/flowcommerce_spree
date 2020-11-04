@@ -99,7 +99,7 @@ module Spree
         # tokenize with Flow
         # rescue Io::Flow::V0::HttpClient::ServerError
         card_form = ::Io::Flow::V0::Models::CardForm.new(data)
-        result    = FlowcommerceSpree::CLIENT.cards.post(::FlowcommerceSpree::ORGANIZATION, card_form)
+        result    = FlowcommerceSpree.client.cards.post(::FlowcommerceSpree::ORGANIZATION, card_form)
 
         @credit_card.update_column :gateway_customer_profile_id, result.token
       end

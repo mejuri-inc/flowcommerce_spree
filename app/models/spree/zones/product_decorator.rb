@@ -11,13 +11,26 @@ module Spree
       end
 
       def remove_on_flow
-        client = FlowcommerceSpree::CLIENT
+        client = FlowcommerceSpree.client
         client.experiences.delete_by_key(FlowcommerceSpree::ORGANIZATION, flow_data['key'])
 
         # Flowcommerce `delete_by_key` methods are always returning `nil`, that's why this hack of fetching
         # @http_handler from client. This handler is a LoggingHttpHandler, which got the http_client attr_reader
         # implemented specifically for this purpose.
         false if client.instance_variable_get(:@http_handler).http_client.error
+      end
+
+      def import_flowcommerce(received_experience, logger: FlowcommerceSpree.logger)
+        self.flow_data = received_experience.is_a?(Hash) ? received_experience : received_experience.to_hash
+        self.status = flow_data['status']
+
+        if new_record?
+          update_attributes(meta: meta, status: status)
+          logger.info "\nNew flow.io experience imported as product zone: #{name}"
+        else
+          update_columns(meta: meta.to_json, status: status)
+          logger.info "\nProduct zone `#{name}` has been updated from flow.io"
+        end
       end
     end
   end

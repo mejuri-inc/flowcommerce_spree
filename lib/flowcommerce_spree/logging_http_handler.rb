@@ -1,13 +1,13 @@
 module FlowcommerceSpree
   class LoggingHttpHandler < ::Io::Flow::V0::HttpClient::DefaultHttpHandler
-    attr_reader :http_client
+    attr_reader :http_client, :logger
 
-    def initialize(logfile_path)
-      @logfile_path = logfile_path
+    def initialize(logger: FlowcommerceSpree.logger)
+      @logger = logger
     end
 
-    def instance(base_uri, path )
-      @http_client = LoggingHttpClient.new(base_uri, @logfile_path)
+    def instance(base_uri, path)
+      @http_client = LoggingHttpClient.new(base_uri, logger: @logger)
     end
   end
 end

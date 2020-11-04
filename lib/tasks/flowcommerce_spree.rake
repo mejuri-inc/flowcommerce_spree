@@ -3,11 +3,15 @@ require 'digest/sha1'
 require 'colorize'
 
 namespace :flowcommerce_spree do
+  logger = FlowcommerceSpree.logger
+  client = FlowcommerceSpree.client(logger: logger)
+  refresher = FlowcommerceSpree::Refresher.new(logger: logger)
+
   desc 'Listing and possible invocation of all the Flow tasks'
   task :list_tasks do |t|
     task_list = `#{'rake -T | grep flowcommerce_spree'}`.split($/)
     @exit = false
-    puts "Executing: #{t}", ''
+    logger.info "Running task: #{t}"
 
     loop do
       puts 'Flowcommerce tasks:'
@@ -20,7 +24,7 @@ namespace :flowcommerce_spree do
 
       if (1..task_list.size).cover?(task_number)
         selected_task_name = task_list[task_number - 1].to_s.split(/\s+/)[1]
-        puts "\nRunning: #{selected_task_name}"
+        logger.info "\nRunning: #{selected_task_name}"
         Rake::Task[selected_task_name].invoke
         puts
       else
@@ -79,23 +83,22 @@ namespace :flowcommerce_spree do
 
   desc 'Check if ENV vars, center and tier per experience is set'
   task check: :environment do |t|
-    puts 'Environment check'
+    logger.info 'Environment check'
     required_env_vars = %w[FLOW_API_KEY FLOW_ORGANIZATION FLOW_BASE_COUNTRY]
-    required_env_vars.each { |el| puts " ENV: #{el} - #{ENV[el].present? ? 'present'.green : 'MISSING'.red} " }
+    required_env_vars.each { |el| logger.info " ENV: #{el} - #{ENV[el].present? ? 'present'.green : 'MISSING'.red} " }
     organization = FlowcommerceSpree::ORGANIZATION
 
-    puts 'Experiences:'
-    puts " Getting experiences for flow org: #{organization}"
-    client      = FlowcommerceSpree::CLIENT
+    logger.info 'Experiences:'
+    logger.info " Getting experiences for flow org: #{organization}"
     experiences = client.experiences.get(organization)
-    puts " Got %d experiences - #{experiences.map(&:country).join(', ')}".green % experiences.length
+    logger.info " Got %d experiences - #{experiences.map(&:country).join(', ')}".green % experiences.length
 
     # create default experience unless one exists
-    puts 'Centers:'
+    logger.info 'Centers:'
     center_name     = 'default'
     current_centers = client.centers.get(organization).map(&:key)
     if current_centers.include?(center_name)
-      puts " Default center: #{'present'.green}"
+      logger.info " Default center: #{'present'.green}"
     else
       FlowcommerceSpree::Api.run :put, "/:organization/centers/#{center_name}", {},
                {'key': center_name,
@@ -125,33 +128,32 @@ namespace :flowcommerce_spree do
                               'calendar': 'weekdays',
                               'cutoff': '16:30' },
                 'timezone': 'US/Eastern' }
-      puts " Default center: #{'created'.blue} (run again)"
+      logger.info " Default center: #{'created'.blue} (run again)"
     end
 
-    puts 'Tiers:'
+    logger.info 'Tiers:'
     experiences.each do |exp|
       exp_tiers = client.tiers.get(FlowcommerceSpree::ORGANIZATION, experience: exp.key)
       count        = exp_tiers.length
       count_desc   = count == 0 ? '0 (error!)'.red : count.to_s.green
-      print " Experience #{exp.key.yellow} has #{count_desc} delivery tiers defined, "
-
       exp_services = exp_tiers.inject([]) { |total, tier| total.push(*tier.services.map(&:id)) }
-      if exp_services.length == 0
-        puts 'and no delivery services defined!'.red
-      else
-        puts "with #{exp_services.length.to_s.green} delivery services defined (#{exp_services.join(', ')})"
-      end
+      services_str = if exp_services.length == 0
+                       'and no delivery services defined!'.red
+                     else
+                       "with #{exp_services.length.to_s.green} delivery services defined (#{exp_services.join(', ')})"
+                     end
+      logger.info " Experience #{exp.key.yellow} has #{count_desc} delivery tiers defined, #{services_str}"
     end
 
-    puts 'Database fields (flow_data):'
+    logger.info 'Database fields (flow_data):'
     [Spree::CreditCard, Spree::Product, Spree::Variant, Spree::Order, Spree::Promotion].each { |klass|
       state = klass.new.respond_to?(:flow_data) ? 'exists'.green : 'not present (run DB migrations)'.red
-      puts " #{klass.to_s.ljust(18)} - #{state}"
+      logger.info " #{klass.to_s.ljust(18)} - #{state}"
     }
 
-    puts 'Default store URL:'
+    logger.info 'Default store URL:'
     url = Spree::Store.find_by(default:true).url
-    puts " Spree::Store.find_by(default:true).url == \"#{url.blue}\" (ensure this is valid and right URL)"
+    logger.info " Spree::Store.find_by(default:true).url == \"#{url.blue}\" (ensure this is valid and right URL)"
 
     # rate cards check
     ratecard_estimates_path = '/:organization/ratecard_estimates/summaries'
@@ -172,17 +174,17 @@ namespace :flowcommerce_spree do
       end
     end
     if origins.size > 0
-      puts "\nRate cards set, OK:".green
+      logger.info "\nRate cards set, OK:".green
       origins.each_with_index do |origin, index|
-        puts " %3d. #{origin}" % (index + 1)
+        logger.info " %3d. #{origin}" % (index + 1)
       end
     end
     if errors.size > 0
-      puts "\nRate cards errors:".red
+      logger.info "\nRate cards errors:".red
       errors.each_with_index do |err, index|
-        puts " %3d. Origin = #{err[:origin]}, errors:" % (index + 1)
+        logger.info " %3d. Origin = #{err[:origin]}, errors:" % (index + 1)
         err[:messages].each do |m|
-          puts "      #{m}".red
+          logger.info "      #{m}".red
         end
       end
     end
@@ -191,24 +193,20 @@ namespace :flowcommerce_spree do
 
   desc 'Sync experiences and localized product catalog items from Flow.io'
   task sync_localized_items: :environment do |t|
-    next t.reenable unless FlowcommerceSpree::ApiRefresh.needs_refresh?
+    next t.reenable unless refresher.needs_refresh?
 
-    puts 'Sync needed, running ...'.yellow
+    logger.info 'Sync needed, running ...'.yellow
 
-    total = FlowcommerceSpree::ImportExperiences.new.run
-
-    puts "Finished with total of #{total.to_s.green} rows."
+    FlowcommerceSpree::ImportExperiences.run(with_items: true, client: client, refresher: refresher)
 
     t.reenable
   end
 
   desc 'Force sync (no timeout) experiences and localized product catalog items from Flow.io'
   task sync_localized_items_forced: :environment do |t|
-    next t.reenable if FlowcommerceSpree::ApiRefresh.in_progress?
+    next t.reenable if refresher.in_progress?
 
-    total = FlowcommerceSpree::ImportExperiences.new.run
-
-    puts "Finished with total of #{total.to_s.green} rows."
+    FlowcommerceSpree::ImportExperiences.run(with_items: true, client: client, refresher: refresher)
 
     t.reenable
   end
@@ -282,7 +280,7 @@ namespace :flowcommerce_spree do
       print '.'
       $stdout.flush
     end
-    puts "\nTruncated flow_data on #{record_counter} records"
+    logger.info "\nTruncated flow_data on #{record_counter} records"
 
     t.reenable
   end

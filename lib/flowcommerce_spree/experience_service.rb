@@ -41,7 +41,7 @@ module FlowcommerceSpree
     def get_from_flow
       # return cached_experinces if cache_valid?
 
-      experiences = FlowcommerceSpree::CLIENT.experiences.get ORGANIZATION
+      experiences = FlowcommerceSpree.client.experiences.get ORGANIZATION
 
       # work with active axperiences only
       # experiences = experiences.select { |it| it.status.value == 'active' }

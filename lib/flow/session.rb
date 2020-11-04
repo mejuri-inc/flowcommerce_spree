@@ -29,12 +29,12 @@ class Flow::Session
     }
 
     session_model = ::Io::Flow::V0::Models::SessionForm.new data
-    @session      = FlowcommerceSpree::CLIENT.sessions.post_organizations_by_organization FlowcommerceSpree::ORGANIZATION, session_model
+    @session      = FlowcommerceSpree.client.sessions.post_organizations_by_organization FlowcommerceSpree::ORGANIZATION, session_model
   end
 
   # if we want to manualy switch to specific country or experience
   def update data
-    @session = FlowcommerceSpree::CLIENT.sessions.put_by_session(
+    @session = FlowcommerceSpree.client.sessions.put_by_session(
       @session.id,
       ::Io::Flow::V0::Models::SessionPutForm.new(data)
     )
