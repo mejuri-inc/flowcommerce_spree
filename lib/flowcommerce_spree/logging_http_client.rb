@@ -13,6 +13,8 @@ module FlowcommerceSpree
 
       start_time = Time.now.utc.round(10)
       @logger.info "start #{request.method} #{request.path}"
+      @logger.info "body: #{request.instance_variable_get(:@header)}"
+      @logger.info "body: #{request.body}"
 
       if request.path.start_with?("/organizations")
         # Contrived example to show how client settings can be adjusted
@@ -21,7 +23,7 @@ module FlowcommerceSpree
       end
 
       begin
-        super
+        response = super
       rescue Io::Flow::V0::HttpClient::ServerError => e
         @error = { error: e }.to_json
       ensure
@@ -31,6 +33,7 @@ module FlowcommerceSpree
         end_time = Time.now.utc.round(10)
         duration = ((end_time - start_time)*1000).round(0)
         @logger.info "complete #{request.method} #{request.path} #{duration} ms"
+        @logger.info "response: #{response}"
         @logger.info "Error: #{e.inspect}" if e
       end
     end
