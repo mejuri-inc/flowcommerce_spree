@@ -5,6 +5,7 @@ require 'flowcommerce_spree/engine'
 require 'flowcommerce_spree/logging_http_client'
 require 'flowcommerce_spree/logging_http_handler'
 require 'flowcommerce_spree/webhook_service'
+require 'flowcommerce_spree/session'
 require 'flow/simple_gateway'
 
 module FlowcommerceSpree
