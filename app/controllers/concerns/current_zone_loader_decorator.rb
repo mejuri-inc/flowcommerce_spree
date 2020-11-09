@@ -9,18 +9,31 @@ CurrentZoneLoader.module_eval do
     @current_zone = if (session_region_name = session['region']&.[]('name'))
                       Spree::Zones::Product.find_by(name: session_region_name)
                     elsif request_iso_code.present?
-                      Spree::Country.find_by(iso: request_iso_code)&.product_zones&.active&.first
+                      flow_io_zones = Spree::Zones::Product.active.where(
+                          "meta -> 'flow_data' ->> 'country' = ?", ISO3166::Country[request_iso_code]&.alpha3
+                        ).all.to_a
+                      if flow_io_zones.present?
+                        if flow_io_zones.size > 1
+                          # TODO: Remove debug comments below
+                          # flow_io_session = FlowcommerceSpree::Session
+                          #                     .new(ip: '85.214.132.117', visitor: visitor_id_for_flow_io) # Germany
+                          # flow_io_session = FlowcommerceSpree::Session
+                          #                     .new(ip: '62.20.0.196', visitor: visitor_id_for_flow_io) # Sweden
+                          # flow_io_session = FlowcommerceSpree::Session
+                          #                     .new(ip: '89.41.76.29', visitor: visitor_id_for_flow_io) # Moldova
+                          flow_io_session = FlowcommerceSpree::Session
+                                              .new(ip: request.ip, visitor: visitor_id_for_flow_io)
+                          # :create method will issue a request to flow.io. The experience, contained in the
+                          # response, will be available in the session object - flow_io_session.experience
+                          flow_io_session.create
+                          Spree::Zones::Product.active.find_by(name: flow_io_session.experience&.key&.titleize)
+                        else
+                          flow_io_zones.first
+                        end
+                      else
+                        Spree::Country.find_by(iso: request_iso_code)&.product_zones&.active&.first
+                      end
                     end
-
-    unless @current_zone
-      # TODO: Remove debug comments below
-      # flow_io_session = FlowcommerceSpree::Session.new ip: '85.214.132.117', visitor: session[:session_id] # Germany
-      # flow_io_session = FlowcommerceSpree::Session.new ip: '62.20.0.196', visitor: session[:session_id] # Sweden
-      # flow_io_session = FlowcommerceSpree::Session.new ip: '89.41.76.29', visitor: visitor_id_for_flowcommerce # Moldova
-      flow_io_session = FlowcommerceSpree::Session.new(ip: request.ip, visitor: visitor_id_for_flowcommerce)
-      flow_io_session.create
-      @current_zone = Spree::Zones::Product.find_by(name: flow_io_session.experience&.key&.titleize)
-    end
 
     @current_zone ||= Spree::Zones::Product.find_by(name: 'Eligible countries')
     @current_zone ||= Spree::Zones::Product.new(name: 'Eligible countries', currencies: %w[USD CAD])
@@ -29,8 +42,8 @@ CurrentZoneLoader.module_eval do
     @current_zone
   end
 
-  # tries to get vunique vistor id, based on user agent and ip
-  def visitor_id_for_flowcommerce
+  # composes an unique vistor id for FlowcommerceSpree::Session model
+  def visitor_id_for_flow_io
     guest_token = cookies.signed[:guest_token]
     uid = if guest_token
             Digest::SHA1.hexdigest(guest_token)
