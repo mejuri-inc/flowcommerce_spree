@@ -65,23 +65,16 @@ module Spree
       return { error: e.message }
     end
 
-    def flow_spree_price
-      '%s %s' % [self.price, self.cost_currency]
-    end
-
     def flow_prices(flow_exp)
-      flow_data.dig(:exp, flow_exp, :prices) || []
+      flow_data&.dig(:exp, flow_exp, :prices) || []
     end
 
     # returns price tied to local experience
     def flow_local_price(flow_exp)
-      price = flow_prices(flow_exp).first
-
-      if flow_exp && price
-        price[:label]
-      else
-        flow_spree_price
-      end
+      price_object = flow_prices(flow_exp)&.first
+      amount = price_object&.[](:amount) || self.price
+      currency = price_object&.[](:currency) || self.cost_currency
+      Spree::Price.new(variant_id: self.id, currency: currency, amount: price)
     end
 
     # creates object for flow api
