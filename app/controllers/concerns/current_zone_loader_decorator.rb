@@ -19,7 +19,7 @@ CurrentZoneLoader.module_eval do
       # flow_io_session = FlowcommerceSpree::Session.new ip: '89.41.76.29', visitor: visitor_id_for_flowcommerce # Moldova
       flow_io_session = FlowcommerceSpree::Session.new(ip: request.ip, visitor: visitor_id_for_flowcommerce)
       flow_io_session.create
-      @current_zone = Spree::Zones::Product.find_by(name: flow_io_session.experience.key.titleize)
+      @current_zone = Spree::Zones::Product.find_by(name: flow_io_session.experience&.key&.titleize)
     end
 
     @current_zone ||= Spree::Zones::Product.find_by(name: 'Eligible countries')
