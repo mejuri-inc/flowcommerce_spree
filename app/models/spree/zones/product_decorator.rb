@@ -3,11 +3,11 @@
 module Spree
   module Zones
     Product.class_eval do
-      after_update :update_on_flow, if: ->{ flow_data['key'].present? }
-      before_destroy :remove_on_flow, if: ->{ flow_data['key'].present? }
+      after_update :update_on_flow, if: ->{ flow_data&.[]('key').present? }
+      before_destroy :remove_on_flow, if: ->{ flow_data&.[]('key').present? }
 
       def available_currencies
-        ((currencies || []) + [flow_data&.[]('currency')]).compact.uniq
+        ((currencies || []) + [flow_data&.[]('currency')]).compact.uniq.reject!(&:empty?)
       end
 
       def update_on_flow
