@@ -38,11 +38,15 @@ module Spree
       attr_name = nil
       FlowcommerceSpree::Config.additional_attributes[self.class.name.tableize.tr('/', '_').to_sym].each do |attr_item|
         attr_name = attr_item[0]
+        # Flow.io could require a different attribute name, as in case of Fulfil's :customs_description - it has the
+        # export_name `:materials` for flow.io. That's why 1st we're checking if an export_name is defined for the
+        # attribute.
+        attr_flowcommerce_name = attr_item[1][:export_name] || attr_name
         export_required = attr_item[1][:export] == :required
         attr_value = __send__(attr_name)
         break if export_required && attr_value.blank?
 
-        additional_attrs[attr_name] = attr_value
+        additional_attrs[attr_flowcommerce_name] = attr_value
       end
 
       return { error: "Variant with sku = #{sku} has no #{attr_name}" } if additional_attrs.blank?
