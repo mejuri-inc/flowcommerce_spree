@@ -1,9 +1,9 @@
 # Flow specific methods for Spree::Product
 module Spree
   Product.class_eval do
-    serialize :options, ActiveRecord::Coders::JSON.new(symbolize_keys: true)
+    serialize :meta, ActiveRecord::Coders::JSON.new(symbolize_keys: true)
 
-    store_accessor :options, :flow_data
+    store_accessor :meta, :flow_data, :zone_ids
 
     def price_in_zone(currency, product_zone)
       flow_experience_key = product_zone.flow_data&.[]('key')
