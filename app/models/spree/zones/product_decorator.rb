@@ -7,7 +7,7 @@ module Spree
       before_destroy :remove_on_flow, if: ->{ flow_data&.[]('key').present? }
 
       def available_currencies
-        ((currencies || []) + [flow_data&.[]('currency')]).compact.uniq.reject!(&:empty?)
+        ((currencies || []) + [flow_data&.[]('currency')]).compact.uniq.reject(&:empty?)
       end
 
       def update_on_flow
