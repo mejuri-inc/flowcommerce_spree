@@ -35,8 +35,8 @@ CurrentZoneLoader.module_eval do
                       end
                     end
 
-    @current_zone ||= Spree::Zones::Product.find_by(name: 'Eligible countries')
-    @current_zone ||= Spree::Zones::Product.new(name: 'Eligible countries', currencies: %w[USD CAD])
+    @current_zone ||= Spree::Zones::Product.find_by(name: 'International')
+    @current_zone ||= Spree::Zones::Product.new(name: 'International', taxon_ids: [], currencies: %w[USD CAD])
     session['region'] = { name: @current_zone.name, available_currencies: @current_zone.available_currencies }
     Rails.logger.debug("Using product zone: #{@current_zone.name}")
     @current_zone
