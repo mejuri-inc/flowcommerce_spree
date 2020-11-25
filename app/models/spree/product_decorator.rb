@@ -7,11 +7,9 @@ module Spree
 
     def price_in_zone(currency, product_zone)
       flow_experience_key = product_zone.flow_data&.[]('key')
-      if flow_experience_key.present?
-        flow_local_price(flow_experience_key) || 0
-      else
-        price_in(currency) || 0
-      end
+      return flow_local_price(flow_experience_key) if flow_experience_key.present?
+
+      price_in(currency)
     end
 
     # returns price tied to local experience from master variant
