@@ -12,9 +12,9 @@ module Spree
       price_in(currency)
     end
 
-    # returns price tied to local experience from master variant
+    # returns price bound to local experience from master variant
     def flow_local_price(flow_exp)
-      variants.first&.flow_local_price(flow_exp) || Spree::Price.new(variant_id: self.id, currency: 'USD', amount: 0)
+      master.flow_local_price(flow_exp) || Spree::Price.new(variant_id: self.id, currency: 'USD', amount: 0)
     end
 
     def flow_included?(flow_exp)
