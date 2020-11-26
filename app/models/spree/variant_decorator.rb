@@ -73,7 +73,7 @@ module Spree
       flow_data&.dig(:exp, flow_exp, :prices) || []
     end
 
-    # returns price tied to local experience
+    # returns price bound to local experience
     def flow_local_price(flow_exp)
       price_object = flow_prices(flow_exp)&.first
       amount = price_object&.[](:amount) || self.price
