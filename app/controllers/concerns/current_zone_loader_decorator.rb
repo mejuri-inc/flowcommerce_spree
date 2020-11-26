@@ -14,15 +14,14 @@ CurrentZoneLoader.module_eval do
                         ).all.to_a
                       if flow_io_zones.present?
                         if flow_io_zones.size > 1
-                          # TODO: Remove debug comments below
-                          # flow_io_session = FlowcommerceSpree::Session
-                          #                     .new(ip: '85.214.132.117', visitor: visitor_id_for_flow_io) # Germany
-                          # flow_io_session = FlowcommerceSpree::Session
-                          #                     .new(ip: '62.20.0.196', visitor: visitor_id_for_flow_io) # Sweden
-                          # flow_io_session = FlowcommerceSpree::Session
-                          #                     .new(ip: '89.41.76.29', visitor: visitor_id_for_flow_io) # Moldova
+                          request_ip = if Rails.env.production?
+                                         request.ip
+                                       else
+                                         Spree::Config[:debug_request_ip_address] || request.ip
+                                         # Germany ip: 85.214.132.117, Sweden ip: 62.20.0.196, Moldova ip: 89.41.76.29
+                                       end
                           flow_io_session = FlowcommerceSpree::Session
-                                              .new(ip: request.ip, visitor: visitor_id_for_flow_io)
+                                              .new(ip: request_ip, visitor: visitor_id_for_flow_io)
                           # :create method will issue a request to flow.io. The experience, contained in the
                           # response, will be available in the session object - flow_io_session.experience
                           flow_io_session.create
