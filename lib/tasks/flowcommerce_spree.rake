@@ -84,7 +84,7 @@ namespace :flowcommerce_spree do
   desc 'Check if ENV vars, center and tier per experience is set'
   task check: :environment do |t|
     logger.info 'Environment check'
-    required_env_vars = %w[FLOW_API_KEY FLOW_ORGANIZATION FLOW_BASE_COUNTRY]
+    required_env_vars = %w[FLOW_TOKEN FLOW_ORGANIZATION FLOW_BASE_COUNTRY]
     required_env_vars.each { |el| logger.info " ENV: #{el} - #{ENV[el].present? ? 'present'.green : 'MISSING'.red} " }
     organization = FlowcommerceSpree::ORGANIZATION
 
