@@ -23,10 +23,11 @@ ApplicationController and FlowController that are present in ./app/controllers f
 
 - Run `bundle install`.
 
-- Define this additional ENV variables. You will find them in [Flow console](https://console.flow.io):
+- Define this additional ENV variables. You will find them in 
+  [Flow console](https://console.flow.io/org_account_name/organization/integrations):
 
     ```
-    FLOW_API_KEY='SUPERsecretTOKEN'
+    FLOW_TOKEN='SUPERsecretTOKEN' # API_KEY
     FLOW_ORGANIZATION='spree-app-sandbox'
     FLOW_BASE_COUNTRY='usa'
     ```
