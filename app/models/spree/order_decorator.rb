@@ -5,7 +5,7 @@ module Spree
   Order.class_eval do
     serialize :meta, ActiveRecord::Coders::JSON.new(symbolize_keys: true)
 
-    store_accessor :meta, :product_zone
+    store_accessor :meta, :flow_data
 
     def display_total
       price = Flow.format_default_price total
