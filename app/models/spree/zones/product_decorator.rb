@@ -2,9 +2,9 @@
 
 module Spree
   module Zones
-    Product.class_eval do
-      after_update :update_on_flow, if: ->{ flow_data&.[]('key').present? }
-      before_destroy :remove_on_flow, if: ->{ flow_data&.[]('key').present? }
+    module ProductDecorator
+      # after_update :update_on_flow, if: ->{ flow_data&.[]('key').present? }
+      # before_destroy :remove_on_flow, if: ->{ flow_data&.[]('key').present? }
 
       def available_currencies
         ((currencies || []) + [flow_data&.[]('currency')]).compact.uniq.reject(&:empty?)
@@ -36,6 +36,8 @@ module Spree
 
         self
       end
+
+      Spree::Zones::Product.prepend(self) if Spree::Zones::Product.included_modules.exclude?(self)
     end
   end
 end
