@@ -83,8 +83,6 @@ module Spree
 
     # creates object for flow api
     def to_flowcommerce_item(additional_attrs)
-      image_base = ENV.fetch('ASSET_HOST_PROTOCOL', 'https') + '://' + ENV.fetch('ASSET_HOST', 'staging.mejuri.com')
-
       # add product categories
       categories = []
       taxon = product.taxons.first
@@ -94,11 +92,21 @@ module Spree
         current_taxon = current_taxon.parent
       end
 
-      image = product.images.first || product.variant_images.first
-      images = image ? [
-        { url: image_base + image.attachment(:large), tags: ['checkout'] },
-        { url: image_base + image.attachment.url(:product), tags: ['thumbnail'] }
-      ] : []
+      images = if (image = product.images.first || product.variant_images.first)
+                 asset_host_scheme = ENV.fetch('ASSET_HOST_PROTOCOL', 'https')
+                 asset_host = ENV.fetch('ASSET_HOST', 'staging.mejuri.com')
+                 large_image_uri = URI(image.attachment(:large))
+                 product_image_uri = URI(image.attachment.url(:product))
+                 large_image_uri.scheme ||= asset_host_scheme
+                 product_image_uri.scheme ||= asset_host_scheme
+                 large_image_uri.host ||= asset_host
+                 product_image_uri.host ||= asset_host
+
+                 [{ url: large_image_uri.to_s, tags: ['checkout'] },
+                  { url: product_image_uri.to_s, tags: ['thumbnail'] }]
+               else
+                 []
+               end
 
       Io::Flow::V0::Models::ItemForm.new(
         number:      sku,
