@@ -78,7 +78,7 @@ module Spree
       price_object = flow_prices(flow_exp)&.first
       amount = price_object&.[](:amount) || self.price
       currency = price_object&.[](:currency) || self.cost_currency
-      Spree::Price.new(variant_id: self.id, currency: currency, amount: price)
+      Spree::Price.new(variant_id: self.id, currency: currency, amount: amount)
     end
 
     # creates object for flow api
