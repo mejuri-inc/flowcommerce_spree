@@ -2,9 +2,11 @@
 
 module Spree
   module Zones
-    module ProductDecorator
-      # after_update :update_on_flow, if: ->{ flow_data&.[]('key').present? }
-      # before_destroy :remove_on_flow, if: ->{ flow_data&.[]('key').present? }
+    module FlowcommerceProductDecorator
+      def self.prepended(base)
+        base.after_update :update_on_flow, if: ->{ flow_data&.[]('key').present? }
+        base.before_destroy :remove_on_flow, if: ->{ flow_data&.[]('key').present? }
+      end
 
       def available_currencies
         ((currencies || []) + [flow_data&.[]('currency')]).compact.uniq.reject(&:empty?)
