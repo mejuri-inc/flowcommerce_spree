@@ -62,8 +62,8 @@ module FlowcommerceSpree
 
       return errors << { message: "Variant with sku [#{received_sku}] not found!" } unless @variant
 
-      @variant.experience[exp_key] ||= {}
-      variant_experience = @variant.experience[exp_key]
+      @variant.experiences[exp_key] ||= {}
+      variant_experience = @variant.experiences[exp_key]
       variant_experience['prices'] = [local_item.dig('pricing', 'price')]
       variant_experience['status'] = local_item['status']
 
