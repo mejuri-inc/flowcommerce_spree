@@ -97,7 +97,7 @@ module Spree
       return all_prices if flow_experience_key.blank?
 
       flow_price = flow_local_price(flow_experience_key)
-      all_prices << { currency: flow_price.currency, amount: (price.amount&.round || 0).to_s }
+      all_prices << { currency: flow_price.currency, amount: (flow_price.amount&.round || 0).to_s }
       all_prices
     end
 
