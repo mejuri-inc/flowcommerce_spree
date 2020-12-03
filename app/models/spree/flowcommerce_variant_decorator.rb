@@ -2,13 +2,15 @@
 # Spree save all the prices inside Variant object. We choose to have a cache jsonb field named flow_data that will
 # hold all important Flow sync data for specific experiences.
 module Spree
-  Variant.class_eval do
-    serialize :meta, ActiveRecord::Coders::JSON.new(symbolize_keys: true)
+  module FlowcommerceVariantDecorator
+    def self.prepended(base)
+      base.serialize :meta, ActiveRecord::Coders::JSON.new(symbolize_keys: true)
 
-    store_accessor :meta, :flow_data
+      base.store_accessor :meta, :flow_data
 
-    # after every save we sync product we generate sh1 checksums to update only when change happend
-    after_save :sync_product_to_flow
+      # after every save we sync product we generate sh1 checksums to update only when change happend
+      base.after_save :sync_product_to_flow
+    end
 
     def experiences
       flow_data['exp']
@@ -79,6 +81,13 @@ module Spree
       amount = price_object&.[](:amount) || self.price
       currency = price_object&.[](:currency) || self.cost_currency
       Spree::Price.new(variant_id: self.id, currency: currency, amount: amount)
+    end
+
+    def price_in_zone(currency, product_zone)
+      flow_experience_key = product_zone.flow_data&.[]('key')
+      return flow_local_price(flow_experience_key) if flow_experience_key.present?
+
+      price_in(currency)
     end
 
     def all_prices_in_zone(product_zone)
@@ -166,5 +175,7 @@ module Spree
 
       update_column(:meta, meta.to_json)
     end
+
+    Spree::Variant.prepend(self) if Spree::Variant.included_modules.exclude?(self)
   end
 end
