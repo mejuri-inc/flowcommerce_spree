@@ -8,7 +8,7 @@ module Spree
     end
 
     def price_in_zone(currency, product_zone)
-      flow_experience_key = product_zone.flow_data&.[]('key')
+      flow_experience_key = product_zone&.flow_data&.[]('key')
       return flow_local_price(flow_experience_key) if flow_experience_key.present?
 
       price_in(currency)
@@ -54,7 +54,7 @@ module Spree
     end
 
     def add_flow_price_range(prices, product_zone)
-      flow_experience_key = product_zone.flow_data&.[]('key')
+      flow_experience_key = product_zone&.flow_data&.[]('key')
       return prices if flow_experience_key.blank?
 
       master_price = master.flow_local_price(flow_experience_key)
