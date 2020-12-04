@@ -84,7 +84,7 @@ module Spree
     end
 
     def price_in_zone(currency, product_zone)
-      flow_experience_key = product_zone.flow_data&.[]('key')
+      flow_experience_key = product_zone&.flow_data&.[]('key')
       return flow_local_price(flow_experience_key) if flow_experience_key.present?
 
       price_in(currency)
@@ -93,7 +93,7 @@ module Spree
     def all_prices_in_zone(product_zone)
       all_prices = prices.map { |price| { currency: price.currency, amount: (price.amount&.round || 0).to_s } }
 
-      flow_experience_key = product_zone.flow_data&.[]('key')
+      flow_experience_key = product_zone&.flow_data&.[]('key')
       return all_prices if flow_experience_key.blank?
 
       flow_price = flow_local_price(flow_experience_key)
