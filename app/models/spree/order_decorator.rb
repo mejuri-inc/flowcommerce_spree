@@ -7,6 +7,12 @@ module Spree
 
     store_accessor :meta, :flow_data
 
+    state_machine.before_transition from: :cart, do: :sync_to_flow_io_if_needed
+
+    def sync_to_flow_io_if_needed
+      return unless zone&.flow_active_experience?
+    end
+
     def display_total
       price = Flow.format_default_price total
       price += ' (%s)' % flow_total if flow_order
