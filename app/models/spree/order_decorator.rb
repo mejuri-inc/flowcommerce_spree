@@ -29,7 +29,7 @@ module Spree
     end
 
     def flow_order
-      return nil unless flow_data['order']
+      return unless flow_data&.[]('order')
 
       Hashie::Mash.new flow_data['order']
     end
@@ -99,7 +99,7 @@ module Spree
     def flow_total
       # r flow_order.total.label
       price = flow_order&.total&.label
-      price || Flow.format_default_price(total)
+      price || FlowcommerceSpree::Api.format_default_price(total)
     end
 
     def flow_experience
