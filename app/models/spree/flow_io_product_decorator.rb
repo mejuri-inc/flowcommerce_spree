@@ -1,6 +1,6 @@
 # Flow specific methods for Spree::Product
 module Spree
-  module FlowcommerceProductDecorator
+  module FlowIoProductDecorator
     def self.prepended(base)
       base.serialize :meta, ActiveRecord::Coders::JSON.new(symbolize_keys: true)
 

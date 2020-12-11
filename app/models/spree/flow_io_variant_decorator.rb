@@ -2,7 +2,7 @@
 # Spree save all the prices inside Variant object. We choose to have a cache jsonb field named flow_data that will
 # hold all important Flow sync data for specific experiences.
 module Spree
-  module FlowcommerceVariantDecorator
+  module FlowIoVariantDecorator
     def self.prepended(base)
       base.serialize :meta, ActiveRecord::Coders::JSON.new(symbolize_keys: true)
 
