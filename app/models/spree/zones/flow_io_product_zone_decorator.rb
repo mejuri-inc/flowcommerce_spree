@@ -5,14 +5,18 @@ module Spree
     module FlowIoProductZoneDecorator
       def self.prepended(base)
         base.after_update :update_on_flow, if: ->{ flow_data&.[]('key').present? }
-        base.before_destroy :remove_on_flow, if: ->{ flow_data&.[]('key').present? }
+        base.before_destroy :remove_on_flow_io, if: ->{ flow_data&.[]('key').present? }
       end
 
       def available_currencies
         ((currencies || []) + [flow_data&.[]('currency')]).compact.uniq.reject(&:empty?)
       end
 
-      def flow_active_experience?
+      def flow_io_experience
+        flow_data&.[]('key')
+      end
+
+      def flow_io_active_experience?
         flow_data&.[]('key').present? && flow_data['status'] == 'active'
       end
 
@@ -20,7 +24,7 @@ module Spree
 
       end
 
-      def remove_on_flow
+      def remove_on_flow_io
         client = FlowcommerceSpree.client
         client.experiences.delete_by_key(FlowcommerceSpree::ORGANIZATION, flow_data['key'])
 
