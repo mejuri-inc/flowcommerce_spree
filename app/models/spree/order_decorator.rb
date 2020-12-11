@@ -10,7 +10,7 @@ module Spree
     state_machine.before_transition from: :cart, do: :sync_to_flow_io_if_needed
 
     def sync_to_flow_io_if_needed
-      return unless zone&.flow_active_experience?
+      return unless zone&.flow_io_active_experience?
     end
 
     def display_total
@@ -107,6 +107,14 @@ module Spree
       model.new flow_order.experience.key
     rescue
       model.new ENV.fetch('FLOW_BASE_COUNTRY')
+    end
+
+    def flow_experience_key
+      flow_data['exp']
+    end
+
+    def flow_io_experience_from_zone
+      self.flow_data = (flow_data || {}).merge!('exp' => zone.flow_io_experience)
     end
 
     # clear invalid zero amount payments. Solidsus bug?
