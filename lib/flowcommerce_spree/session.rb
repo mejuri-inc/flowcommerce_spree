@@ -1,4 +1,4 @@
-# communicates with flow api, easy access to session
+# communicates with flow.io api, easy access to session
 module FlowcommerceSpree
   class Session
     attr_accessor :session, :localized, :visitor
@@ -22,7 +22,7 @@ module FlowcommerceSpree
     end
 
     # if we want to manualy switch to specific country or experience
-    def update data
+    def update(data)
       @session = FlowCommerce.instance.sessions.put_by_session(@session.id,
                                                                ::Io::Flow::V0::Models::SessionPutForm.new(data))
     end
@@ -44,6 +44,7 @@ module FlowcommerceSpree
       # use flow if we are not in default country
       return false unless local
       return false if @localized.class == FalseClass
+
       local.country.iso_3166_3 != ENV.fetch('FLOW_BASE_COUNTRY').upcase
     end
 
@@ -51,16 +52,14 @@ module FlowcommerceSpree
     def delivered_duty_options
       return nil unless experience
 
-      if flow_experience = Flow::Experience.get(experience.key)
-        Hashie::Mash.new flow_experience.settings.delivered_duty.to_hash
-      else
-        nil
+      if (flow_experience = Flow::Experience.get(experience.key))
+        Hashie::Mash.new(flow_experience.settings.delivered_duty.to_hash)
       end
     end
 
     # if we have more than one choice, we show choice popup
     def offers_delivered_duty_choice?
-      if options = delivered_duty_options
+      if (options = delivered_duty_options)
         options.available.length > 1
       else
         false

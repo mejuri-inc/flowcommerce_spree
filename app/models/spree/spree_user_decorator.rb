@@ -7,7 +7,7 @@ Spree.user_class.class_eval do
   def flow_number
     return unless id
 
-    token = ENV.fetch('SECRET_TOKEN')
+    token = ENV.fetch('ENCRYPTION_KEY')
     'su-%s' % Digest::SHA1.hexdigest('%d-%s' % [id, token])
   end
 end
