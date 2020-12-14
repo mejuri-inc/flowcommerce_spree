@@ -14,7 +14,8 @@ module Spree
 
     def sync_to_flow_io
       flow_io_order = FlowcommerceSpree::OrderSync.new(order: self)
-      flow_io_order.synchronize!
+      flow_io_order.build_flow_request
+      flow_io_order.synchronize if flow_data['digest'] != flow_io_order.digest
     end
 
     def display_total

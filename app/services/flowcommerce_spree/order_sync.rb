@@ -17,7 +17,7 @@ module FlowcommerceSpree
   class OrderSync
     FLOW_CENTER = 'default'
 
-    attr_reader :order, :response
+    attr_reader :digest, :order, :response
 
     class << self
       def clear_cache(order)
@@ -33,7 +33,7 @@ module FlowcommerceSpree
 
       @experience = order.flow_experience_key
       @order      = order
-      @customer   = order.user_id
+      @customer   = order.user
       @items      = []
     end
 
@@ -98,6 +98,33 @@ module FlowcommerceSpree
       @order.flow_data['delivered_duty'] || ::Io::Flow::V0::Models::DeliveredDuty.paid.value
     end
 
+    # builds object that can be sent to api.flow.io to sync order data
+    def build_flow_request
+      @order.line_items.each { |line_item| add_item(line_item) }
+
+      @opts = {}
+      @opts[:organization] = FlowcommerceSpree::ORGANIZATION
+      @opts[:experience]   = @experience
+      @opts[:expand]       = 'experience'
+
+      @body = { items: @items, number: @order.number }
+
+      add_customer if @customer
+
+      # if defined, add selection (delivery options) and delivered_duty from flow_data
+      @body[:selections] = [@order.flow_data['selection']] if @order.flow_data['selection']
+      @body[:delivered_duty] = @order.flow_data['delivered_duty'] if @order.flow_data['delivered_duty']
+
+      # discount on full order is applied
+      if @order.adjustment_total != 0
+        @body[:discount] = { amount: @order.adjustment_total,
+                             currency: @order.currency }
+      end
+
+      # calculate digest body and cache it
+      @digest = Digest::SHA1.hexdigest(@opts.to_json + @body.to_json)
+    end
+
     private
 
     # if customer is defined, add customer info
@@ -131,37 +158,8 @@ module FlowcommerceSpree
       @body
     end
 
-    # builds object that can be sent to api.flow.io to sync order data
-    def build_flow_request
-      @order.line_items.each { |line_item| add_item(line_item) }
-
-      @opts = {}
-      @opts[:organization] = FlowcommerceSpree::ORGANIZATION
-      @opts[:experience]   = @experience
-      @opts[:expand]       = 'experience'
-
-      @body = { items: @items, number: @order.number }
-
-      add_customer if @customer
-
-      # if defined, add selection (delivery options) and delivered_duty from flow_data
-      @body[:selections] = [@order.flow_data['selection']] if @order.flow_data['selection']
-      @body[:delivered_duty] = @order.flow_data['delivered_duty'] if @order.flow_data['delivered_duty']
-
-      # discount on full order is applied
-      if @order.adjustment_total != 0
-        @body[:discount] = { amount: @order.adjustment_total,
-                             currency: @order.currency }
-      end
-
-      # calculate digest body and cache it
-      @digest = Digest::SHA1.hexdigest(@opts.to_json + @body.to_json)
-
-      [@opts, @body]
-    end
-
     def sync_body!
-      @opts, @body = build_flow_request if @body.blank?
+      build_flow_request if @body.blank?
 
       @use_get = false
 
