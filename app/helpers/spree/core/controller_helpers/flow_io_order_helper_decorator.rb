@@ -9,10 +9,13 @@ module Spree
         private
 
         def adjust_zone_and_ip
-          @current_order.last_ip_address = ip_address
           @current_order.zone = current_zone
           @current_order.flow_io_experience_from_zone if @current_order.zone&.flow_io_active_experience?
-          @current_order.save!
+          if @current_order.new_record?
+            @current_order.save!
+          else
+            @current_order.update_columns(last_ip_address: ip_address, meta: @current_order.meta.to_json)
+          end
         end
 
         if ApplicationController.included_modules.exclude?(self)
