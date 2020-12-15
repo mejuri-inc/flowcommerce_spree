@@ -9,14 +9,22 @@ module Spree
         private
 
         def adjust_zone_and_ip
+          attrs_to_update = { last_ip_address: ip_address }
+          update_meta = @current_order.zone_id ? nil : true
           @current_order.zone = current_zone
-          @current_order.flow_io_experience_from_zone if @current_order.zone&.flow_io_active_experience?
-          if @current_order.new_record?
-            @current_order.last_ip_address = ip_address
-            @current_order.save!
-          else
-            @current_order.update_columns(last_ip_address: ip_address, meta: @current_order.meta.to_json)
+
+          if @current_order.zone&.flow_io_active_experience? && @current_order.flow_experience_key.nil?
+            @current_order.flow_io_experience_from_zone
+            return @current_order.save if @current_order.new_record?
+
+            update_meta = true
           end
+
+          # :meta is a jsonb column costly to update every time, especially with all the flow.io data, that's why
+          # here it is updated only if no zone_id there was inside :meta
+          attrs_to_update[:meta] = @current_order.meta.to_json if update_meta
+
+          @current_order.update_columns(attrs_to_update)
         end
 
         if ApplicationController.included_modules.exclude?(self)
