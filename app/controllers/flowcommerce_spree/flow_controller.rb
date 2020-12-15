@@ -6,7 +6,6 @@ module FlowcommerceSpree
       response = []
       params['items'].each { |data| response << check_stock(data[:id], data[:qty].to_i) }
 
-      response = params['items'].each_with_object([]) { |item, result| result << check_stock(item[:id], item[:qty]) }
       render json: { items: response }, status: :ok
     end
 
