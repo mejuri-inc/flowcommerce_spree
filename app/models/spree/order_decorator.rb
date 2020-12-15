@@ -106,7 +106,7 @@ module Spree
     end
 
     def flow_experience_key
-      flow_data['exp']
+      flow_data&.[]('exp')
     end
 
     def flow_io_experience_from_zone
