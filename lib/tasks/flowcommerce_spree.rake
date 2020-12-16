@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'flowcommerce'
 require 'digest/sha1'
 require 'colorize'
@@ -38,46 +40,33 @@ namespace :flowcommerce_spree do
   # uploads catalog to Flow API using local Spree database
   desc 'Upload catalog'
   task upload_catalog: :environment do |t|
-    $update_sum   = 0
+    update_sum   = 0
     total_sum    = 0
     current_page = 0
     variants     = []
-    promises = []
-    thread_pool = Concurrent::FixedThreadPool.new(5)
 
     while current_page == 0 || variants.length > 0
       current_page += 1
       variants = Spree::Variant.order('updated_at desc').page(current_page).per(100).all
 
       variants.each do |variant|
-        total_sum    += 1
+        total_sum += 1
+        result = variant.sync_product_to_flow
 
-        # multithread upload - perform requests in parallel
-        promises << Concurrent::Promises.future_on(thread_pool, variant) do |variant|
-          ActiveRecord::Base.connection_pool.with_connection do
-            result = variant.sync_product_to_flow
+        # skip if sync not needed
+        next $stdout.print "\nVariant #{variant.sku} is synced, no need to update".green unless result
 
-            # skip if sync not needed
-            next $stdout.print "\nVariant #{variant.sku} is synced, no need to update".green unless result
-
-            if result.is_a?(Hash) && result[:error]
-              $stdout.print "\nError uploading #{variant.sku}. Reason: #{result[:error]}".red
-            else
-              $update_sum += 1
-              $stdout.print "\n#{variant.sku}: #{variant.product.name} (#{variant.price} #{variant.cost_currency})"
-            end
-          end
+        if result.is_a?(Hash) && result[:error]
+          $stdout.print "\nError uploading #{variant.sku}. Reason: #{result[:error]}".red
+        else
+          update_sum += 1
+          $stdout.print "\n#{variant.sku}: #{variant.product.name} (#{variant.price} #{variant.cost_currency})"
         end
       end
     end
 
-    Concurrent::Promises.zip(*promises).value!
-    thread_pool.shutdown
-    thread_pool.wait_for_termination
-
-    needed_update = ($update_sum == 0 ? 'none' : $update_sum).to_s.green
+    needed_update = (update_sum == 0 ? 'none' : update_sum).to_s.green
     puts "\nFor total of #{total_sum.to_s.blue} products, #{needed_update} needed update"
-    $update_sum = nil
     t.reenable
   end
 
@@ -159,9 +148,11 @@ namespace :flowcommerce_spree do
     ratecard_estimates_path = '/:organization/ratecard_estimates/summaries'
     origins = []
     errors = []
-    ratecards = client.ratecards.get(FlowcommerceSpree::ORGANIZATION).each do |rc|
+    client.ratecards.get(FlowcommerceSpree::ORGANIZATION).each do |rc|
       rc.origination_zones.each do |oz|
-        data = FlowcommerceSpree::Api.run :post, ratecard_estimates_path, {}, { origin: oz.country, destination: origins.last || 'MDA' }
+        data = FlowcommerceSpree::Api.run(
+          :post, ratecard_estimates_path, {}, { origin: oz.country, destination: origins.last || 'USA' }
+        )
 
         if data.is_a?(Hash) && data['code'] == 'generic_error'
           errors << { origin: oz.country, messages: data['messages'] }
