@@ -13,11 +13,13 @@ module Spree
     end
 
     def experiences
-      flow_data['exp']
+      flow_data&.[]('exp')
     end
 
-    def experiences=(value)
-      flow_data['exp'] = value
+    def add_flow_io_experience_data(exp, value)
+      raise ArgumentError, 'Value should be a hash' unless value.is_a?(Hash)
+
+      self.flow_data = (flow_data || {}).merge!(exp => value)
     end
 
     # clears flow_data from the records
@@ -164,13 +166,12 @@ module Spree
     # called from flow:sync_localized_items rake task
     def flow_import_item(item_hash, experience_key: nil)
       # If experience not specified, get it from the local hash of imported variant
-      experience_key = item_hash.dig(:local, :experience, :key) unless experience_key
-      self.flow_data ||= {}
+      experience_key ||= item_hash.dig(:local, :experience, :key)
       current_experience_meta = item_hash.delete(:local)
+
       # Do not repeatedly store Experience data - this is stored in Spree::Zones::Product
       current_experience_meta.delete(:experience)
-      self.flow_data[:exp] ||= {}
-      self.flow_data[:exp][experience_key] = current_experience_meta
+      add_flow_io_experience_data(experience_key, current_experience_meta)
       self.flow_data.merge!(item_hash)
 
       update_column(:meta, meta.to_json)
