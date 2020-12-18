@@ -19,7 +19,9 @@ module Spree
     def add_flow_io_experience_data(exp, value)
       raise ArgumentError, 'Value should be a hash' unless value.is_a?(Hash)
 
-      self.flow_data = (flow_data || {}).merge!('exp' => { exp => value })
+      self.flow_data = flow_data || {}
+      self.flow_data['exp'] ||= {}
+      self.flow_data['exp'][exp] = value
     end
 
     # clears flow_data from the records
