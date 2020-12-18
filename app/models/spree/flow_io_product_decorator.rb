@@ -58,7 +58,7 @@ module Spree
       return prices if flow_experience_key.blank?
 
       master_price = master.flow_local_price(flow_experience_key)
-      currency = master_price.currency
+      currency = product_zone.flow_io_experience_currency
       min = nil
       max = nil
 
@@ -72,11 +72,13 @@ module Spree
         end
       end
 
-      min ||= master_price
-      max ||= master_price
+      if master_price.currency == currency
+        min ||= master_price
+        max ||= master_price
+      end
 
-      rmin = min.amount&.to_s(:rounded, precision: 0) || 0
-      rmax = max.amount&.to_s(:rounded, precision: 0) || 0
+      rmin = min&.amount&.to_s(:rounded, precision: 0) || 0
+      rmax = max&.amount&.to_s(:rounded, precision: 0) || 0
 
       prices[currency] = rmin == rmax ? { amount: rmin } : { min: rmin, max: rmax }
       prices
