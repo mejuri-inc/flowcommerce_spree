@@ -19,13 +19,30 @@ module Spree
     def add_flow_io_experience_data(exp, value)
       raise ArgumentError, 'Value should be a hash' unless value.is_a?(Hash)
 
-      self.flow_data = (flow_data || {}).merge!(exp => value)
+      self.flow_data = (flow_data || {}).merge!('exp' => { exp => value })
     end
 
     # clears flow_data from the records
     def truncate_flow_data
+      flow_data&.[]('exp')&.keys&.each do |exp_key|
+        break unless (product = self.product)
+
+        remove_experience_from_product(exp_key, product)
+      end
+
       meta.delete(:flow_data)
       update_column(:meta, meta.to_json)
+    end
+
+    def remove_experience_from_product(exp_key, product)
+      return unless (zone = Spree::Zones::Product.find_by(name: exp_key.titleize))
+
+      zone_ids = product.zone_ids || []
+      zone_id_string = zone.id.to_s
+      return unless zone_ids.include?(zone_id_string)
+
+      product.zone_ids = zone_ids - [zone_id_string]
+      product.update_columns(meta: product.meta.to_json)
     end
 
     # upload product variant to Flow's Product Catalog
@@ -70,7 +87,7 @@ module Spree
 
       response
     rescue Net::OpenTimeout => e
-      return { error: e.message }
+      { error: e.message }
     end
 
     def flow_prices(flow_exp)
@@ -80,8 +97,8 @@ module Spree
     # returns price bound to local experience
     def flow_local_price(flow_exp)
       price_object = flow_prices(flow_exp)&.first
-      amount = price_object&.[](:amount) || self.price
-      currency = price_object&.[](:currency) || self.cost_currency
+      amount = price_object&.[](:amount) || price
+      currency = price_object&.[](:currency) || cost_currency
       Spree::Price.new(variant_id: self.id, currency: currency, amount: amount)
     end
 
@@ -159,7 +176,7 @@ module Spree
         product_meta_description: taxon&.meta_description.to_s,
         product_meta_keywords: taxon&.meta_keywords.to_s,
         product_slug: product.slug,
-      }.select{ |k,v| v.present? }
+      }.select{ |_k,v| v.present? }
     end
 
     # gets flow catalog item, and imports it
