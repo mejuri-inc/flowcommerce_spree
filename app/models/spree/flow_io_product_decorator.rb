@@ -70,12 +70,13 @@ module Spree
           min = price if min.nil? || min.amount > price.amount
           max = price if max.nil? || max.amount < price.amount
         end
-      else
-        min = max = master_price
       end
 
-      rmin = min&.amount&.to_s(:rounded, precision: 0) || 0
-      rmax = max&.amount&.to_s(:rounded, precision: 0) || 0
+      min ||= master_price
+      max ||= master_price
+
+      rmin = min.amount&.to_s(:rounded, precision: 0) || 0
+      rmax = max.amount&.to_s(:rounded, precision: 0) || 0
 
       prices[currency] = rmin == rmax ? { amount: rmin } : { min: rmin, max: rmax }
       prices
