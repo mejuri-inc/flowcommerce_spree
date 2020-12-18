@@ -9,14 +9,14 @@ module FlowcommerceSpree
 
     private
 
-    def check_stock(flow_id, quantity)
-      variant = Spree::Variant.find_by("meta -> 'flow_data' ->> 'id' = ?", flow_id)
-      return { id: flow_id, has_inventory: false } unless variant
+    def check_stock(flow_number, quantity)
+      variant = Spree::Variant.find_by(sku: flow_number)
+      return { id: flow_number, has_inventory: false } unless variant
 
-      { id: flow_id, has_inventory: variant.available_online?(quantity) }
+      { id: flow_number, has_inventory: variant.available_online?(quantity) }
     rescue StandardError
       Rails.logger.error "[!] FlowcommerceSpree::InventoryController#stock unexpected Error: #{$ERROR_INFO}"
-      { id: flow_id, has_inventory: false }
+      { id: flow_number, has_inventory: false }
     end
   end
 end
