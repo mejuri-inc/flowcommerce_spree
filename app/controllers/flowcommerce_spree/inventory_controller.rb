@@ -3,9 +3,7 @@
 module FlowcommerceSpree
   class InventoryController < ActionController::Base
     def stock
-      response = []
-      params['items'].each { |data| response << check_stock(data[:id], data[:qty].to_i) }
-
+      response = params['items'].inject([]) { |result, item| result << check_stock(item[:id], item[:qty].to_i) }
       render json: { items: response }, status: :ok
     end
 
@@ -17,7 +15,7 @@ module FlowcommerceSpree
 
       { id: flow_id, has_inventory: variant.available_online?(quantity) }
     rescue StandardError
-      Rails.logger.error "[!] FlowCommerceSpree#stock unexpected Error: #{$ERROR_INFO}"
+      Rails.logger.error "[!] FlowcommerceSpree::InventoryController#stock unexpected Error: #{$ERROR_INFO}"
       { id: flow_id, has_inventory: false }
     end
   end
