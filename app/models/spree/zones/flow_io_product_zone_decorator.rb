@@ -16,6 +16,10 @@ module Spree
         flow_data&.[]('key')
       end
 
+      def flow_io_experience_currency
+        flow_data&.[]('currency')
+      end
+
       def flow_io_active_experience?
         flow_data&.[]('key').present? && flow_data['status'] == 'active'
       end
