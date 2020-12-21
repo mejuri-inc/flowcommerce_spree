@@ -13,7 +13,7 @@ module Spree
           update_meta = @current_order.zone_id ? nil : true
           @current_order.zone = current_zone
 
-          if @current_order.zone&.flow_io_active_experience? && @current_order.flow_experience_key.nil?
+          if @current_order.zone&.flow_io_active_experience? && @current_order.flow_io_experience_key.nil?
             @current_order.flow_io_experience_from_zone
             update_meta = true
           end

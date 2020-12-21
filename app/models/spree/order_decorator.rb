@@ -105,7 +105,7 @@ module Spree
       model.new ENV.fetch('FLOW_BASE_COUNTRY')
     end
 
-    def flow_experience_key
+    def flow_io_experience_key
       flow_data&.[]('exp')
     end
 
