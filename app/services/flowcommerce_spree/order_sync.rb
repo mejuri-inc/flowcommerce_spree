@@ -31,7 +31,7 @@ module FlowcommerceSpree
     def initialize(order:)
       raise(ArgumentError, 'Experience not defined or not active') unless order.zone&.flow_io_active_experience?
 
-      @experience = order.flow_experience_key
+      @experience = order.flow_io_experience_key
       @order      = order
       @customer   = order.user
       @items      = []
