@@ -59,6 +59,7 @@ module Spree
 
       additional_attrs = {}
       attr_name = nil
+      export_required = false
       FlowcommerceSpree::Config.additional_attributes[self.class.name.tableize.tr('/', '_').to_sym].each do |attr_item|
         attr_name = attr_item[0]
         # Flow.io could require a different attribute name, as in case of Fulfil's :customs_description - it has the
@@ -69,10 +70,12 @@ module Spree
         attr_value = __send__(attr_name)
         break if export_required && attr_value.blank?
 
-        additional_attrs[attr_flowcommerce_name] = attr_value
+        additional_attrs[attr_flowcommerce_name] = attr_value if attr_value
       end
 
-      return { error: "Variant with sku = #{sku} has no #{attr_name}" } if additional_attrs.blank?
+      if export_required && additional_attrs[attr_value].blank?
+        return { error: "Variant with sku = #{sku} has no #{attr_name}" }
+      end
 
       flow_item     = to_flowcommerce_item(additional_attrs)
       flow_item_sh1 = Digest::SHA1.hexdigest(flow_item.to_json)
