@@ -5,7 +5,7 @@ module FlowcommerceSpree
   # for easy integration we are currently passing:
   # - flow experience
   # - spree order
-  # - current customer, presetnt as  @current_spree_user controller instance variable
+  # - current customer, present as  @current_spree_user controller instance variable
   #
   # example:
   #  flow_order = FlowcommerceSpree::OrderSync.new    # init flow-order object

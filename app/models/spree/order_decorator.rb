@@ -8,11 +8,12 @@ module Spree
 
     store_accessor :meta, :flow_data
 
-    before_save :sync_to_flow_io, if: lambda { |order|
-      order.zone&.flow_io_active_experience? && order.state == 'cart' && order.line_items.exists?
-    }
+    before_save :sync_to_flow_io
+    after_touch :sync_to_flow_io
 
     def sync_to_flow_io
+      return unless zone&.flow_io_active_experience? && state == 'cart' && line_items.exists?
+
       flow_io_order = FlowcommerceSpree::OrderSync.new(order: self)
       flow_io_order.build_flow_request
       flow_io_order.synchronize! if flow_data['digest'] != flow_io_order.digest
@@ -111,6 +112,10 @@ module Spree
 
     def flow_io_experience_from_zone
       self.flow_data = (flow_data || {}).merge!('exp' => zone.flow_io_experience)
+    end
+
+    def flow_io_order_id
+      flow_data&.dig('order', 'id')
     end
 
     # clear invalid zero amount payments. Solidus bug?
