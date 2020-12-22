@@ -118,6 +118,10 @@ module Spree
       flow_data&.dig('order', 'id')
     end
 
+    def checkout_url
+      "https:://checkout.flow.io/#{FlowcommerceSpree::ORGANIZATION}/checkout/#{flow_io_order_id}"
+    end
+
     # clear invalid zero amount payments. Solidus bug?
     def clear_zero_amount_payments!
       # class attribute that can be set to true
