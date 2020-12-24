@@ -9,8 +9,8 @@ require 'flowcommerce_spree/session'
 require 'flow/simple_gateway'
 
 module FlowcommerceSpree
-  def self.client(logger: FlowcommerceSpree.logger)
-    FlowCommerce.instance(http_handler: LoggingHttpHandler.new(logger: logger))
+  def self.client(logger: FlowcommerceSpree.logger, **opts)
+    FlowCommerce.instance(http_handler: LoggingHttpHandler.new(logger: logger), **opts)
   end
 
   def self.configure

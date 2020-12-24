@@ -31,6 +31,7 @@ module FlowcommerceSpree
     def initialize(order:)
       raise(ArgumentError, 'Experience not defined or not active') unless order.zone&.flow_io_active_experience?
 
+      @client = FlowcommerceSpree.client(session_id: order.flow_data['session'])
       @experience = order.flow_io_experience_key
       @order      = order
       @customer   = order.user
@@ -103,9 +104,8 @@ module FlowcommerceSpree
       @order.line_items.each { |line_item| add_item(line_item) }
 
       @opts = {}
-      @opts[:organization] = FlowcommerceSpree::ORGANIZATION
       @opts[:experience]   = @experience
-      @opts[:expand]       = 'experience'
+      @opts[:expand]       = ['experience']
 
       @body = { items: @items, number: @order.number }
 
@@ -173,18 +173,10 @@ module FlowcommerceSpree
       @use_get = false unless @order.flow_data['order']
 
       if @use_get
-        @response ||= FlowcommerceSpree::Api.run :get, '/:organization/orders/%s' % @body[:number], expand: 'experience'
+        @response ||= FlowcommerceSpree::Api.run :get, "/:organization/orders/#{@body[:number]}", expand: 'experience'
       else
-        # replace when fixed integer error
-        # @body[:items].map! { |item| ::Io::Flow::V0::Models::LineItemForm.new(item) }
-        # @opts[:experience] = @experience.key
-        # order_put_form = ::Io::Flow::V0::Models::OrderPutForm.new(@body)
-        # r FlowcommerceSpree.client.orders.put_by_number(FlowcommerceSpree::ORGANIZATION, @order.number, order_put_form, @opts)
-
-        # cache last order/put for debug purposes
-        # FlowSettings.set 'flow-order-put-body-%s' % @body[:number], @body.to_json
-
-        @response = FlowcommerceSpree::Api.run :put, "/:organization/orders/#{@body[:number]}", @opts, @body
+        @response = @client.orders.put_by_number(FlowcommerceSpree::ORGANIZATION, @order.number,
+                                                 Io::Flow::V0::Models::OrderPutForm.new(@body), @opts).to_hash
       end
     end
 
