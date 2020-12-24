@@ -13,22 +13,20 @@ CurrentZoneLoader.module_eval do
                           "meta -> 'flow_data' ->> 'country' = ?", ISO3166::Country[request_iso_code]&.alpha3
                         ).all.to_a
                       if flow_io_zones.present?
-                        if flow_io_zones.size > 1
-                          request_ip = if Rails.env.production?
-                                         request.ip
-                                       else
-                                         Spree::Config[:debug_request_ip_address] || request.ip
-                                         # Germany ip: 85.214.132.117, Sweden ip: 62.20.0.196, Moldova ip: 89.41.76.29
-                                       end
-                          flow_io_session = FlowcommerceSpree::Session
-                                              .new(ip: request_ip, visitor: visitor_id_for_flow_io)
-                          # :create method will issue a request to flow.io. The experience, contained in the
-                          # response, will be available in the session object - flow_io_session.experience
-                          flow_io_session.create
-                          Spree::Zones::Product.active.find_by(name: flow_io_session.experience&.key&.titleize)
-                        else
-                          flow_io_zones.first
-                        end
+                        request_ip = if Rails.env.production?
+                                       request.ip
+                                     else
+                                       Spree::Config[:debug_request_ip_address] || request.ip
+                                       # Germany ip: 85.214.132.117, Sweden ip: 62.20.0.196, Moldova ip: 89.41.76.29
+                                     end
+                        flow_io_session = FlowcommerceSpree::Session
+                                            .new(ip: request_ip, visitor: visitor_id_for_flow_io)
+                        # :create method will issue a request to flow.io. The experience, contained in the
+                        # response, will be available in the session object - flow_io_session.experience
+                        flow_io_session.create
+                        zone = Spree::Zones::Product.active.find_by(name: flow_io_session.experience&.key&.titleize)
+                        session['_f60_session'] = flow_io_session.id if zone
+                        zone
                       else
                         Spree::Country.find_by(iso: request_iso_code)&.product_zones&.active&.first
                       end
@@ -36,7 +34,7 @@ CurrentZoneLoader.module_eval do
 
     @current_zone ||= Spree::Zones::Product.find_by(name: 'International')
     @current_zone ||= Spree::Zones::Product.new(name: 'International', taxon_ids: [], currencies: %w[USD CAD])
-    session['region'] = { name: @current_zone.name, available_currencies: @current_zone.available_currencies }
+    session['region'] = { 'name' => @current_zone.name, 'available_currencies' => @current_zone.available_currencies }
     Rails.logger.debug("Using product zone: #{@current_zone.name}")
     @current_zone
   end
