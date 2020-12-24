@@ -15,6 +15,13 @@ module Spree
 
           if @current_order.zone&.flow_io_active_experience? && @current_order.flow_io_experience_key.nil?
             @current_order.flow_io_experience_from_zone
+            order_flow_io_session_id = @current_order.flow_data['session']
+            flow_io_session_id = session['_f60_session']
+            if order_flow_io_session_id.present? && flow_io_session_id.blank?
+              session['_f60_session'] = order_flow_io_session_id
+            elsif flow_io_session_id.present?
+              @current_order.flow_data['session'] = flow_io_session_id
+            end
             update_meta = true
           end
 
