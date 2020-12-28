@@ -119,7 +119,8 @@ module Spree
     end
 
     def checkout_url
-      "https://checkout.flow.io/#{FlowcommerceSpree::ORGANIZATION}/checkout/#{flow_io_order_id}"
+      "https://checkout.flow.io/#{FlowcommerceSpree::ORGANIZATION}/checkout/#{number}/" \
+        "contact-info?flow_session_id=#{flow_data['session_id']}"
     end
 
     # clear invalid zero amount payments. Solidus bug?
