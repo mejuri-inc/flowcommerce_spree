@@ -3,12 +3,10 @@
 CurrentZoneLoader.module_eval do
   extend ActiveSupport::Concern
 
-  def flow_zone
-    flow_io_zones = Spree::Zones::Product.active.where(
-      "meta -> 'flow_data' ->> 'country' = ?", ISO3166::Country[request_iso_code]&.alpha3
-    ).all.to_a
-
-    return unless flow_io_zones.present?
+  def flow_zone # rubocop:disable Metrics/MethodLength, Metrics/AbcSize
+    return unless Spree::Zones::Product.active
+                                       .find_by("meta -> 'flow_data' ->> 'country' = ?",
+                                                ISO3166::Country[request_iso_code]&.alpha3)
 
     request_ip =
       if Rails.env.production?
@@ -43,7 +41,7 @@ CurrentZoneLoader.module_eval do
   def fetch_product_for_zone(product)
     Rails.cache.fetch(
       "product_zone_#{current_zone.name}_#{product.sku}", expires_in: 1.day,
-      race_condition_ttl: 10.seconds, compress: true
+                                                          race_condition_ttl: 10.seconds, compress: true
     ) do
       Spree::Zones::Product.find_product_for_zone(product, current_zone)
     end
