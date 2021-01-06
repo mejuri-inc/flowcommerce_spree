@@ -45,10 +45,6 @@ module FlowcommerceSpree
       @logger ||= Logger.new('./log/flow.log') # or nil for no logging
     end
 
-    def price_not_found
-      'n/a'
-    end
-
     def format_default_price(amount)
       '$%.2f' % amount
     end
