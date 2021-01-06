@@ -5,8 +5,8 @@ CurrentZoneLoader.module_eval do
 
   def flow_zone # rubocop:disable Metrics/MethodLength, Metrics/AbcSize
     return unless Spree::Zones::Product.active
-                                       .find_by("meta -> 'flow_data' ->> 'country' = ?",
-                                                ISO3166::Country[request_iso_code]&.alpha3)
+                                       .where("meta -> 'flow_data' ->> 'country' = ?",
+                                                ISO3166::Country[request_iso_code]&.alpha3).exists?
 
     request_ip =
       if Rails.env.production?
