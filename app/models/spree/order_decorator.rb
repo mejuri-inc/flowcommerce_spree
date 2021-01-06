@@ -34,12 +34,12 @@ module Spree
     # accepts line item, usually called from views
     def flow_line_item_price(line_item, total = false)
       result = if flow_order
-                 id = line_item.variant.id.to_s
+                 id = line_item.variant.sku
 
                  lines = flow_order.lines || []
-                 item  = lines.select { |el| el['item_number'] == id }.first
+                 item  = lines.find { |el| el['item_number'] == id }
 
-                 return Flow.price_not_found unless item
+                 return 'n/a' unless item
 
                  total ? item['total']['label'] : item['price']['label']
                else
