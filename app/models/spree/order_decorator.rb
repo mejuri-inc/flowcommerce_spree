@@ -37,7 +37,7 @@ module Spree
                  id = line_item.variant.sku
 
                  lines = flow_order.lines || []
-                 item  = lines.select { |el| el['item_number'] == id }.first
+                 item  = lines.find { |el| el['item_number'] == id }
 
                  return 'n/a' unless item
 
