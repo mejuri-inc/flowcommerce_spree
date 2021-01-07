@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Communicates with flow.io API, easy access
 # to basic shop frontend and backend needs
 module FlowcommerceSpree
@@ -6,11 +8,11 @@ module FlowcommerceSpree
 
     def all(no_world = nil)
       experiences = get_from_flow
-      no_world ? experiences.select{ |exp| exp.key != 'world' } : experiences
+      no_world ? experiences.select { |exp| exp.key != 'world' } : experiences
     end
 
     def keys
-      all.map{ |el| el.key }
+      all.map { |el| el.key }
     end
 
     def get(key)
@@ -33,7 +35,7 @@ module FlowcommerceSpree
     end
 
     def default
-      FlowcommerceSpree::ExperienceService.all.select{ |exp| exp.key.downcase == ENV.fetch('FLOW_BASE_COUNTRY').downcase }.first
+      FlowcommerceSpree::ExperienceService.all.select { |exp| exp.key.downcase == ENV.fetch('FLOW_BASE_COUNTRY').downcase }.first
     end
 
     private

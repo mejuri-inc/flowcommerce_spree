@@ -1,0 +1,92 @@
+AllCops:
+  Exclude:
+    - 'bin/**/*'
+    - 'db/**/*'
+  TargetRubyVersion: 2.3
+
+Layout/HashAlignment:
+  EnforcedColonStyle: key
+  EnforcedHashRocketStyle: key
+
+Layout/LineLength:
+  Max: 120
+  Exclude:
+    - 'app/services/order_service.rb' #to refactor
+
+Metrics/BlockLength:
+  Exclude:
+    - 'Rakefile'
+    - '**/*.rake'
+    - 'spec/**/*'
+  ExcludedMethods: ['class_eval']
+
+# Lint/RaiseException:
+#   Enabled: true
+
+# Lint/StructNewOverride:
+#   Enabled: true
+
+Style/Documentation:
+  Enabled: false
+
+# Style/HashEachMethods:
+#   Enabled: true
+
+# Style/HashTransformKeys:
+#   Enabled: true
+#
+# Style/HashTransformValues:
+#   Enabled: true
+
+Style/NumericPredicate:
+  Enabled: true
+  EnforcedStyle: comparison
+
+Style/RedundantSelf:
+  Enabled: true
+  Exclude:
+    - 'app/models/user_profile.rb' # To Refactor
+
+Layout/CaseIndentation:
+  Enabled: true
+  EnforcedStyle: case
+  IndentOneStep: true
+
+Documentation:
+  Enabled: false
+
+GlobalVars:
+  AllowedVariables:
+    - $redis
+    - $redis_context
+Style/GuardClause:
+  Enabled: true
+  Exclude:
+    - 'app/models/abilities/*'
+
+Metrics/MethodLength:
+  Enabled: true
+  Exclude:
+    - 'app/models/abilities/*'
+
+Metrics/AbcSize:
+  Enabled: true
+  Exclude:
+    - 'app/models/abilities/*'
+
+    
+Style/FrozenStringLiteralComment:
+  Exclude:
+    - 'app/overrides/spree_admin_users_avalara.rb'
+
+Metrics/CyclomaticComplexity:
+  Exclude:
+
+Metrics/PerceivedComplexity:
+  Exclude:
+
+Naming/PredicateName:
+  Exclude:
+
+Metrics/ClassLength:
+  Exclude:

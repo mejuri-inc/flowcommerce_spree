@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'pathname'
 
 # Service class to manage product sync scheduling
@@ -18,7 +20,7 @@ module FlowcommerceSpree
     def duration
       return '? (unknown)' if !data[:start] || !data[:end] || data[:start] > data[:end]
 
-      (data[:end] - data[:start])/60
+      (data[:end] - data[:start]) / 60
     end
 
     def write
@@ -67,7 +69,7 @@ module FlowcommerceSpree
 
       write do |data|
         if has_ended
-          data[:end]       = Time.zone.now.to_i
+          data[:end] = Time.zone.now.to_i
           data.delete(:in_progress)
         else
           data[:in_progress] = true

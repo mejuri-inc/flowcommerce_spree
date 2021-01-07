@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module FlowcommerceSpree
   class LoggingHttpHandler < ::Io::Flow::V0::HttpClient::DefaultHttpHandler
     attr_reader :http_client, :logger

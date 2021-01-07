@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Flow.io (2017)
 # adapter for Spree that talks to activemerchant_flow
 module Spree
@@ -28,22 +30,22 @@ module Spree
         {}
       end
 
-      def supports? source
+      def supports?(source)
         # flow supports credit cards
         source.class == Spree::CreditCard
       end
 
-      def authorize amount, payment_method, options={}
+      def authorize(amount, payment_method, options = {})
         order = load_order options
         order.cc_authorization
       end
 
-      def capture amount, payment_method, options={}
+      def capture(amount, payment_method, options = {})
         order = load_order options
         order.cc_capture
       end
 
-      def purchase amount, payment_method, options={}
+      def purchase(amount, payment_method, options = {})
         order = load_order options
         flow_auth = order.cc_authorization
 
@@ -54,16 +56,16 @@ module Spree
         end
       end
 
-      def refund money, authorization_key, options={}
+      def refund(money, authorization_key, options = {})
         order = load_order options
         order.cc_refund
       end
 
-      def void money, authorization_key, options={}
+      def void(money, authorization_key, options = {})
         # binding.pry
       end
 
-      def create_profile payment
+      def create_profile(payment)
         # binding.pry
 
         # payment.order.state
@@ -79,7 +81,7 @@ module Spree
       def profile_ensure_payment_method_is_present!
         return if @credit_card.payment_method_id
 
-        flow_payment = Spree::PaymentMethod.where(active: true, type:'Spree::Gateway::Flow').first
+        flow_payment = Spree::PaymentMethod.where(active: true, type: 'Spree::Gateway::Flow').first
         @credit_card.payment_method_id = flow_payment.id if flow_payment
       end
 
@@ -104,7 +106,7 @@ module Spree
         @credit_card.update_column :gateway_customer_profile_id, result.token
       end
 
-      def load_order options
+      def load_order(options)
         order_number = options[:order_id].split('-').first
         spree_order  = Spree::Order.find_by number: order_number
         ::Flow::SimpleGateway.new spree_order

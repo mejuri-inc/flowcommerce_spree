@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # added flow specific methods to Spree.user_class
 # which is for Spree in same time
 # - user object (for admins as well)

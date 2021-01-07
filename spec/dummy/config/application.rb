@@ -1,9 +1,11 @@
-require File.expand_path('../boot', __FILE__)
+# frozen_string_literal: true
+
+require File.expand_path('boot', __dir__)
 
 require 'rails/all'
 
 Bundler.require(*Rails.groups)
-require "flowcommerce_spree"
+require 'flowcommerce_spree'
 
 module Dummy
   class Application < Rails::Application
@@ -20,4 +22,3 @@ module Dummy
     # config.i18n.default_locale = :de
   end
 end
-

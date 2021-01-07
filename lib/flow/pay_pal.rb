@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Flow.io (2017)
 # communicates with flow api to synchronize Spree order with PayPal
 
@@ -9,14 +11,14 @@ module Flow::PayPal
       # get PayPal ID using Flow api
       body = {
         # discriminator: 'merchant_of_record_payment_form',
-        method:        'paypal',
-        order_number:  order.number,
-        amount:        order.flow_order.total.amount,
-        currency:      order.flow_order.total.currency,
+        method: 'paypal',
+        order_number: order.number,
+        amount: order.flow_order.total.amount,
+        currency: order.flow_order.total.currency,
       }
 
       # FlowcommerceSpree::Api.run :post, '/:organization/payments', {}, body
-      form     = ::Io::Flow::V0::Models::MerchantOfRecordPaymentForm.new body
+      form = ::Io::Flow::V0::Models::MerchantOfRecordPaymentForm.new body
       FlowcommerceSpree.client.payments.post FlowcommerceSpree::ORGANIZATION, form
     else
       # to do

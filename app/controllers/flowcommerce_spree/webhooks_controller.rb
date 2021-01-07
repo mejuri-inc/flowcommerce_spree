@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module FlowcommerceSpree
   class WebhooksController < ActionController::Base
     respond_to :json

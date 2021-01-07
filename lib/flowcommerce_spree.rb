@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 require 'flowcommerce'
 require 'flowcommerce_spree/api'
 require 'flowcommerce_spree/refresher'
