@@ -10,6 +10,6 @@ Spree.user_class.class_eval do
     return unless id
 
     token = ENV.fetch('ENCRYPTION_KEY')
-    'su-%s' % Digest::SHA1.hexdigest('%d-%s' % [id, token])
+    "su-#{Digest::SHA1.hexdigest(format('%d-%s', id, token))}"
   end
 end

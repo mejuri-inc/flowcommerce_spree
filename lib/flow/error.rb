@@ -10,7 +10,7 @@ class Flow::Error < StandardError
   def self.log(exception, request)
     history = exception.backtrace.reject { |el| el.index('/gems/') }.map { |el| el.sub(Rails.root.to_s, '') }.join($/)
 
-    msg  = '%s in %s' % [exception.class, request.url]
+    msg  = "#{exception.class} in #{request.url}"
     data = [msg, exception.message, history].join("\n\n")
     key  = Digest::SHA1.hexdigest exception.backtrace.first.split(' ').first
 

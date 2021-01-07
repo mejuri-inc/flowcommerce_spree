@@ -107,10 +107,10 @@ module Flow
     end
 
     # we want to return errors in standardized format
-    def error_response(exception_object, message = nil)
+    def error_response(exception_object)
       message = if exception_object.respond_to?(:body) && exception_object.body.length > 0
                   description = JSON.load(exception_object.body)['messages'].to_sentence
-                  '%s: %s (%s)' % [exception_object.details, description, exception_object.code]
+                  "#{exception_object.details}: #{description} (#{exception_object.code})"
                 else
                   exception_object.message
       end

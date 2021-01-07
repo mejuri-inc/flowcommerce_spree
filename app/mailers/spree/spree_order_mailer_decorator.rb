@@ -11,14 +11,14 @@ module Spree
 
       authorization = FlowcommerceSpree.client.authorizations.get_by_key FlowcommerceSpree::ORGANIZATION, auth_id
 
-      @mail_to   = authorization.customer.email
-      @full_name = '%s %s' % [authorization.customer.name.first, authorization.customer.name.last]
-      @amount    = '%s %s' % [web_hook_event['refund']['requested']['amount'], web_hook_event['refund']['requested']['currency']]
-      @number    = authorization.order.number
-      @order     = Spree::Order.find_by number: @number
+      refund_requested = web_hook_event['refund']['requested']
+      @mail_to = authorization.customer.email
+      @full_name = "#{authorization.customer.name.first} #{authorization.customer.name.last}"
+      @amount = "#{refund_requested['amount']} #{refund_requested['currency']}"
+      @number = authorization.order.number
+      @order = Spree::Order.find_by number: @number
 
-      mail( to: @mail_to,
-             subject: 'We refunded your order for ammount %s' % @amount )
+      mail(to: @mail_to, subject: "We refunded your order for ammount #{@amount}")
     end
   end
 end

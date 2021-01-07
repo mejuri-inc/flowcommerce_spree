@@ -20,7 +20,7 @@ class SimpleCsvWriter
              @keys.map { |key| data[key] }
            else
              data
-    end
+           end
 
     @data.push list.map { |el| fmt(el) }.join(@delimiter)
   end
@@ -36,9 +36,9 @@ class SimpleCsvWriter
 
   private
 
-  def fmt(el)
-    el = el.to_s.gsub($/, '\\n').gsub('"', '""')
+  def fmt(item)
+    item = item.to_s.gsub($/, '\\n').gsub('"', '""')
 
-    el.include?(@delimiter) || el.include?('\\') ? '"%s"' % el : el
+    item.include?(@delimiter) || item.include?('\\') ? "\"#{item}\"" : item
   end
 end
