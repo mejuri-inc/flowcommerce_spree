@@ -11,7 +11,7 @@ namespace :flowcommerce_spree do
 
   desc 'Listing and possible invocation of all the Flow tasks'
   task :list_tasks do |t|
-    task_list = `rake -T | grep flowcommerce_spree`.split($/)
+    task_list = `rake -T | grep flowcommerce_spree`.split($RS)
     @exit = false
     logger.info "Running task: #{t}"
 
@@ -251,9 +251,7 @@ namespace :flowcommerce_spree do
       offset += page_size
 
       items.each do |item|
-        sku = item['number']
-
-        promises << Concurrent::Promises.future_on(thread_pool, sku) do |sku|
+        promises << Concurrent::Promises.future_on(thread_pool, item['number']) do |sku|
           FlowcommerceSpree::Api.run :delete, "/:organization/catalog/items/#{sku}"
           $stdout.puts "Removed item: #{sku.red}"
         end

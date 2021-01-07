@@ -12,7 +12,7 @@ module FlowcommerceSpree
 
       remote_params = URI.encode_www_form params
       remote_path   = debug_path = path.sub('%o', ORGANIZATION).sub(':organization', ORGANIZATION)
-      remote_path  += '?%s' % remote_params unless remote_params.blank?
+      remote_path  += "?#{remote_params}" unless remote_params.blank?
 
       curl = ['curl -s']
       curl.push "-X #{action.to_s.upcase}"
@@ -21,10 +21,10 @@ module FlowcommerceSpree
       if body
         body = body.to_json unless body.is_a?(Array)
         curl.push '-H "Content-Type: application/json"'
-        curl.push "-d '%s'" % body.gsub(%['], %['"'"']) if body
+        curl.push "-d '#{body.gsub(%['], %['"'"'])}'" if body
       end
 
-      curl.push '"https://api.flow.io%s"' % remote_path
+      curl.push "\"https://api.flow.io#{remote_path}\""
       command = curl.join(' ')
 
       puts command if defined?(Rails::Console)
@@ -34,13 +34,7 @@ module FlowcommerceSpree
       debug_file = "#{dir}/#{debug_path.gsub(/[^\w]+/, '_')}.bash"
       File.write debug_file, command + "\n"
 
-      data = JSON.load `#{command}`
-
-      if data.kind_of?(Hash) && data['code'] == 'generic_error'
-        data
-      else
-        data
-      end
+      Oj.load `#{command}`
     end
 
     def logger
@@ -48,7 +42,7 @@ module FlowcommerceSpree
     end
 
     def format_default_price(amount)
-      '$%.2f' % amount
+      format('$%<price>.2f', amount)
     end
   end
 end

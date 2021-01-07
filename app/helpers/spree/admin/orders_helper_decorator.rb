@@ -9,7 +9,7 @@ module Spree
       # admin show line item total price
       def line_item_shipment_price(line_item, quantity)
         price = Spree::Money.new(line_item.price * quantity, currency: line_item.currency).to_s
-        price += ' (%s)' % @order.flow_line_item_price(line_item, quantity) if @order.flow_order
+        price += " (#{@order.flow_line_item_price(line_item, quantity)})" if @order.flow_order
         price.html_safe
       end
     end

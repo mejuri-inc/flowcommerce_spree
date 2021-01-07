@@ -28,16 +28,16 @@ class SimpleCsvWriter
   def to_s
     if @keys
       @keys.map(&:to_s).join(@delimiter) + "\n" +
-        @data.join($/)
+        @data.join($RS)
     else
-      @data.join($/)
+      @data.join($RS)
     end
   end
 
   private
 
   def fmt(item)
-    item = item.to_s.gsub($/, '\\n').gsub('"', '""')
+    item = item.to_s.gsub($RS, '\\n').gsub('"', '""')
 
     item.include?(@delimiter) || item.include?('\\') ? "\"#{item}\"" : item
   end

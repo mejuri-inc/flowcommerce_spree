@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-$:.push File.expand_path('lib', __dir__)
+$LOAD_PATH.push File.expand_path('lib', __dir__)
 
 # Maintain your gem's version:
 require 'flowcommerce_spree/version'
@@ -21,12 +21,12 @@ Gem::Specification.new do |s|
   s.require_path = 'lib'
 
   s.add_dependency 'colorize'
+  s.add_dependency 'concurrent-ruby', '~> 1.0', '>= 1.1.7'
   s.add_dependency 'flowcommerce'
   # s.add_dependency 'flowcommerce-activemerchant'
   s.add_dependency 'flowcommerce-reference'
   s.add_dependency 'oj'
   s.add_dependency 'spree_backend', '~> 2.3.0'
-  s.add_dependency 'concurrent-ruby', '~> 1.0', '>= 1.1.7'
 
   s.add_development_dependency 'sqlite3'
 end

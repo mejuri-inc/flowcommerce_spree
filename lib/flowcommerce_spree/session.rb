@@ -54,9 +54,9 @@ module FlowcommerceSpree
     def delivered_duty_options
       return nil unless experience
 
-      if (flow_experience = Flow::Experience.get(experience.key))
-        Hashie::Mash.new(flow_experience.settings.delivered_duty.to_hash)
-      end
+      return unless (flow_experience = Flow::Experience.get(experience.key))
+
+      Hashie::Mash.new(flow_experience.settings.delivered_duty.to_hash)
     end
 
     # if we have more than one choice, we show choice popup

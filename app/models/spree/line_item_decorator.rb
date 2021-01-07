@@ -8,7 +8,7 @@ module Spree
     # admin show line item price
     def single_money
       price  = display_price.to_s
-      price += ' (%s)' % order.flow_line_item_price(self) if order.flow_order
+      price += " (#{order.flow_line_item_price(self)})" if order.flow_order
       price
     end
   end

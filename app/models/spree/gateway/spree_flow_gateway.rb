@@ -10,7 +10,7 @@ module Spree
       end
 
       def actions
-        %w(capture authorize purchase refund void)
+        %w[capture authorize purchase refund void]
       end
 
       # if user wants to force auto capture
@@ -35,17 +35,17 @@ module Spree
         source.class == Spree::CreditCard
       end
 
-      def authorize(amount, payment_method, options = {})
+      def authorize(_amount, _payment_method, options = {})
         order = load_order options
         order.cc_authorization
       end
 
-      def capture(amount, payment_method, options = {})
+      def capture(_amount, _payment_method, options = {})
         order = load_order options
         order.cc_capture
       end
 
-      def purchase(amount, payment_method, options = {})
+      def purchase(_amount, _payment_method, options = {})
         order = load_order options
         flow_auth = order.cc_authorization
 
@@ -56,7 +56,7 @@ module Spree
         end
       end
 
-      def refund(money, authorization_key, options = {})
+      def refund(_money, _authorization_key, options = {})
         order = load_order options
         order.cc_refund
       end
