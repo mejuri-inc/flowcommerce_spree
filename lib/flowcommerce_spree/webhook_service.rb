@@ -1,14 +1,16 @@
-# communicates with flow api, responds to webhook events
+# frozen_string_literal: true
+
 module FlowcommerceSpree
+  # communicates with flow api, responds to webhook events
   class WebhookService
     attr_accessor :errors, :product, :variant
-    alias :full_messages :errors
+    alias full_messages errors
 
-    def self.process(data, opts={})
+    def self.process(data, opts = {})
       new(data, opts).process
     end
 
-    def initialize(data, opts={})
+    def initialize(data, opts = {})
       @data = data
       @opts = opts
       @errors = []
@@ -35,10 +37,6 @@ module FlowcommerceSpree
       self
     end
 
-    def full_messages
-
-    end
-
     private
 
     def hook_experience_upserted_v2
@@ -51,7 +49,7 @@ module FlowcommerceSpree
       return errors << { message: 'Local item param missing' } unless local_item
 
       received_sku = local_item.dig('item', 'number')
-      return errors << { message: 'SKU not param missing' } unless received_sku
+      return errors << { message: 'SKU param missing' } unless received_sku
 
       exp_key = local_item.dig('experience', 'key')
 
@@ -68,6 +66,19 @@ module FlowcommerceSpree
 
       @variant.update_column(:meta, @variant.meta.to_json)
       @variant
+    end
+
+    def hook_order_upserted_v2
+      return errors << { message: 'Order param missing' } unless (received_order = @data['order'])
+
+      return errors << { message: 'Order number param missing' } unless (order_number = received_order['number'])
+
+      order = Spree::Order.find_by(number: order_number)
+      return errors << { message: "Order #{order_number} not found" } unless order
+
+      order.flow_data['order'] = received_order.to_hash
+      order.update_column(:meta, order.meta.to_json)
+      order
     end
 
     # send en email when order is refunded
