@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # module for communication and customization based on Flow API
 # for now all in same class
 module FlowcommerceSpree

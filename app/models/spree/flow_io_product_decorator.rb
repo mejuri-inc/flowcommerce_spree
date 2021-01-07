@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Flow specific methods for Spree::Product
 module Spree
   module FlowIoProductDecorator

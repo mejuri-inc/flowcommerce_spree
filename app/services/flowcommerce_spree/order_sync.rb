@@ -71,7 +71,7 @@ module FlowcommerceSpree
 
       delivery_list = @order.flow_order['deliveries'][0]['options']
       delivery_list = delivery_list.map do |opts|
-        name         = opts['tier']['name']
+        name = opts['tier']['name']
 
         # add original Flow ID
         # name        += ' (%s)' % opts['tier']['strategy'] if opts['tier']['strategy']

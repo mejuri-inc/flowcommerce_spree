@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # simple class to build scv files
 
 # csv = CsvWriter.new
@@ -6,18 +8,18 @@
 # csv.to_s
 
 class SimpleCsvWriter
-  def initialize delimiter: nil
+  def initialize(delimiter: nil)
     @data      = []
     @delimiter = delimiter || "\t"
   end
 
   # add hash or list
-  def add data
+  def add(data)
     list = if data.class == Hash
-      @keys ||= data.keys
-      @keys.map { |key| data[key] }
-    else
-      data
+             @keys ||= data.keys
+             @keys.map { |key| data[key] }
+           else
+             data
     end
 
     @data.push list.map { |el| fmt(el) }.join(@delimiter)
@@ -26,7 +28,7 @@ class SimpleCsvWriter
   def to_s
     if @keys
       @keys.map(&:to_s).join(@delimiter) + "\n" +
-      @data.join($/)
+        @data.join($/)
     else
       @data.join($/)
     end
@@ -34,12 +36,9 @@ class SimpleCsvWriter
 
   private
 
-  def fmt el
-    el = el.to_s
-      .gsub($/, "\\n")
-      .gsub('"', '""')
+  def fmt(el)
+    el = el.to_s.gsub($/, '\\n').gsub('"', '""')
 
-    el.include?(@delimiter) || el.include?("\\") ? '"%s"' % el : el
+    el.include?(@delimiter) || el.include?('\\') ? '"%s"' % el : el
   end
 end
-

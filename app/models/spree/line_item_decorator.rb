@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Flow (2017)
 # Enable this modifications if you want to display flow localized line item
 # Example: https://i.imgur.com/7v2ix2G.png

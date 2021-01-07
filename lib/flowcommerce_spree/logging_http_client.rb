@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 module FlowcommerceSpree
   class LoggingHttpClient < ::Io::Flow::V0::HttpClient::DefaultHttpHandlerInstance
     attr_reader :error
@@ -16,7 +18,7 @@ module FlowcommerceSpree
       @logger.info "body: #{request.instance_variable_get(:@header)}"
       @logger.info "body: #{request.body}"
 
-      if request.path.start_with?("/organizations")
+      if request.path.start_with?('/organizations')
         # Contrived example to show how client settings can be adjusted
         # client.open_timeout = 60
         # client.read_timeout = 60
@@ -31,7 +33,7 @@ module FlowcommerceSpree
         # client.read_timeout = original_read
 
         end_time = Time.now.utc.round(10)
-        duration = ((end_time - start_time)*1000).round(0)
+        duration = ((end_time - start_time) * 1000).round(0)
         @logger.info "complete #{request.method} #{request.path} #{duration} ms"
         @logger.info "response: #{response}"
         @logger.info "Error: #{e.inspect}" if e

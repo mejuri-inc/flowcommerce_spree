@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # communicates with flow.io api, easy access to session
 module FlowcommerceSpree
   class Session
@@ -12,9 +14,9 @@ module FlowcommerceSpree
 
     # create session with blank data
     def create
-      data = { ip:    @ip,
+      data = { ip: @ip,
                visit: { id: @visitor,
-                        expires_at: (Time.now+30.minutes).iso8601 } }
+                        expires_at: (Time.now + 30.minutes).iso8601 } }
 
       session_model = ::Io::Flow::V0::Models::SessionForm.new data
       @session = FlowCommerce.instance(http_handler: LoggingHttpHandler.new)

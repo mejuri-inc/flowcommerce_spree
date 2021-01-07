@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # module Spree
 #   Taxon.class_eval do
 #     def products_by_zone(product_zone)

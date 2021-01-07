@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Flow specific methods for Spree::Promotion
 module Spree
   Promotion.class_eval do

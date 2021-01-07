@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # Flow specific methods for Spree::Variant
 # Spree save all the prices inside Variant object. We choose to have a cache jsonb field named flow_data that will
 # hold all important Flow sync data for specific experiences.
@@ -153,14 +155,14 @@ module Spree
                end
 
       Io::Flow::V0::Models::ItemForm.new(
-        number:      sku,
-        locale:      'en_US',
-        language:    'en',
-        name:        product.name,
+        number: sku,
+        locale: 'en_US',
+        language: 'en',
+        name: product.name,
         description: product.description,
-        currency:    cost_currency,
-        price:       price.to_f,
-        images:      images,
+        currency: cost_currency,
+        price: price.to_f,
+        images: images,
         categories: categories,
         attributes: common_attrs(taxon).merge!(additional_attrs)
       )
@@ -181,7 +183,7 @@ module Spree
         product_meta_description: taxon&.meta_description.to_s,
         product_meta_keywords: taxon&.meta_keywords.to_s,
         product_slug: product.slug,
-      }.select{ |_k,v| v.present? }
+      }.select { |_k, v| v.present? }
     end
 
     # gets flow catalog item, and imports it

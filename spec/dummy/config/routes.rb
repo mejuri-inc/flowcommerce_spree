@@ -1,4 +1,5 @@
-Rails.application.routes.draw do
+# frozen_string_literal: true
 
-  mount FlowcommerceSpree::Engine => "/flowcommerce_spree"
+Rails.application.routes.draw do
+  mount FlowcommerceSpree::Engine => '/flowcommerce_spree'
 end

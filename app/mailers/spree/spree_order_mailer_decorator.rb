@@ -1,8 +1,10 @@
+# frozen_string_literal: true
+
 module Spree
   OrderMailer.class_eval do
     # default from: ApplicationMailer::DEFAULT_FROM
 
-    def refund_complete_email web_hook_event
+    def refund_complete_email(web_hook_event)
       auth_id = web_hook_event.dig('refund', 'authorization', 'key')
 
       raise Flow::Error.new('authorization key not found in WebHookEvent [refund_capture_upserted_v2]') unless auth_id
@@ -15,8 +17,8 @@ module Spree
       @number    = authorization.order.number
       @order     = Spree::Order.find_by number: @number
 
-      mail({ to:      @mail_to,
-             subject: 'We refunded your order for ammount %s' % @amount })
+      mail( to: @mail_to,
+             subject: 'We refunded your order for ammount %s' % @amount )
     end
   end
 end
