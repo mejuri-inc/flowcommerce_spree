@@ -15,8 +15,8 @@ module FlowcommerceSpree
       remote_path  += '?%s' % remote_params unless remote_params.blank?
 
       curl = ['curl -s']
-      curl.push '-X %s' % action.to_s.upcase
-      curl.push '-u %s:' % API_KEY
+      curl.push "-X #{action.to_s.upcase}"
+      curl.push "-u #{API_KEY}:"
 
       if body
         body = body.to_json unless body.is_a?(Array)
@@ -31,7 +31,7 @@ module FlowcommerceSpree
 
       dir = Rails.root.join('log/api')
       Dir.mkdir(dir) unless Dir.exist?(dir)
-      debug_file = '%s/%s.bash' % [dir, debug_path.gsub(/[^\w]+/, '_')]
+      debug_file = "#{dir}/#{debug_path.gsub(/[^\w]+/, '_')}.bash"
       File.write debug_file, command + "\n"
 
       data = JSON.load `#{command}`

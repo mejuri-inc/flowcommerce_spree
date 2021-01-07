@@ -49,7 +49,7 @@ module FlowcommerceSpree
         logger.info 'Force refresh scheduled, refreshing.'
         true
       else
-        logger.info 'No need for refresh, ended before %d seconds.' % (now - data[:end])
+        logger.info format('No need for refresh, ended before %d seconds.', (now - data[:end]))
         @data = nil
         false
       end
