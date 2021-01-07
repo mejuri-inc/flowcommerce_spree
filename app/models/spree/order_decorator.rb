@@ -1,9 +1,9 @@
 # frozen_string_literal: true
 
 # `:display_total` modifications to display total prices beside Spree default. Example: https://i.imgur.com/7v2ix2G.png
-module Spree
+module Spree # rubocop:disable Metrics/ModuleLength
   # Added flow specific methods to Spree::Order
-  Order.class_eval do # rubocop:disable Metrics/BlockLength
+  Order.class_eval do
     serialize :meta, ActiveRecord::Coders::JSON.new(symbolize_keys: true)
 
     store_accessor :meta, :flow_data
@@ -48,7 +48,7 @@ module Spree
 
       # add line item promo
       # promo_total, adjustment_total
-      result += ' (%s)' % FlowcommerceSpree::Api.format_default_price(line_item.promo_total) if line_item.promo_total > 0
+      result += " (#{FlowcommerceSpree::Api.format_default_price(line_item.promo_total)})" if line_item.promo_total > 0
 
       result
     end
@@ -63,14 +63,15 @@ module Spree
         # duty, vat, ...
         unless flow_order.prices
           message = Flow::Error.format_order_message flow_order
-          raise Flow::Error.new(message)
+          raise Flow::Error, message
         end
 
         flow_order.prices.each do |price|
           prices.push price_model.new(price['name'], price['label'])
         end
       else
-        price_elements = %i[item_total adjustment_total included_tax_total additional_tax_total tax_total shipment_total promo_total]
+        price_elements =
+          %i[item_total adjustment_total included_tax_total additional_tax_total tax_total shipment_total promo_total]
         price_elements.each do |el|
           price = send(el)
           if price > 0
@@ -102,7 +103,7 @@ module Spree
     def flow_experience
       model = Struct.new(:key)
       model.new flow_order.experience.key
-    rescue
+    rescue StandardError => _e
       model.new ENV.fetch('FLOW_BASE_COUNTRY')
     end
 

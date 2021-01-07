@@ -34,9 +34,7 @@ module Spree
           @current_order.update_columns(attrs_to_update)
         end
 
-        if ApplicationController.included_modules.exclude?(self)
-          ApplicationController.prepend(self)
-        end
+        ApplicationController.prepend(self) if ApplicationController.included_modules.exclude?(self)
       end
     end
   end

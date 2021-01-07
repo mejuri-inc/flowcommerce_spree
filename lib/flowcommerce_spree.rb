@@ -24,7 +24,7 @@ module FlowcommerceSpree
 
     # Broadcast the log into the file besides STDOUT, if `log` folder exists
     if Dir.exist?('log')
-      logger.extend((ActiveSupport::Logger.broadcast(ActiveSupport::Logger.new('log/flowcommerce_spree.log'))))
+      logger.extend(ActiveSupport::Logger.broadcast(ActiveSupport::Logger.new('log/flowcommerce_spree.log')))
     end
     logger
   end

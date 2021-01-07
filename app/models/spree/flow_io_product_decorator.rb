@@ -18,13 +18,13 @@ module Spree
 
     # returns price bound to local experience from master variant
     def flow_local_price(flow_exp)
-      master.flow_local_price(flow_exp) || Spree::Price.new(variant_id: self.id, currency: 'USD', amount: 0)
+      master.flow_local_price(flow_exp) || Spree::Price.new(variant_id: id, currency: 'USD', amount: 0)
     end
 
     def flow_included?(flow_exp)
       return true unless flow_exp
 
-      flow_data['%s.excluded' % flow_exp.key].to_i == 1 ? false : true
+      flow_data["#{flow_exp.key}.excluded"].to_i != 1
     end
 
     def price_range(product_zone)

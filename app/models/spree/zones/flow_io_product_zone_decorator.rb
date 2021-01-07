@@ -24,8 +24,7 @@ module Spree
         flow_data&.[]('key').present? && flow_data['status'] == 'active'
       end
 
-      def update_on_flow
-      end
+      def update_on_flow; end
 
       def remove_on_flow_io
         client = FlowcommerceSpree.client

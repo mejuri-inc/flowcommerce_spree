@@ -13,27 +13,25 @@ module Flow
 
     # authorises credit card and prepares for capture
     def cc_authorization
-      auth_form      = get_authorization_form
-      response       = FlowcommerceSpree.client.authorizations.post(FlowcommerceSpree::ORGANIZATION, auth_form)
+      response = FlowcommerceSpree.client.authorizations.post(FlowcommerceSpree::ORGANIZATION, build_authorization_form)
       status_message = response.result.status.value
-      status         = status_message == ::Io::Flow::V0::Models::AuthorizationStatus.authorized.value
+      status = status_message == ::Io::Flow::V0::Models::AuthorizationStatus.authorized.value
 
-      store = {
-        key: response.key,
-        amount: response.amount,
-        currency: response.currency,
-        authorization_id: response.id
-      }
+      store = { key: response.key,
+                amount: response.amount,
+                currency: response.currency,
+                authorization_id: response.id }
 
-      @order.update_column :flow_data, @order.flow_data.merge('authorization': store)
+      @order.flow_data['authorization'] = store
+      @order.update_column(:meta, @order.meta.to_json)
 
       if self.class.clear_zero_amount_payments
-        @order.payments.where(amount: 0, state: ['invalid', 'processing', 'pending']).map(&:destroy)
+        @order.payments.where(amount: 0, state: %w[invalid processing pending]).map(&:destroy)
       end
 
       ActiveMerchant::Billing::Response.new(status, status_message, { response: response }, authorization: store)
-    rescue Io::Flow::V0::HttpClient::ServerError => exception
-      error_response(exception)
+    rescue Io::Flow::V0::HttpClient::ServerError => e
+      error_response(e)
     end
 
     # capture authorised funds
@@ -44,18 +42,16 @@ module Flow
       raise ArgumentError, 'No Authorization data, please authorize first' unless data
 
       capture_form = ::Io::Flow::V0::Models::CaptureForm.new(data)
-      response     = FlowcommerceSpree.client.captures.post(FlowcommerceSpree::ORGANIZATION, capture_form)
+      response = FlowcommerceSpree.client.captures.post(FlowcommerceSpree::ORGANIZATION, capture_form)
 
-      if response.id
-        @order.update_column :flow_data, @order.flow_data.merge('capture': response.to_hash)
-        @order.flow_finalize!
+      return ActiveMerchant::Billing::Response.new false, 'error', response: response unless response.id
 
-        ActiveMerchant::Billing::Response.new true, 'success', response: response
-      else
-        ActiveMerchant::Billing::Response.new false, 'error', response: response
-      end
-    rescue => exception
-      error_response(exception)
+      @order.update_column :flow_data, @order.flow_data.merge('capture': response.to_hash)
+      @order.flow_finalize!
+
+      ActiveMerchant::Billing::Response.new true, 'success', response: response
+    rescue StandardError => e
+      error_response(e)
     end
 
     def cc_refund
@@ -66,14 +62,12 @@ module Flow
       refund_form = ::Io::Flow::V0::Models::RefundForm.new(refund_data)
       response    = FlowcommerceSpree.client.refunds.post(FlowcommerceSpree::ORGANIZATION, refund_form)
 
-      if response.id
-        @order.update_column :flow_data, @order.flow_data.merge('refund': response.to_hash)
-        ActiveMerchant::Billing::Response.new true, 'success', response: response
-      else
-        ActiveMerchant::Billing::Response.new false, 'error', response: response
-      end
-    rescue => exception
-      error_response(exception)
+      return ActiveMerchant::Billing::Response.new false, 'error', response: response unless response.id
+
+      @order.update_column :flow_data, @order.flow_data.merge('refund': response.to_hash)
+      ActiveMerchant::Billing::Response.new true, 'success', response: response
+    rescue StandardError => e
+      error_response(e)
     end
 
     private
@@ -83,7 +77,7 @@ module Flow
       @order.flow_order ? true : false
     end
 
-    def get_authorization_form
+    def build_authorization_form
       if in_flow?
         # we have order id so we allways use MerchantOfRecordAuthorizationForm
         ::Io::Flow::V0::Models::MerchantOfRecordAuthorizationForm.new('order_number': @order.flow_number,
@@ -100,8 +94,8 @@ module Flow
 
     # gets credit card token
     def cc_get_token
-      cards = @order.credit_cards.select { |cc| cc.gateway_customer_profile_id }
-      raise StandardError.new('Credit card with token not found') unless cards.first
+      cards = @order.credit_cards.select(&:gateway_customer_profile_id)
+      raise StandardError, 'Credit card with token not found' unless cards.first
 
       cards.first.gateway_customer_profile_id
     end
@@ -109,11 +103,11 @@ module Flow
     # we want to return errors in standardized format
     def error_response(exception_object)
       message = if exception_object.respond_to?(:body) && exception_object.body.length > 0
-                  description = JSON.load(exception_object.body)['messages'].to_sentence
+                  description = Oj.load(exception_object.body)['messages'].to_sentence
                   "#{exception_object.details}: #{description} (#{exception_object.code})"
                 else
                   exception_object.message
-      end
+                end
 
       ActiveMerchant::Billing::Response.new(false, message, exception: exception_object)
     end

@@ -8,7 +8,7 @@ module FlowcommerceSpree
       @logger = logger
     end
 
-    def instance(base_uri, path)
+    def instance(base_uri, _path)
       @http_client = LoggingHttpClient.new(base_uri, logger: @logger)
     end
   end

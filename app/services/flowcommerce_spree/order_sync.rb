@@ -149,7 +149,7 @@ module FlowcommerceSpree
                                 city: address.city,
                                 province: address.state_name,
                                 postal: address.zipcode,
-                                country: (address.country.iso3 rescue 'USA'),
+                                country: (address.country.iso3 || 'USA'),
                                 contact: @body[:customer] }
 
         @body[:destination].delete_if { |_k, v| v.nil? }
@@ -221,8 +221,7 @@ module FlowcommerceSpree
         return if @use_get && response_total == cache_total
 
         # update local order
-        @order.flow_data['digest'] = @digest
-        @order.flow_data['order']  = @response.to_hash
+        @order.flow_data.merge!('digest' => @digest, 'order' => @response.to_hash)
       end
 
       @order.update_column(:meta, @order.meta.to_json)

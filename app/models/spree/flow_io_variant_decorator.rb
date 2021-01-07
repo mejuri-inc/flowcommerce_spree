@@ -52,12 +52,11 @@ module Spree
     # upload product variant to Flow's Product Catalog
     def sync_product_to_flow
       # initial Spree seed will fail, so skip unless we have Flow data field
-      return if !respond_to?(:flow_data) || FlowcommerceSpree::API_KEY.blank? || FlowcommerceSpree::API_KEY == 'test_key'
+      return unless respond_to?(:flow_data)
+
+      return if FlowcommerceSpree::API_KEY.blank? || FlowcommerceSpree::API_KEY == 'test_key'
 
       return { error: 'Price is 0' } if price == 0
-
-      # master is not sellable, if product has other variants
-      # return { error: 'Master not sellable, if product has other variants' } if is_master? && product.variants.size > 1
 
       additional_attrs = {}
       attr_name = nil
@@ -106,7 +105,7 @@ module Spree
       price_object = flow_prices(flow_exp)&.first
       amount = price_object&.[](:amount) || price
       currency = price_object&.[](:currency) || cost_currency
-      Spree::Price.new(variant_id: self.id, currency: currency, amount: amount)
+      Spree::Price.new(variant_id: id, currency: currency, amount: amount)
     end
 
     def price_in_zone(currency, product_zone)
@@ -182,7 +181,7 @@ module Spree
         product_meta_title: taxon&.meta_title.to_s,
         product_meta_description: taxon&.meta_description.to_s,
         product_meta_keywords: taxon&.meta_keywords.to_s,
-        product_slug: product.slug,
+        product_slug: product.slug
       }.select { |_k, v| v.present? }
     end
 

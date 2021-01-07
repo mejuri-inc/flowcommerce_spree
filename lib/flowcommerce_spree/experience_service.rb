@@ -7,12 +7,12 @@ module FlowcommerceSpree
     extend self
 
     def all(no_world = nil)
-      experiences = get_from_flow
-      no_world ? experiences.select { |exp| exp.key != 'world' } : experiences
+      experiences = fetch_from_flow
+      no_world ? experiences.reject { |exp| exp.key == 'world' } : experiences
     end
 
     def keys
-      all.map { |el| el.key }
+      all.map(&:key)
     end
 
     def get(key)
@@ -23,7 +23,7 @@ module FlowcommerceSpree
     end
 
     def get_by_subcatalog_id(subcatalog_id)
-      get_from_flow.each do |experince|
+      fetch_from_flow.each do |experince|
         return experince if experince.subcatalog.id == subcatalog_id
       end
 
@@ -35,12 +35,13 @@ module FlowcommerceSpree
     end
 
     def default
-      FlowcommerceSpree::ExperienceService.all.select { |exp| exp.key.downcase == ENV.fetch('FLOW_BASE_COUNTRY').downcase }.first
+      FlowcommerceSpree::ExperienceService
+        .all.select { |exp| exp.key.downcase == ENV.fetch('FLOW_BASE_COUNTRY').downcase }.first
     end
 
     private
 
-    def get_from_flow
+    def fetch_from_flow
       # return cached_experinces if cache_valid?
 
       experiences = FlowcommerceSpree.client.experiences.get ORGANIZATION
