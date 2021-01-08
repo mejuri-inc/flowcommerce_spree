@@ -111,14 +111,15 @@ module FlowcommerceSpree
 
       add_customer if @customer
 
-      # if defined, add selection (delivery options) and delivered_duty from flow_data
-      @body[:selections] = [@order.flow_data['selection']] if @order.flow_data['selection']
-      @body[:delivered_duty] = @order.flow_data['delivered_duty'] if @order.flow_data['delivered_duty']
+      if (flow_data = @order.flow_data['order'])
+        @body[:selections] = flow_data['selections'].presence
+        @body[:delivered_duty] = flow_data['delivered_duty'].presence
+        @body[:attributes] = flow_data['attributes'].presence
 
-      # discount on full order is applied
-      if @order.adjustment_total != 0
-        @body[:discount] = { amount: @order.adjustment_total,
-                             currency: @order.currency }
+        if @order.adjustment_total != 0
+          # discount on full order is applied
+          @body[:discount] = { amount: @order.adjustment_total, currency: @order.currency }
+        end
       end
 
       # calculate digest body and cache it
