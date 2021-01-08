@@ -12,7 +12,7 @@ module Spree # rubocop:disable Metrics/ModuleLength
     after_touch :sync_to_flow_io
 
     def sync_to_flow_io
-      return unless zone&.flow_io_active_experience? && state == 'cart' && line_items.exists?
+      return unless zone&.flow_io_active_experience? && state == 'cart' && line_items.size > 0
 
       flow_io_order = FlowcommerceSpree::OrderSync.new(order: self)
       flow_io_order.build_flow_request
@@ -117,6 +117,16 @@ module Spree # rubocop:disable Metrics/ModuleLength
 
     def flow_io_order_id
       flow_data&.dig('order', 'id')
+    end
+
+    def flow_attributes
+      flow_data&.dig('order', 'attributes') || {}
+    end
+
+    def add_user_consent(consent, value)
+      self.flow_data['order'] ||= {}
+      self.flow_data['order']['attributes'] ||= {}
+      self.flow_data['order']['attributes'][consent] = value
     end
 
     def checkout_url
