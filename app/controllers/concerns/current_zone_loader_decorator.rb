@@ -12,7 +12,9 @@ CurrentZoneLoader.module_eval do
       if Rails.env.production?
         request.ip
       else
-        Spree::Config[:debug_request_ip_address] || request.ip
+        header['X-Mejuri-Ip-Address'] ||
+          Spree::Config[:debug_request_ip_address] ||
+          request.ip
         # Germany ip: 85.214.132.117, Sweden ip: 62.20.0.196, Moldova ip: 89.41.76.29
       end
     flow_io_session = FlowcommerceSpree::Session
