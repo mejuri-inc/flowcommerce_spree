@@ -34,7 +34,7 @@ module FlowcommerceSpree
       debug_file = "#{dir}/#{debug_path.gsub(/[^\w]+/, '_')}.bash"
       File.write debug_file, command + "\n"
 
-      Oj.load `#{command}`
+      JSON.load `#{command}`
     end
 
     def logger
