@@ -24,7 +24,7 @@ module FlowcommerceSpree
         return unless order.flow_data['order']
 
         order.flow_data.delete('order')
-        order.update_column :flow_data, order.flow_data.dup
+        order.update_column :meta, order.meta.to_json
       end
     end
 
