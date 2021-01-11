@@ -251,10 +251,14 @@ namespace :flowcommerce_spree do
       offset += page_size
 
       items.each do |item|
-        promises << Concurrent::Promises.future_on(thread_pool, item['number']) do |sku|
+        variant_sku = item['number']
+        promises << Concurrent::Promises.future_on(thread_pool, variant_sku) do |sku|
           FlowcommerceSpree::Api.run :delete, "/:organization/catalog/items/#{sku}"
           $stdout.puts "Removed item: #{sku.red}"
         end
+        v = Spree::Variant.find_by(sku: variant_sku)
+        v.flow_data.delete('last_sync_sh1')
+        v.update_column(:meta, v.meta.to_json)
       end
     end
 
