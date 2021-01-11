@@ -77,6 +77,8 @@ module FlowcommerceSpree
       return errors << { message: "Order #{order_number} not found" } unless order
 
       order.flow_data['order'] = received_order.to_hash
+      attrs_to_update = { meta: order.meta.to_json }
+      attrs_to_update[state] = 'complete' if order.flow_data['order']['submitted_at'].present?
       order.update_column(:meta, order.meta.to_json)
       order
     end
