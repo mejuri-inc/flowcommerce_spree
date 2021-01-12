@@ -11,7 +11,7 @@ module FlowcommerceSpree
       # we have to log start, so that another process does not start while this one is running
       @refresher.log_refresh!
 
-      @client.experiences.get(@organization).each do |experience|
+      @client.experiences.get(@organization, status: 'active').each do |experience|
         experience_key = experience.key
         zone = Spree::Zones::Product.find_or_initialize_by(name: experience_key.titleize)
         zone.store_flow_io_data(experience, logger: @refresher.logger)
