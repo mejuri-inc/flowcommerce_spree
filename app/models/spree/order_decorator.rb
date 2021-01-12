@@ -119,14 +119,24 @@ module Spree # rubocop:disable Metrics/ModuleLength
       flow_data&.dig('order', 'id')
     end
 
-    def flow_attributes
+    def flow_io_attributes
       flow_data&.dig('order', 'attributes') || {}
     end
 
-    def add_user_consent(consent, value)
+    def add_user_consent_to_flow_data(consent, value)
       self.flow_data['order'] ||= {}
       self.flow_data['order']['attributes'] ||= {}
       self.flow_data['order']['attributes'][consent] = value
+    end
+
+    def add_user_uuid_to_flow_data
+      self.flow_data['order'] ||= {}
+      self.flow_data['order']['attributes'] ||= {}
+      self.flow_data['order']['attributes']['user_uuid'] = user&.uuid
+    end
+
+    def flow_io_user_uuid
+      flow_data&.dig('order', 'attributes', 'user_uuid')
     end
 
     def checkout_url
