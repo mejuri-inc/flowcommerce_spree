@@ -65,22 +65,24 @@ module FlowcommerceSpree
     end
 
     def hook_order_upserted_v2
-      if (received_order = @data['order'])
-        if (order_number = received_order['number'])
-          if (order = Spree::Order.find_by(number: order_number))
-            order.flow_data['order'] = received_order.to_hash
-            attrs_to_update = { meta: order.meta.to_json }
-            attrs_to_update[:state] = 'complete' if order.flow_data['order']['submitted_at'].present?
-            order.update_columns(attrs_to_update)
-            return order
-          else
-            errors << { message: "Order #{order_number} not found" }
+      errors << { message: 'Order param missing' } unless (received_order = @data['order'])
+
+      if errors.none? && (order_number = received_order['number'])
+        if (order = Spree::Order.find_by(number: order_number))
+          order.flow_data['order'] = received_order.to_hash
+          attrs_to_update = { meta: order.meta.to_json }
+          if order.flow_data['order']['submitted_at'].present?
+            attrs_to_update[:state] = 'complete'
+            attrs_to_update[:completed_at] = Time.zone.now
           end
+
+          order.update_columns(attrs_to_update)
+          return order
         else
-          errors << { message: 'Order number param missing' }
+          errors << { message: "Order #{order_number} not found" }
         end
       else
-        errors << { message: 'Order param missing' }
+        errors << { message: 'Order number param missing' }
       end
 
       self
