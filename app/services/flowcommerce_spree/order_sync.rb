@@ -196,7 +196,7 @@ module FlowcommerceSpree
 
     def add_item(line_item)
       variant    = line_item.variant
-      price_root = variant.flow_data.dig('exp', @experience, 'prices')[0] || {}
+      price_root = variant.flow_data&.dig('exp', @experience, 'prices')&.[](0) || {}
 
       # create flow order line item
       item = { center: FLOW_CENTER,
