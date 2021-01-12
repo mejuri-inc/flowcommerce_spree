@@ -23,15 +23,11 @@ module FlowcommerceSpree
       else
         discriminator = @data['discriminator']
         hook_method = "hook_#{discriminator}"
-        if respond_to?(hook_method, true)
-          hook_processor_result = __send__(hook_method)
+        # If hook processing method registered an error, a self.object of WebhookService with this error will be
+        # returned, else an ActiveRecord object will be returned
+        return __send__(hook_method) if respond_to?(hook_method, true)
 
-          # If hook processing method registered an error, return self.object of WebhookService with this error, else
-          # return hook_processor_result, which will be an ActiveRecord object
-          return hook_processor_result unless errors.any?
-        else
-          errors << { message: "No hook for #{discriminator}" }
-        end
+        errors << { message: "No hook for #{discriminator}" }
       end
 
       self
@@ -45,42 +41,49 @@ module FlowcommerceSpree
     end
 
     def hook_local_item_upserted
-      local_item = @data['local_item']
-      return errors << { message: 'Local item param missing' } unless local_item
+      if (local_item = @data['local_item'])
+        if (received_sku = local_item.dig('item', 'number'))
+          if (@variant = Spree::Variant.find_by(sku: received_sku))
+            @variant.add_flow_io_experience_data(
+              local_item.dig('experience', 'key'),
+              'prices' => [local_item.dig('pricing', 'price')], 'status' => local_item['status']
+            )
 
-      received_sku = local_item.dig('item', 'number')
-      return errors << { message: 'SKU param missing' } unless received_sku
+            @variant.update_column(:meta, @variant.meta.to_json)
+            return @variant
+          else
+            errors << { message: "Variant with sku [#{received_sku}] not found!" }
+          end
+        else
+          errors << { message: 'SKU param missing' }
+        end
+      else
+        errors << { message: 'Local item param missing' }
+      end
 
-      exp_key = local_item.dig('experience', 'key')
-
-      # TODO: Check if this is really necessary
-      # for testing we need ability to inject dependency for variant class
-      variant_class = @opts[:variant_class] || Spree::Variant
-      @variant      = variant_class.find_by(sku: received_sku)
-
-      return errors << { message: "Variant with sku [#{received_sku}] not found!" } unless @variant
-
-      @variant.add_flow_io_experience_data(
-        exp_key, 'prices' => [local_item.dig('pricing', 'price')], 'status' => local_item['status']
-      )
-
-      @variant.update_column(:meta, @variant.meta.to_json)
-      @variant
+      self
     end
 
     def hook_order_upserted_v2
-      return errors << { message: 'Order param missing' } unless (received_order = @data['order'])
+      if (received_order = @data['order'])
+        if (order_number = received_order['number'])
+          if (order = Spree::Order.find_by(number: order_number))
+            order.flow_data['order'] = received_order.to_hash
+            attrs_to_update = { meta: order.meta.to_json }
+            attrs_to_update[:state] = 'complete' if order.flow_data['order']['submitted_at'].present?
+            order.update_columns(attrs_to_update)
+            return order
+          else
+            errors << { message: "Order #{order_number} not found" }
+          end
+        else
+          errors << { message: 'Order number param missing' }
+        end
+      else
+        errors << { message: 'Order param missing' }
+      end
 
-      return errors << { message: 'Order number param missing' } unless (order_number = received_order['number'])
-
-      order = Spree::Order.find_by(number: order_number)
-      return errors << { message: "Order #{order_number} not found" } unless order
-
-      order.flow_data['order'] = received_order.to_hash
-      attrs_to_update = { meta: order.meta.to_json }
-      attrs_to_update[state] = 'complete' if order.flow_data['order']['submitted_at'].present?
-      order.update_column(:meta, order.meta.to_json)
-      order
+      self
     end
 
     # send en email when order is refunded
