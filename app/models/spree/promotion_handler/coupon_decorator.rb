@@ -6,8 +6,8 @@ module Spree
       def apply
         if order.coupon_code.present?
           if promotion&.actions.exists?
-            experience_key  = order.flow_order.dig('experience', 'key')
-            forbiden_keys   = promotion.flow_data.dig('filter', 'experience') || []
+            experience_key  = order.flow_order&.dig('experience', 'key')
+            forbiden_keys   = promotion.flow_data&.dig('filter', 'experience') || []
 
             if experience_key.present? && !forbiden_keys.include?(experience_key)
               self.error = 'Promotion is not available in current country'
