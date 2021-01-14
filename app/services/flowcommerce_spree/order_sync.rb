@@ -37,7 +37,6 @@ module FlowcommerceSpree
       @order = order
       @client = FlowcommerceSpree.client(session_id: refresh_session)
       @session_changed = nil
-      @items = []
     end
 
     # helper method to send complete order from Spree to flow.io
@@ -68,7 +67,7 @@ module FlowcommerceSpree
 
     # delivery methods are defined in flow console
     def deliveries
-      # if we have erorr with an order, but still using this method
+      # if we have error with an order, but still using this method
       return [] unless @order.flow_order
 
       @order.flow_data ||= {}
@@ -105,13 +104,8 @@ module FlowcommerceSpree
 
     # builds object that can be sent to api.flow.io to sync order data
     def build_flow_request
-      @order.line_items.each { |line_item| add_item(line_item) }
-
-      @opts = {}
-      @opts[:experience]   = @experience
-      @opts[:expand]       = ['experience']
-
-      @body = { items: @items }
+      @opts = { experience: @experience, expand: ['experience'] }
+      @body = { items: @order.line_items.map { |line_item| add_item(line_item) } }
 
       try_to_add_customer
 
@@ -185,8 +179,6 @@ module FlowcommerceSpree
 
         @body[:destination].delete_if { |_k, v| v.nil? }
       end
-
-      @body
     end
 
     def sync_body!
@@ -229,13 +221,11 @@ module FlowcommerceSpree
       price_root = variant.flow_data&.dig('exp', @experience, 'prices')&.[](0) || {}
 
       # create flow order line item
-      item = { center: FLOW_CENTER,
-               number: variant.sku,
-               quantity: line_item.quantity,
-               price: { amount: price_root['amount'] || variant.cost_price,
-                        currency: price_root['currency'] || variant.cost_currency } }
-
-      @items.push item
+      { center: FLOW_CENTER,
+        number: variant.sku,
+        quantity: line_item.quantity,
+        price: { amount: price_root['amount'] || variant.cost_price,
+                 currency: price_root['currency'] || variant.cost_currency } }
     end
 
     # set cache for total order amount
