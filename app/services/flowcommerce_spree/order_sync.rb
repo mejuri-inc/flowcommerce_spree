@@ -19,6 +19,8 @@ module FlowcommerceSpree
 
     attr_reader :digest, :order, :response
 
+    delegate :url_helpers, to: 'Rails.application.routes'
+
     class << self
       def clear_cache(order)
         return unless order.flow_data['order']
@@ -109,7 +111,6 @@ module FlowcommerceSpree
       @opts[:experience]   = @experience
       @opts[:expand]       = ['experience']
 
-      # @body = { items: @items, number: @order.number }
       @body = { items: @items }
 
       try_to_add_customer
@@ -143,14 +144,16 @@ module FlowcommerceSpree
     end
 
     def refresh_checkout_token
+      root_url = url_helpers.root_url
+      order_number = @order.number
       checkout_token = FlowcommerceSpree.client.checkout_tokens.post_checkout_and_tokens_by_organization(
         FlowcommerceSpree::ORGANIZATION,
         discriminator: 'checkout_token_reference_form',
-        order_number: @order.number,
+        order_number: order_number,
         session_id: @order.flow_data['session_id'],
-        urls: { continue_shopping: 'http://dev.mejuri.com:3100',
-                confirmation: 'http://dev.mejuri.com:3100',
-                invalid_checkout: 'http://dev.mejuri.com:3100' }
+        urls: { continue_shopping: root_url,
+                confirmation: "#{root_url}thankyou?order=#{order_number}&t=#{@order.guest_token}",
+                invalid_checkout: root_url }
       )
       @order.add_flow_checkout_token(checkout_token.id)
     end
