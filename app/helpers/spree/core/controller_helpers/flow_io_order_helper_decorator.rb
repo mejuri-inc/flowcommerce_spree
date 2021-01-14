@@ -12,16 +12,22 @@ module Spree
           update_meta = @current_order.zone_id ? nil : true
           @current_order.zone = current_zone
 
-          if @current_order.zone&.flow_io_active_experience? && @current_order.flow_io_experience_key.nil?
-            @current_order.flow_io_experience_from_zone
-            order_flow_io_session_id = @current_order.flow_data['session_id']
-            flow_io_session_id = session['_f60_session']
-            if order_flow_io_session_id.present? && flow_io_session_id.blank?
-              session['_f60_session'] = order_flow_io_session_id
-            elsif flow_io_session_id.present?
-              @current_order.flow_data['session_id'] = flow_io_session_id
+          if @current_order.zone&.flow_io_active_experience?
+            if @current_order.flow_io_experience_key.nil?
+              @current_order.flow_io_experience_from_zone
+              update_meta ||= true
             end
-            update_meta = true
+            order_flow_session_id = @current_order.flow_data['session_id']
+            flow_io_session_id = session['_f60_session']
+            if flow_io_session_id.present?
+              if order_flow_session_id != flow_io_session_id
+                @current_order.flow_data['session_id'] = flow_io_session_id
+                update_meta ||= true
+              end
+            elsif order_flow_session_id.present?
+              session['_f60_session'] = order_flow_session_id
+              RequestStore.store[:flow_session_id] = flow_io_session.id
+            end
           end
 
           if @current_order.new_record?

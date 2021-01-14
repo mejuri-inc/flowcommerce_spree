@@ -2,39 +2,18 @@
 
 Integration of Spree with Flow, how it is done.
 
-I plan to be concise as possible, but cover all important topics.
+## Installation
 
-## Instalation
-
-Add the following lines to `./config/application.rb` :
-
-```
-  config.to_prepare do
-    # add all flow libs
-    overload = Dir.glob('./app/flow/**/*.rb')
-    overload.reverse.each { |c| require(c) }
-  end
-
-  config.after_initialize do |app|
-    # init Flow payments as an option
-    app.config.spree.payment_methods << Spree::Gateway::Flow
-  end
-```
-
-Additional configuration could be adjusted in the gem's initializer. For example, the following file could be created in the main application:
+Additional configuration could be adjusted in the gem's initializer. For example, the following file could be created 
+in the main application, which would add additional attributes of spree_variants to be imported/exported to flow.io:
 
 ```
 # ./config/initializers/flowcommerce_spree.rb
 
-FlowcommerceSpree.configure do |c|
-  c.experience_associator = FlowcommerceSpree::ExperienceAssociator
-end
+FlowcommerceSpree::Config.additional_attributes =
+  { spree_variants: { country_of_origin: { import: true, export: :optional },
+                      customs_description: { import: true, export: :optional, export_name: 'materials' } } }
 ```
-
-### Configurable settings
-
-1. experience_associator - this attribute could be assigned, if necessary, a service object to perform some
- additional association actions when upserting a FlowcommerceSpree::Experience model
 
 ## Things to take into account
 
@@ -131,4 +110,3 @@ By default Flow Admin (on /admin/flow) is anybody that is Spree admin.
 
 This way we provide good frontend info, some integration notes in realtime as opposed to running
 rake tests to check for integrity of Flow integration.
-
