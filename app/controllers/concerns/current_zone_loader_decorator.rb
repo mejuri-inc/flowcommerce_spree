@@ -21,7 +21,11 @@ CurrentZoneLoader.module_eval do
     # response, will be available in the session object - flow_io_session.experience
     flow_io_session.create
     zone = Spree::Zones::Product.active.find_by(name: flow_io_session.experience&.key&.titleize)
-    session['_f60_session'] = flow_io_session.id if zone
+    if zone
+      session['_f60_session'] = flow_io_session.id
+      RequestStore.store[:flow_session_id] = flow_io_session.id
+    end
+
     zone
   end
 

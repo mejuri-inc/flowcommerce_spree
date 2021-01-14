@@ -4,7 +4,7 @@
 # adapter for Spree that talks to activemerchant_flow
 module Spree
   class Gateway
-    class Flow < Gateway
+    class FlowIo < Gateway
       def provider_class
         self.class
       end

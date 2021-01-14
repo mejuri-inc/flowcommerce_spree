@@ -5,13 +5,13 @@ module FlowcommerceSpree
   # for easy integration we are currently passing:
   # - flow experience
   # - spree order
-  # - current customer, present as  @current_spree_user controller instance variable
+  # - current customer, if present as  @order.user
   #
   # example:
   #  flow_order = FlowcommerceSpree::OrderSync.new    # init flow-order object
   #    order: Spree::Order.last,
   #    experience: @flow_session.experience
-  #    customer: Spree::User.last
+  #    customer: @order.user
   #  flow_order.build_flow_request           # builds json body to be posted to flow.io api
   #  flow_order.synchronize!                 # sends order to flow
   class OrderSync
@@ -31,11 +31,11 @@ module FlowcommerceSpree
     def initialize(order:)
       raise(ArgumentError, 'Experience not defined or not active') unless order.zone&.flow_io_active_experience?
 
-      @client = FlowcommerceSpree.client(session_id: order.flow_data['session_id'])
       @experience = order.flow_io_experience_key
-      @order      = order
-      @customer   = order.user
-      @items      = []
+      @order = order
+      @client = FlowcommerceSpree.client(session_id: refresh_session)
+      @session_changed = nil
+      @items = []
     end
 
     # helper method to send complete order from Spree to flow.io
@@ -43,6 +43,8 @@ module FlowcommerceSpree
       sync_body!
       check_state!
       write_response_in_cache
+      refresh_checkout_token if @session_changed || @order.flow_io_checkout_token.nil?
+      @order.update_column(:meta, @order.meta.to_json)
       @response
     end
 
@@ -107,9 +109,10 @@ module FlowcommerceSpree
       @opts[:experience]   = @experience
       @opts[:expand]       = ['experience']
 
-      @body = { items: @items, number: @order.number }
+      # @body = { items: @items, number: @order.number }
+      @body = { items: @items }
 
-      add_customer if @customer
+      try_to_add_customer
 
       if (flow_data = @order.flow_data['order'])
         @body[:selections] = flow_data['selections'].presence
@@ -128,18 +131,42 @@ module FlowcommerceSpree
 
     private
 
+    def refresh_session
+      return unless (current_flow_session_id = RequestStore.store[:flow_session_id])
+
+      if current_flow_session_id != @order.flow_data['session_id']
+        @order.flow_data['session_id'] = current_flow_session_id
+        refresh_checkout_token
+        @session_changed = true
+      end
+      current_flow_session_id
+    end
+
+    def refresh_checkout_token
+      checkout_token = FlowcommerceSpree.client.checkout_tokens.post_checkout_and_tokens_by_organization(
+        FlowcommerceSpree::ORGANIZATION,
+        discriminator: 'checkout_token_reference_form',
+        order_number: @order.number,
+        session_id: @order.flow_data['session_id'],
+        urls: { continue_shopping: 'http://dev.mejuri.com:3100',
+                confirmation: 'http://dev.mejuri.com:3100',
+                invalid_checkout: 'http://dev.mejuri.com:3100' }
+      )
+      @order.add_flow_checkout_token(checkout_token.id)
+    end
+
     # if customer is defined, add customer info
     # it is possible to have order in Spree without customer info (new guest session)
-    def add_customer
-      return unless @customer
+    def try_to_add_customer
+      return unless (customer = @order.user)
 
-      address = @customer.ship_address
+      address = customer.ship_address
       # address = nil
       if address
         @body[:customer] = { name: { first: address.firstname,
                                      last: address.lastname },
-                             email: @customer.email,
-                             number: @customer.flow_number,
+                             email: customer.email,
+                             number: customer.flow_number,
                              phone: address.phone }
 
         streets = []
@@ -208,7 +235,7 @@ module FlowcommerceSpree
       @items.push item
     end
 
-    # set cache for total order ammount
+    # set cache for total order amount
     # written in flow_data field inside spree_orders table
     def write_response_in_cache
       if !@response || error?
@@ -224,8 +251,6 @@ module FlowcommerceSpree
         # update local order
         @order.flow_data.merge!('digest' => @digest, 'order' => @response.to_hash)
       end
-
-      @order.update_column(:meta, @order.meta.to_json)
     end
   end
 end
