@@ -107,6 +107,10 @@ module Spree # rubocop:disable Metrics/ModuleLength
       model.new ENV.fetch('FLOW_BASE_COUNTRY')
     end
 
+    def flow_io_checkout_token
+      flow_data&.[]('checkout_token')
+    end
+
     def flow_io_experience_key
       flow_data&.[]('exp')
     end
@@ -123,6 +127,11 @@ module Spree # rubocop:disable Metrics/ModuleLength
       flow_data&.dig('order', 'attributes') || {}
     end
 
+    def add_flow_checkout_token(token)
+      self.flow_data ||= {}
+      self.flow_data['checkout_token'] = token
+    end
+
     def add_user_consent_to_flow_data(consent, value)
       self.flow_data['order'] ||= {}
       self.flow_data['order']['attributes'] ||= {}
@@ -132,14 +141,17 @@ module Spree # rubocop:disable Metrics/ModuleLength
     def add_user_uuid_to_flow_data
       self.flow_data['order'] ||= {}
       self.flow_data['order']['attributes'] ||= {}
-      self.flow_data['order']['attributes']['user_uuid'] = user&.uuid
+      self.flow_data['order']['attributes']['user_uuid'] = user&.uuid || ''
     end
 
-    def flow_io_user_uuid
+    def flow_io_attr_user_uuid
       flow_data&.dig('order', 'attributes', 'user_uuid')
     end
 
     def checkout_url
+      checkout_token = flow_io_checkout_token
+      return "https://checkout.flow.io/tokens/#{checkout_token}" if checkout_token
+
       "https://checkout.flow.io/#{FlowcommerceSpree::ORGANIZATION}/checkout/#{number}/" \
         "contact-info?flow_session_id=#{flow_data['session_id']}"
     end
