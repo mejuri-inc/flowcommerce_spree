@@ -26,7 +26,7 @@ module Spree
               end
             elsif order_flow_session_id.present?
               session['_f60_session'] = order_flow_session_id
-              RequestStore.store[:flow_session_id] = flow_io_session.id
+              RequestStore.store[:flow_session_id] = order_flow_session_id
             end
           end
 
