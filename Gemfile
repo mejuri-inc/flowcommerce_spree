@@ -19,3 +19,7 @@ group :development, :test do
   gem 'factory_bot_rails', '~> 4.0'
   gem 'pg', '~> 0.21'
 end
+
+group :test do
+  gem 'database_cleaner'
+end
