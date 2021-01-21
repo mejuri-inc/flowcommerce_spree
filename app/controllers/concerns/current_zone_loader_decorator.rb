@@ -13,7 +13,7 @@ CurrentZoneLoader.module_eval do
     end
 
     if request_iso_code.present?
-      @current_zone ||= flow_zone if defined?(FlowcommerceSpree)
+      @current_zone ||= flow_zone
       @current_zone ||= Spree::Country.find_by(iso: request_iso_code)&.product_zones&.active&.first
     end
 
