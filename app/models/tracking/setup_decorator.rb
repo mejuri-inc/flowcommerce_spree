@@ -5,6 +5,8 @@ module Tracking
     private
 
     def setup_tracking
+      return if request.path.start_with?('/shop/admin/')
+
       user_consents = UserConsent.new(cookies)
       setup_visitor_cookie(user_consents)
       store_order_flow_io_attributes(user_consents) if current_order&.zone&.flow_io_active_experience?
