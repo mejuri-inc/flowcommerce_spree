@@ -3,6 +3,29 @@
 CurrentZoneLoader.module_eval do
   extend ActiveSupport::Concern
 
+  def current_zone # rubocop:disable Metrics/MethodLength, Metrics/AbcSize
+    return @current_zone if defined?(@current_zone)
+
+    if (session_region_name = session['region']&.[]('name'))
+      @current_zone ||= Spree::Zones::Product.find_by(name: session_region_name)
+      flow_io_session_id = session['_f60_session']
+      RequestStore.store[:flow_session_id] = flow_io_session_id if flow_io_session_id
+    end
+
+    if request_iso_code.present?
+      @current_zone ||= flow_zone if defined?(FlowcommerceSpree)
+      @current_zone ||= Spree::Country.find_by(iso: request_iso_code)&.product_zones&.active&.first
+    end
+
+    @current_zone ||= Spree::Zones::Product.find_by(name: 'International') ||
+      Spree::Zones::Product.new(name: 'International', taxon_ids: [], currencies: %w[USD CAD])
+
+    current_zone_name = @current_zone.name
+    session['region'] = { name: current_zone_name, available_currencies: @current_zone.available_currencies }
+    Rails.logger.debug("Using product zone: #{current_zone_name}")
+    @current_zone
+  end
+
   def flow_zone # rubocop:disable Metrics/MethodLength, Metrics/AbcSize
     return unless Spree::Zones::Product.active
                                        .where("meta -> 'flow_data' ->> 'country' = ?",
@@ -40,14 +63,5 @@ CurrentZoneLoader.module_eval do
           end
 
     "session-#{uid}"
-  end
-
-  def fetch_product_for_zone(product)
-    Rails.cache.fetch(
-      "product_zone_#{current_zone.name}_#{product.sku}", expires_in: 1.day,
-                                                          race_condition_ttl: 10.seconds, compress: true
-    ) do
-      Spree::Zones::Product.find_product_for_zone(product, current_zone)
-    end
   end
 end
