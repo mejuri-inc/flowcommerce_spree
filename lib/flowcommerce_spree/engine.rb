@@ -16,6 +16,12 @@ module FlowcommerceSpree
     config.flowcommerce_spree = ActiveSupport::OrderedOptions.new
 
     initializer 'flowcommerce_spree.configuration' do |app|
+      # If some Rake tasks will fail in development environment, the cause could be the autoloading.
+      # Uncommenting the following 3 lines will enable eager-loading for the flowcommerce_spree Rake tasks.
+      # if Rails.env.development?
+      #   app.config.eager_load = Rake.application.top_level_tasks.any? { |t| t.start_with?('flowcommerce_spree') }
+      # end
+
       app.config.flowcommerce_spree[:mounted_path] = ENV.fetch('FLOW_MOUNT_PATH', '/flow')
 
       app.routes.append do
