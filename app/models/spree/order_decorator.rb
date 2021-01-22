@@ -150,7 +150,7 @@ module Spree # rubocop:disable Metrics/ModuleLength
 
     def checkout_url
       checkout_token = flow_io_checkout_token
-      "https://checkout.flow.io/tokens/#{checkout_token}" if checkout_token
+      return "https://checkout.flow.io/tokens/#{checkout_token}" if checkout_token
     end
 
     # clear invalid zero amount payments. Solidus bug?
