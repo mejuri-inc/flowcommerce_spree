@@ -201,10 +201,9 @@ module FlowcommerceSpree
     # if customer is defined, add customer info
     # it is possible to have order in Spree without customer info (new guest session)
     def try_to_add_customer
-      return unless @order.user_id
+      return unless (customer = @order.user)
 
-      customer = @order.user
-      address = customer.ship_address
+      address = customer.ship_address || customer.user_profile&.address
 
       @body[:customer] = { name: { first: address&.firstname,
                                    last: address&.lastname },
