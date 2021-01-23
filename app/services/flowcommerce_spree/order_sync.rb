@@ -16,6 +16,7 @@ module FlowcommerceSpree
   #  flow_order.synchronize!                 # sends order to flow
   class OrderSync
     FLOW_CENTER = 'default'
+    SESSION_EXPIRATION_THRESHOLD = 10 # Refresh session if less than 10 seconds to session expiration remains
 
     attr_reader :digest, :order, :response
 
@@ -35,8 +36,8 @@ module FlowcommerceSpree
 
       @experience = order.flow_io_experience_key
       @order = order
-      @client = FlowcommerceSpree.client(session_id: refresh_session)
-      @session_changed = nil
+      @refresh_checkout_token = nil # must be set before fetch_session_id call
+      @client = FlowcommerceSpree.client(session_id: fetch_session_id)
     end
 
     # helper method to send complete order from Spree to flow.io
@@ -44,7 +45,11 @@ module FlowcommerceSpree
       sync_body!
       check_state!
       write_response_in_cache
-      refresh_checkout_token if @session_changed || @order.flow_io_checkout_token.nil?
+
+      # This is for 1st order syncing, when no checkout_token has been fetched yet. In all the subsequent syncs,
+      # the checkout_token is fetched in the `fetch_session_id` method, calling the refresh_checkout_token method when
+      # necessary.
+      refresh_checkout_token if @order.flow_io_checkout_token.blank?
       @order.update_column(:meta, @order.meta.to_json)
       @response
     end
@@ -126,15 +131,52 @@ module FlowcommerceSpree
 
     private
 
-    def refresh_session
-      return unless (current_flow_session_id = RequestStore.store[:flow_session_id])
+    def fetch_session_id
+      session = RequestStore.store[:session]
+      current_session_id = session&.[]('_f60_session')
+      session_expire_at = session&.[]('_f60_expires_at')&.to_datetime
+      order_flow_session_id = @order.flow_data['session_id']
+      order_session_expire_at = @order.flow_io_session_expires_at
 
-      if current_flow_session_id != @order.flow_data['session_id']
-        @order.flow_data['session_id'] = current_flow_session_id
-        refresh_checkout_token
-        @session_changed = true
+      if current_session_id && session_expire_at && !flow_io_session_expired?(session_expire_at.to_i)
+        # If request flow_session is not expired, don't refresh the flow_session (i.e., don't mark the refresh_session
+        # lvar as true), just store the flow_session data into the order, if it is new, and refresh the checkout_token
+        refresh_session = nil
+      elsif order_flow_session_id && order_session_expire_at && !flow_io_session_expired?(order_session_expire_at.to_i)
+        refresh_checkout_token if @order.flow_io_order_id && @order.flow_io_checkout_token.blank?
+        return order_flow_session_id
+      else
+        refresh_session = true
       end
-      current_flow_session_id
+
+      if refresh_session
+        flow_io_session = Session.new(
+          ip: '127.0.0.1',
+          visitor: "session-#{Digest::SHA1.hexdigest(@order.guest_token)}",
+          experience: @experience
+        )
+        flow_io_session.create
+        current_session_id = flow_io_session.id
+        session_expire_at = flow_io_session.expires_at.to_s
+      end
+
+      if order_flow_session_id == current_session_id && session_expire_at == order_session_expire_at &&
+         @order.flow_io_checkout_token.present?
+        return current_session_id
+      end
+
+      @order.flow_data['session_id'] = current_session_id
+      @order.flow_data['session_expires_at'] = session_expire_at
+
+      # On the 1st OrderSync at this moment the order is not yet created at flow.io, so we couldn't yet retrieve the
+      # checkout_token. This is done after the order will be synced, in the `synchronize!` method.
+      refresh_checkout_token if @order.flow_io_order_id
+
+      current_session_id
+    end
+
+    def flow_io_session_expired?(expiration_time)
+      expiration_time - Time.zone.now.utc.to_i < SESSION_EXPIRATION_THRESHOLD
     end
 
     def refresh_checkout_token
