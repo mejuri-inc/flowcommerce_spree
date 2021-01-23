@@ -22,7 +22,8 @@ module Spree
             flow_io_session_id = session['_f60_session']
             flow_io_session_expires = session['_f60_expires_at']
             if flow_io_session_id.present?
-              if order_flow_session_id != flow_io_session_id || order_session_expired != flow_io_session_expires
+              if order_flow_session_id != flow_io_session_id &&
+                 order_session_expired&.to_datetime.to_i < flow_io_session_expires&.to_datetime.to_i
                 @current_order.flow_data['session_id'] = flow_io_session_id
                 @current_order.flow_data['session_expires_at'] = flow_io_session_expires
                 @current_order.flow_data['checkout_token'] = nil
