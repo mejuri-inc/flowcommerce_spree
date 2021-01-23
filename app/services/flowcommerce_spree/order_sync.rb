@@ -36,7 +36,6 @@ module FlowcommerceSpree
 
       @experience = order.flow_io_experience_key
       @order = order
-      @refresh_checkout_token = nil # must be set before fetch_session_id call
       @client = FlowcommerceSpree.client(session_id: fetch_session_id)
     end
 
@@ -149,6 +148,11 @@ module FlowcommerceSpree
         refresh_session = true
       end
 
+      if order_flow_session_id == current_session_id && session_expire_at == order_session_expire_at &&
+        @order.flow_io_checkout_token.present?
+        return current_session_id
+      end
+
       if refresh_session
         flow_io_session = Session.new(
           ip: '127.0.0.1',
@@ -160,13 +164,13 @@ module FlowcommerceSpree
         session_expire_at = flow_io_session.expires_at.to_s
       end
 
-      if order_flow_session_id == current_session_id && session_expire_at == order_session_expire_at &&
-         @order.flow_io_checkout_token.present?
-        return current_session_id
-      end
-
       @order.flow_data['session_id'] = current_session_id
       @order.flow_data['session_expires_at'] = session_expire_at
+
+      if session.respond_to?(:[])
+        session['_f60_session'] = current_session_id
+        session['_f60_expires_at'] = session_expire_at
+      end
 
       # On the 1st OrderSync at this moment the order is not yet created at flow.io, so we couldn't yet retrieve the
       # checkout_token. This is done after the order will be synced, in the `synchronize!` method.
