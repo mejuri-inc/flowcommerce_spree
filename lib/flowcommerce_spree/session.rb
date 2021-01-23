@@ -5,11 +5,12 @@ module FlowcommerceSpree
   class Session
     attr_accessor :session, :localized, :visitor
 
-    def initialize(ip:, visitor:)
+    def initialize(ip:, visitor:, experience: nil)
       ip = '127.0.0.1' if ip == '::1'
 
       @ip      = ip
       @visitor = visitor
+      @experience = experience
     end
 
     # create session with blank data
@@ -17,6 +18,7 @@ module FlowcommerceSpree
       data = { ip: @ip,
                visit: { id: @visitor,
                         expires_at: (Time.now + 30.minutes).iso8601 } }
+      data[:experience] = @experience if @experience
 
       session_model = ::Io::Flow::V0::Models::SessionForm.new data
       @session = FlowCommerce.instance(http_handler: LoggingHttpHandler.new)
@@ -32,6 +34,10 @@ module FlowcommerceSpree
     # get local experience or return nil
     def experience
       @session.local&.experience
+    end
+
+    def expires_at
+      @session.visit.expires_at
     end
 
     def local
