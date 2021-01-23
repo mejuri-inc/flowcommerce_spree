@@ -6,10 +6,9 @@ CurrentZoneLoader.module_eval do
   def current_zone # rubocop:disable Metrics/MethodLength, Metrics/AbcSize
     return @current_zone if defined?(@current_zone)
 
+    RequestStore.store[:session] = session
     if (session_region_name = session['region']&.[]('name'))
       @current_zone ||= Spree::Zones::Product.find_by(name: session_region_name)
-      flow_io_session_id = session['_f60_session']
-      RequestStore.store[:flow_session_id] = flow_io_session_id if flow_io_session_id
     end
 
     if request_iso_code.present?
@@ -38,21 +37,20 @@ CurrentZoneLoader.module_eval do
         Spree::Config[:debug_request_ip_address] || request.ip
         # Germany ip: 85.214.132.117, Sweden ip: 62.20.0.196, Moldova ip: 89.41.76.29
       end
-    flow_io_session = FlowcommerceSpree::Session
-                      .new(ip: request_ip, visitor: visitor_id_for_flow_io)
+    flow_io_session = FlowcommerceSpree::Session.new(ip: request_ip, visitor: visitor_id_for_flow_io)
     # :create method will issue a request to flow.io. The experience, contained in the
     # response, will be available in the session object - flow_io_session.experience
     flow_io_session.create
     zone = Spree::Zones::Product.active.find_by(name: flow_io_session.experience&.key&.titleize)
     if zone
       session['_f60_session'] = flow_io_session.id
-      RequestStore.store[:flow_session_id] = flow_io_session.id
+      session['_f60_expires_at'] = flow_io_session.expires_at.to_s
     end
 
     zone
   end
 
-  # composes an unique vistor id for FlowcommerceSpree::Session model
+  # composes an unique visitor id for FlowcommerceSpree::Session model
   def visitor_id_for_flow_io
     guest_token = cookies.signed[:guest_token]
     uid = if guest_token

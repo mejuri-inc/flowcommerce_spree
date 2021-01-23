@@ -123,6 +123,10 @@ module Spree # rubocop:disable Metrics/ModuleLength
       flow_data&.dig('order', 'id')
     end
 
+    def flow_io_session_expires_at
+      flow_data&.[]('session_expires_at')&.to_datetime
+    end
+
     def flow_io_attributes
       flow_data&.dig('order', 'attributes') || {}
     end
