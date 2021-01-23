@@ -205,23 +205,22 @@ module FlowcommerceSpree
 
       customer = @order.user
       address = customer.ship_address
-      return unless address&.id
 
-      @body[:customer] = { name: { first: address.firstname,
-                                   last: address.lastname },
+      @body[:customer] = { name: { first: address&.firstname,
+                                   last: address&.lastname },
                            email: customer.email,
                            number: customer.flow_number,
-                           phone: address.phone }
+                           phone: address&.phone }
 
       streets = []
-      streets.push address.address1 unless address.address1.blank?
-      streets.push address.address2 unless address.address2.blank?
+      streets.push address.address1 unless address&.address1.blank?
+      streets.push address.address2 unless address&.address2.blank?
 
       @body[:destination] = { streets: streets,
-                              city: address.city,
-                              province: address.state_name,
-                              postal: address.zipcode,
-                              country: (address.country.iso3 || 'USA'),
+                              city: address&.city,
+                              province: address&.state_name,
+                              postal: address&.zipcode,
+                              country: (address&.country&.iso3 || 'USA'),
                               contact: @body[:customer] }
 
       @body[:destination].delete_if { |_k, v| v.nil? }
