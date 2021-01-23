@@ -201,30 +201,30 @@ module FlowcommerceSpree
     # if customer is defined, add customer info
     # it is possible to have order in Spree without customer info (new guest session)
     def try_to_add_customer
-      return unless (customer = @order.user)
+      return unless @order.user_id
 
+      customer = @order.user
       address = customer.ship_address
-      # address = nil
-      if address
-        @body[:customer] = { name: { first: address.firstname,
-                                     last: address.lastname },
-                             email: customer.email,
-                             number: customer.flow_number,
-                             phone: address.phone }
+      return unless address&.id
 
-        streets = []
-        streets.push address.address1 unless address.address1.blank?
-        streets.push address.address2 unless address.address2.blank?
+      @body[:customer] = { name: { first: address.firstname,
+                                   last: address.lastname },
+                           email: customer.email,
+                           number: customer.flow_number,
+                           phone: address.phone }
 
-        @body[:destination] = { streets: streets,
-                                city: address.city,
-                                province: address.state_name,
-                                postal: address.zipcode,
-                                country: (address.country.iso3 || 'USA'),
-                                contact: @body[:customer] }
+      streets = []
+      streets.push address.address1 unless address.address1.blank?
+      streets.push address.address2 unless address.address2.blank?
 
-        @body[:destination].delete_if { |_k, v| v.nil? }
-      end
+      @body[:destination] = { streets: streets,
+                              city: address.city,
+                              province: address.state_name,
+                              postal: address.zipcode,
+                              country: (address.country.iso3 || 'USA'),
+                              contact: @body[:customer] }
+
+      @body[:destination].delete_if { |_k, v| v.nil? }
     end
 
     def sync_body!
