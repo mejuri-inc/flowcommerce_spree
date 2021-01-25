@@ -3,7 +3,8 @@
 module FlowcommerceSpree
   class InventoryController < ActionController::Base
     def stock
-      response = params['items'].inject([]) { |result, item| result << check_stock(item[:id], item[:qty].to_i) }
+      items = params['items'] || []
+      response = items.inject([]) { |result, item| result << check_stock(item[:id], item[:qty].to_i) }
       render json: { items: response }, status: :ok
     end
 
