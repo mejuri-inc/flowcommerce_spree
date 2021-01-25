@@ -3,6 +3,10 @@
 require 'rails_helper'
 
 RSpec.describe Spree::Variant, type: :model do
+  before(:each) do
+    allow_any_instance_of(Spree::Variant).to(receive(:sync_product_to_flow))
+  end
+
   describe '#truncate_flow_data' do
     context 'when variant has flow_data' do
       let(:variant) { create(:base_variant, :with_flow_data) }

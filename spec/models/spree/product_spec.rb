@@ -3,6 +3,10 @@
 require 'rails_helper'
 
 RSpec.describe Spree::Product, type: :model do
+  before(:each) do
+    allow_any_instance_of(Spree::Variant).to(receive(:sync_product_to_flow))
+  end
+
   describe '#flow_local_price' do
     describe 'when variant has flow_data' do
       let(:product) { create(:product, :with_master_variant_flow_data) }

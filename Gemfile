@@ -24,4 +24,5 @@ end
 
 group :test do
   gem 'database_cleaner'
+  gem 'rspec-mocks', git: 'https://github.com/mejuri-inc/rspec-mocks'
 end
