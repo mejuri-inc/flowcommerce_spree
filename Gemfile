@@ -2,6 +2,8 @@
 
 source 'https://rubygems.org'
 
+gemspec
+
 group :development, :test do
   gem 'dotenv-rails', require: 'dotenv/rails-now'
 
