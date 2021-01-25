@@ -18,14 +18,14 @@ RSpec.describe FlowcommerceSpree::InventoryController, type: :controller do
         variant_sku = 'doesnotexists'
         spree_get :stock, items: [{ id: variant_sku, qty: 1 }]
         expect(response).to have_http_status(:ok)
-        expect(JSON.parse(response.body)['items']).to(include({ 'id' => variant_sku, 'has_inventory' => false }))
+        expect(JSON.parse(response.body)['items']).to(include('id' => variant_sku, 'has_inventory' => false))
       end
 
       context 'when variant does not have stock' do
         it 'returns has_inventory as false' do
           spree_get :stock, items: [{ id: variant.sku, qty: 1 }]
           expect(response).to have_http_status(:ok)
-          expect(JSON.parse(response.body)['items']).to(include({ 'id' => variant.sku, 'has_inventory' => false }))
+          expect(JSON.parse(response.body)['items']).to(include('id' => variant.sku, 'has_inventory' => false))
         end
       end
 
@@ -38,13 +38,13 @@ RSpec.describe FlowcommerceSpree::InventoryController, type: :controller do
         it 'returns has_inventory as true if enough available stock' do
           spree_get :stock, items: [{ id: variant.sku, qty: 1 }]
           expect(response).to have_http_status(:ok)
-          expect(JSON.parse(response.body)['items']).to(include({ 'id' => variant.sku, 'has_inventory' => true }))
+          expect(JSON.parse(response.body)['items']).to(include('id' => variant.sku, 'has_inventory' => true))
         end
 
         it 'returns has_inventory as false if not enough available stock' do
           spree_get :stock, items: [{ id: variant.sku, qty: 11 }]
           expect(response).to have_http_status(:ok)
-          expect(JSON.parse(response.body)['items']).to(include({ 'id' => variant.sku, 'has_inventory' => false }))
+          expect(JSON.parse(response.body)['items']).to(include('id' => variant.sku, 'has_inventory' => false))
         end
       end
     end
