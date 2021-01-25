@@ -61,7 +61,7 @@ module Spree
       additional_attrs = {}
       attr_name = nil
       export_required = false
-      FlowcommerceSpree::Config.additional_attributes[self.class.name.tableize.tr('/', '_').to_sym].each do |attr_item|
+      FlowcommerceSpree::Config.additional_attributes[self.class.name.tableize.tr('/', '_').to_sym]&.each do |attr_item|
         attr_name = attr_item[0]
         # Flow.io could require a different attribute name, as in case of Fulfil's :customs_description - it has the
         # export_name `:materials` for flow.io. That's why 1st we're checking if an export_name is defined for the

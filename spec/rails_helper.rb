@@ -10,6 +10,7 @@ require 'rspec/rails'
 require 'ffaker'
 require 'support/factory_bot'
 require 'support/database_cleaner.rb'
+require 'support/flow.rb'
 
 # Add additional requires below this line. Rails is not loaded until this point!
 
