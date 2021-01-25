@@ -29,5 +29,5 @@ Gem::Specification.new do |s|
   s.add_dependency 'request_store'
   s.add_dependency 'spree_backend', '~> 2.3.0'
 
-  s.add_development_dependency 'sqlite3'
+  s.add_development_dependency 'pg', '~> 0.21'
 end
