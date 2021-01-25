@@ -47,7 +47,7 @@ jobs:
         run: |
           bundle exec rake db:schema:load RAILS_ENV=test
       - name: Run tests
-        run: REPORT_COVERAGE=true bundler exec rake
+        run: REPORT_COVERAGE=true bundle exec rspec
       - name: Upload coverage results  
         uses: actions/upload-artifact@master
         if: always()	
