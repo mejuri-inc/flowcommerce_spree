@@ -3,6 +3,8 @@
 source 'https://rubygems.org'
 
 group :development, :test do
+  gem 'dotenv-rails', require: 'dotenv/rails-now'
+
   gem 'rubocop', '~> 0.78.0', require: false
   gem 'rubocop-performance', require: false
   gem 'rubocop-rails', require: false
