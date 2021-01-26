@@ -33,13 +33,13 @@ jobs:
         with:
           ruby-version: ${{ env.RUBY_VERSION }}
           bundler: 1.17.3
+          bundler-cache: true
       - name: Install postgres client
         run: sudo apt-get install libpq-dev
       - name: Install dependencies
         run: |
           sudo apt-get update
           sudo apt-get install libcurl3-dev
-          bundle install
       - name: Create database
         run: |
           bundle exec rake db:create RAILS_ENV=test
