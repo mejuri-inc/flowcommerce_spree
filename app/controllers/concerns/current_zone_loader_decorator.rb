@@ -3,7 +3,7 @@
 CurrentZoneLoader.module_eval do
   extend ActiveSupport::Concern
 
-  def current_zone # rubocop:disable Metrics/MethodLength, Metrics/AbcSize
+  def current_zone
     return @current_zone if defined?(@current_zone)
 
     RequestStore.store[:session] = session
@@ -17,7 +17,7 @@ CurrentZoneLoader.module_eval do
     end
 
     @current_zone ||= Spree::Zones::Product.find_by(name: 'International') ||
-      Spree::Zones::Product.new(name: 'International', taxon_ids: [], currencies: %w[USD CAD])
+                      Spree::Zones::Product.new(name: 'International', taxon_ids: [], currencies: %w[USD CAD])
 
     current_zone_name = @current_zone.name
     session['region'] = { name: current_zone_name, available_currencies: @current_zone.available_currencies }
@@ -25,7 +25,7 @@ CurrentZoneLoader.module_eval do
     @current_zone
   end
 
-  def flow_zone # rubocop:disable Metrics/MethodLength, Metrics/AbcSize
+  def flow_zone # rubocop:disable Metrics/AbcSize
     return unless Spree::Zones::Product.active
                                        .where("meta -> 'flow_data' ->> 'country' = ?",
                                               ISO3166::Country[request_iso_code]&.alpha3).exists?
@@ -40,8 +40,8 @@ CurrentZoneLoader.module_eval do
     # :create method will issue a request to flow.io. The experience, contained in the
     # response, will be available in the session object - flow_io_session.experience
     flow_io_session.create
-    zone = Spree::Zones::Product.active.find_by(name: flow_io_session.experience&.key&.titleize)
-    if zone
+
+    if (zone = Spree::Zones::Product.active.find_by(name: flow_io_session.experience&.key&.titleize))
       session['_f60_session'] = flow_io_session.id
       session['_f60_expires_at'] = flow_io_session.expires_at.to_s
     end
