@@ -31,6 +31,7 @@ GlobalVars:
 
 Metrics/AbcSize:
   Enabled: true
+  Max: 25
   Exclude:
 
 Metrics/BlockLength:
@@ -48,6 +49,7 @@ Metrics/CyclomaticComplexity:
 
 Metrics/MethodLength:
   Enabled: true
+  Max: 15
   Exclude:
 
 Metrics/PerceivedComplexity:
