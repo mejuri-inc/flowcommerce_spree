@@ -76,8 +76,7 @@ module FlowcommerceSpree
 
       @order.flow_data ||= {}
 
-      delivery_list = @order.flow_order['deliveries'][0]['options']
-      delivery_list = delivery_list.map do |opts|
+      delivery_list = @order.flow_order['deliveries'][0]['options'].map do |opts|
         name = opts['tier']['name']
 
         # add original Flow ID
@@ -149,7 +148,7 @@ module FlowcommerceSpree
       end
 
       if order_flow_session_id == current_session_id && session_expire_at == order_session_expire_at &&
-        @order.flow_io_checkout_token.present?
+         @order.flow_io_checkout_token.present?
         return current_session_id
       end
 
@@ -211,15 +210,19 @@ module FlowcommerceSpree
                            number: customer.flow_number,
                            phone: address&.phone }
 
+      add_customer_address(address) if address&.country&.iso3 == @order.zone.flow_io_experience_country
+    end
+
+    def add_customer_address(address)
       streets = []
-      streets.push address.address1 unless address&.address1.blank?
-      streets.push address.address2 unless address&.address2.blank?
+      streets.push address.address1 if address&.address1.present?
+      streets.push address.address2 if address&.address2.present?
 
       @body[:destination] = { streets: streets,
                               city: address&.city,
                               province: address&.state_name,
                               postal: address&.zipcode,
-                              country: (address&.country&.iso3 || 'USA'),
+                              country: (address&.country&.iso3 || ''),
                               contact: @body[:customer] }
 
       @body[:destination].delete_if { |_k, v| v.nil? }

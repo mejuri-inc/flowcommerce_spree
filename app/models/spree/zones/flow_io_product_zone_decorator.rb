@@ -16,6 +16,10 @@ module Spree
         flow_data&.[]('key')
       end
 
+      def flow_io_experience_country
+        flow_data&.[]('country')
+      end
+
       def flow_io_experience_currency
         flow_data&.[]('currency')
       end

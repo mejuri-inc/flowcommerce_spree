@@ -34,10 +34,7 @@ module Spree # rubocop:disable Metrics/ModuleLength
     # accepts line item, usually called from views
     def flow_line_item_price(line_item, total = false)
       result = if flow_order
-                 id = line_item.variant.sku
-
-                 lines = flow_order.lines || []
-                 item  = lines.find { |el| el['item_number'] == id }
+                 item = flow_order.lines&.find { |el| el['item_number'] == line_item.variant.sku }
 
                  return 'n/a' unless item
 
