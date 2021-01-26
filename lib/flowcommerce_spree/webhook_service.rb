@@ -94,7 +94,7 @@ module FlowcommerceSpree
           attrs_to_update = { meta: order.meta.to_json }
           flow_data_submitted = order_flow_data['submitted_at'].present?
           if flow_data_submitted && !order.complete?
-            if order_flow_data['payments'].present? && order_flow_data.dig('balance', 'amount')&.to_i == 0
+            if order_flow_data['payments'].present? && (order_flow_data.dig('balance', 'amount')&.to_i == 0)
               attrs_to_update[:state] = 'complete'
               attrs_to_update[:payment_state] = 'paid'
               attrs_to_update[:completed_at] = Time.zone.now.utc
