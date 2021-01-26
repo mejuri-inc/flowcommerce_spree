@@ -5,6 +5,12 @@ module FlowcommerceSpree
   class Session
     attr_accessor :session, :localized, :visitor
 
+    def self.create(ip:, visitor:, experience: nil)
+      instance = new(ip: ip, visitor: visitor, experience: experience)
+      instance.create
+      instance
+    end
+
     def initialize(ip:, visitor:, experience: nil)
       ip = '127.0.0.1' if ip == '::1'
 
@@ -13,7 +19,8 @@ module FlowcommerceSpree
       @experience = experience
     end
 
-    # create session with blank data
+    # create session without or with experience (the latter is useful for creating a new session with the order's
+    # experience on refreshing the checkout_token)
     def create
       data = { ip: @ip,
                visit: { id: @visitor,
@@ -25,7 +32,7 @@ module FlowcommerceSpree
                              .sessions.post_organizations_by_organization(ORGANIZATION, session_model)
     end
 
-    # if we want to manualy switch to specific country or experience
+    # if we want to manually switch to specific country or experience
     def update(data)
       @session = FlowCommerce.instance.sessions.put_by_session(@session.id,
                                                                ::Io::Flow::V0::Models::SessionPutForm.new(data))
@@ -46,14 +53,6 @@ module FlowcommerceSpree
 
     def id
       @session.id
-    end
-
-    def localized?
-      # use flow if we are not in default country
-      return false unless local
-      return false if @localized.class == FalseClass
-
-      local.country.iso_3166_3 != ENV.fetch('FLOW_BASE_COUNTRY').upcase
     end
 
     # because we do not get full experience from session, we have to get from exp list
