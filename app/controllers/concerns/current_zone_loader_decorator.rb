@@ -36,10 +36,9 @@ CurrentZoneLoader.module_eval do
                    Spree::Config[:debug_request_ip_address] || request.ip
                    # Germany ip: 85.214.132.117, Sweden ip: 62.20.0.196, Moldova ip: 89.41.76.29
                  end
-    flow_io_session = FlowcommerceSpree::Session.new(ip: request_ip, visitor: visitor_id_for_flow_io)
+    flow_io_session = FlowcommerceSpree::Session.create(ip: request_ip, visitor: visitor_id_for_flow_io)
     # :create method will issue a request to flow.io. The experience, contained in the
     # response, will be available in the session object - flow_io_session.experience
-    flow_io_session.create
 
     if (zone = Spree::Zones::Product.active.find_by(name: flow_io_session.experience&.key&.titleize))
       session['_f60_session'] = flow_io_session.id
