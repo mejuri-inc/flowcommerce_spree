@@ -14,7 +14,7 @@ module FlowcommerceSpree
   #    customer: @order.user
   #  flow_order.build_flow_request           # builds json body to be posted to flow.io api
   #  flow_order.synchronize!                 # sends order to flow
-  class OrderSync
+  class OrderSync # rubocop:disable Metrics/ClassLength
     FLOW_CENTER = 'default'
     SESSION_EXPIRATION_THRESHOLD = 10 # Refresh session if less than 10 seconds to session expiration remains
 
@@ -129,7 +129,7 @@ module FlowcommerceSpree
 
     private
 
-    def fetch_session_id
+    def fetch_session_id # rubocop:disable Metrics/MethodLength, AbcSize, CyclomaticComplexity, PerceivedComplexity
       session = RequestStore.store[:session]
       current_session_id = session&.[]('_f60_session')
       session_expire_at = session&.[]('_f60_expires_at')&.to_datetime
