@@ -6,7 +6,7 @@ gemspec
 
 group :development, :test do
   gem 'dotenv-rails', require: 'dotenv/rails-now'
-
+  gem 'rails', '4.1.16'
   gem 'rubocop', '~> 0.78.0', require: false
   gem 'rubocop-performance', require: false
   gem 'rubocop-rails', require: false
