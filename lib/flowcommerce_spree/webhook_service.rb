@@ -40,6 +40,26 @@ module FlowcommerceSpree
       Spree::Zones::Product.find_or_initialize_by(name: experience['key'].titleize).store_flow_io_data(experience)
     end
 
+    def hook_fraud_status_changed
+      errors << { message: 'Order param missing' } unless (received_order = @data['order'])
+
+      if errors.none? && (order_number = received_order['number'])
+        if @data['status'] == 'declined'
+          if (order = Spree::Order.find_by(number: order_number))
+            order.update_columns(fraudulent: true)
+            order.cancel!
+            return order
+          else
+            errors << { message: "Order #{order_number} not found" }
+          end
+        end
+      else
+        errors << { message: 'Order number param missing' }
+      end
+
+      self
+    end
+
     def hook_local_item_upserted
       if (local_item = @data['local_item'])
         if (received_sku = local_item.dig('item', 'number'))
@@ -70,11 +90,17 @@ module FlowcommerceSpree
       if errors.none? && (order_number = received_order['number'])
         if (order = Spree::Order.find_by(number: order_number))
           order.flow_data['order'] = received_order.to_hash
+          order_flow_data = order.flow_data['order']
           attrs_to_update = { meta: order.meta.to_json }
-          flow_data_submitted = order.flow_data['order']['submitted_at'].present?
-          if flow_data_submitted
-            attrs_to_update[:state] = 'complete'
-            attrs_to_update[:completed_at] = Time.zone.now
+          flow_data_submitted = order_flow_data['submitted_at'].present?
+          if flow_data_submitted && !order.complete?
+            if order_flow_data['payments'].present? && order_flow_data.dig('balance', 'amount')&.to_i == 0
+              attrs_to_update[:state] = 'complete'
+              attrs_to_update[:payment_state] = 'paid'
+              attrs_to_update[:completed_at] = Time.zone.now.utc
+            else
+              attrs_to_update[:state] = 'confirmed'
+            end
           end
 
           order.update_columns(attrs_to_update)
