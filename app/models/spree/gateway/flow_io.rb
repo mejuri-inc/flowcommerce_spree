@@ -81,7 +81,7 @@ module Spree
       def profile_ensure_payment_method_is_present!
         return if @credit_card.payment_method_id
 
-        flow_payment = Spree::PaymentMethod.where(active: true, type: 'Spree::Gateway::Flow').first
+        flow_payment = Spree::PaymentMethod.where(active: true, type: 'Spree::Gateway::FlowIo').first
         @credit_card.payment_method_id = flow_payment.id if flow_payment
       end
 

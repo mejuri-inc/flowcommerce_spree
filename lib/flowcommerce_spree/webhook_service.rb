@@ -17,23 +17,28 @@ module FlowcommerceSpree
     end
 
     def process
-      org = @data['organization']
-      if org != ORGANIZATION
-        errors << { message: "Organization name mismatch for #{org}" }
-      else
-        discriminator = @data['discriminator']
-        hook_method = "hook_#{discriminator}"
-        # If hook processing method registered an error, a self.object of WebhookService with this error will be
-        # returned, else an ActiveRecord object will be returned
-        return __send__(hook_method) if respond_to?(hook_method, true)
+      discriminator = @data['discriminator']
+      hook_method = "hook_#{discriminator}"
+      # If hook processing method registered an error, a self.object of WebhookService with this error will be
+      # returned, else an ActiveRecord object will be returned
+      return __send__(hook_method) if respond_to?(hook_method, true)
 
-        errors << { message: "No hook for #{discriminator}" }
-      end
-
+      errors << { message: "No hook for #{discriminator}" }
       self
     end
 
     private
+
+    def hook_capture_upserted_v2
+      capture = Io::Flow::V0::Models::Capture.new(@data['capture'])
+      if (order = Spree::Order.find_by(number: capture.authorization.order.number))
+        # return order
+      else
+        errors << { message: "Order #{order_number} not found" }
+      end
+
+      order.update_column :flow_data, order.flow_data.merge('capture': @data['capture'])
+    end
 
     def hook_experience_upserted_v2
       experience = @data['experience']
