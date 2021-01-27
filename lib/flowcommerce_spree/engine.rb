@@ -43,5 +43,9 @@ module FlowcommerceSpree
     end
 
     config.to_prepare(&method(:activate).to_proc)
+
+    initializer 'spree.flowcommerce_spree.calculators', after: 'spree.register.calculators' do |_app|
+      Rails.application.config.spree.calculators.tax_rates << Spree::Calculator::FlowcommerceCalculator
+    end
   end
 end

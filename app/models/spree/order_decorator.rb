@@ -11,6 +11,10 @@ module Spree # rubocop:disable Metrics/ModuleLength
     before_save :sync_to_flow_io
     after_touch :sync_to_flow_io
 
+    def flow_tax_cache_key
+      [number, 'flowcommerce', 'allocation', line_items.sum(:quantity)].join('-')
+    end
+
     def sync_to_flow_io
       return unless zone&.flow_io_active_experience? && state == 'cart' && line_items.size > 0
 

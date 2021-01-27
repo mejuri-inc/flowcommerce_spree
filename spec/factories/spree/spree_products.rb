@@ -6,9 +6,12 @@ FactoryBot.define do
     description { 'This is a random description for a product' }
     price { 19.99 }
     cost_price { 17.00 }
+    sequence(:sku) { |n| "p000#{n}" }
     available_on { 1.year.ago }
     deleted_at { nil }
     shipping_category { |r| Spree::ShippingCategory.first || r.association(:shipping_category) }
+
+    before(:create) { create(:stock_location) if Spree::StockLocation.count == 0 }
 
     trait :with_master_variant_flow_data do
       after(:create) do |product|
