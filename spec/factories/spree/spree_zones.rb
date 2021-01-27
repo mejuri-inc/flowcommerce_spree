@@ -1,6 +1,27 @@
 # frozen_string_literal: true
 
 FactoryBot.define do
+  factory :global_zone, class: Spree::Zone do
+    name { 'GlobalZone' }
+    status { 'active' }
+    description { "Description for Global Zone #{name}" }
+    after(:create) do |zone, _evaluator|
+      Spree::Country.all.map do |c|
+        Spree::ZoneMember.create(zoneable: c, zone: zone)
+      end
+    end
+  end
+
+  factory :zone, class: Spree::Zone do
+    name { Faker::Address.country }
+    description { 'Description for Zone' }
+    status { 'active' }
+
+    trait :default_zone do
+      default_tax true
+    end
+  end
+
   factory :germany_zone, class: Spree::Zones::Product do
     name { 'Germany' }
     description { 'Germany Zone' }
