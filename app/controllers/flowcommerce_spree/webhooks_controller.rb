@@ -2,6 +2,7 @@
 
 module FlowcommerceSpree
   class WebhooksController < ActionController::Base
+    wrap_parameters false
     respond_to :json
 
     # forward all incoming requests to Flow WebhookService object
@@ -9,7 +10,7 @@ module FlowcommerceSpree
     def handle_flow_web_hook_event
       result = check_organization
       if result.blank?
-        webhook_result = WebhookService.process(params[:webhook])
+        webhook_result = WebhookService.process(params)
         result[:error] = webhook_result.full_messages.join("\n") if webhook_result.errors.any?
       end
     rescue StandardError => e
