@@ -1,8 +1,13 @@
 # frozen_string_literal: true
 
 def flow_example_allocation(order_number, variant_sku, amount)
-  { 'id' => 'alc-5c6c3b5e10b44e4fb4063ec19fa10f65',
-    'order' => { 'id' => 'ord-550219e93efe4bfb8d4c32cf9e6d589e', 'number' => order_number, 'submitted_at' => '2021-01-27T18:29:04.266Z' },
+  response = {
+    'id' => 'alc-5c6c3b5e10b44e4fb4063ec19fa10f65',
+    'order' => {
+      'id' => 'ord-550219e93efe4bfb8d4c32cf9e6d589e',
+      'number' => order_number,
+      'submitted_at' => '2021-01-27T18:29:04.266Z'
+    },
     'details' =>
     [
       { 'number' => variant_sku,
@@ -46,5 +51,6 @@ def flow_example_allocation(order_number, variant_sku, amount)
         'not_included' => [],
         'discriminator' => 'allocation_order_detail' }
     ],
-    'total' => { 'currency' => 'EUR', 'amount' => 358.41, 'label' => '358,41 €', 'base' => { 'amount' => 427.76, 'currency' => 'USD', 'label' => 'US$427.76' }, 'key' => 'localized_total' } }
+               'total' => { 'currency' => 'EUR', 'amount' => 358.41, 'label' => '358,41 €', 'base' => { 'amount' => 427.76, 'currency' => 'USD', 'label' => 'US$427.76' }, 'key' => 'localized_total' } }
+  ::Io::Flow::V0::Models::AllocationV2.new(response)
 end

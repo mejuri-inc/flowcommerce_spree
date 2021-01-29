@@ -71,13 +71,14 @@ module FlowcommerceSpree
         if (order = Spree::Order.find_by(number: order_number))
           order.flow_data['order'] = received_order.to_hash
           attrs_to_update = { meta: order.meta.to_json }
-          if order.flow_data['order']['submitted_at'].present?
+          flow_data_submitted = order.flow_data['order']['submitted_at'].present?
+          if flow_data_submitted
             attrs_to_update[:state] = 'complete'
             attrs_to_update[:completed_at] = Time.zone.now
           end
 
           order.update_columns(attrs_to_update)
-          order.create_tax_charge!
+          order.create_tax_charge! if flow_data_submitted
           return order
         else
           errors << { message: "Order #{order_number} not found" }
