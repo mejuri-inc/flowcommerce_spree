@@ -1,10 +1,14 @@
+# frozen_string_literal: true
+
 FactoryBot.define do
   factory :shipment, class: Spree::Shipment do
     tracking { 'U10000' }
     cost { 100.00 }
     state { 'pending' }
     order
-    stock_location { Spree::StockLocation.find_by(id: Rails.configuration.main_warehouse_id) || FactoryBot.create(:stock_location) }
+    stock_location do
+      Spree::StockLocation.find_by(id: Rails.configuration.main_warehouse_id) || FactoryBot.create(:stock_location)
+    end
 
     after(:create) do |shipment|
       shipment.add_shipping_method(create(:shipping_method), true)
