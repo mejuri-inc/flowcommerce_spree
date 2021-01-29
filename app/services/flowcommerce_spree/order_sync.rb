@@ -202,7 +202,14 @@ module FlowcommerceSpree
     def try_to_add_customer
       return unless (customer = @order.user)
 
-      address = customer.ship_address || customer.user_profile&.address
+      address = nil
+      customer_ship_address = customer.ship_address
+      address = customer_ship_address if customer_ship_address&.country&.iso3 == @order.zone.flow_io_experience_country
+
+      unless address
+        user_profile_address = customer.user_profile&.address
+        address = user_profile_address if user_profile_address&.country&.iso3 == @order.zone.flow_io_experience_country
+      end
 
       @body[:customer] = { name: { first: address&.firstname,
                                    last: address&.lastname },
@@ -210,7 +217,7 @@ module FlowcommerceSpree
                            number: customer.flow_number,
                            phone: address&.phone }
 
-      add_customer_address(address) if address&.country&.iso3 == @order.zone.flow_io_experience_country
+      add_customer_address(address) if address
     end
 
     def add_customer_address(address)
