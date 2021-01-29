@@ -32,13 +32,14 @@ module Spree
 
       def can_calculate_tax?(order)
         return false if order.flow_data.blank?
+        return false if %w[cart address delivery].include?(order.state)
 
         true
       end
 
       def get_flow_response(order)
         flow_io_tax_response = Rails.cache.fetch(order.flow_tax_cache_key, time_to_idle: 5.minutes) do
-          FlowcommerceSpree::Api.run :get, "/:organization/orders/allocations/#{order.number}"
+          FlowcommerceSpree.client.orders.get_allocations_by_number(FlowcommerceSpree::ORGANIZATION, order.number)
         end
         flow_io_tax_response
       end
@@ -47,13 +48,12 @@ module Spree
         prev_tax_amount = prev_tax_amount(item)
         return prev_tax_amount if flow_response.nil?
 
-        item_details = flow_response['details']&.find do |el|
-          item.is_a?(Spree::LineItem) ? el['number'] == item.variant.sku : el['key'] == 'shipping'
+        item_details = flow_response.details&.find do |el|
+          item.is_a?(Spree::LineItem) ? el.number == item.variant.sku : el.key.value == 'shipping'
         end
-        details_key = rate.included_in_price ? 'included' : 'not_included'
-        price_components = item_details&.[](details_key)
+        price_components = rate.included_in_price ? item_details.included : item_details.not_included
 
-        amount = price_components&.find { |el| el['key'] == 'vat_item_price' }&.[]('total')&.[]('amount')
+        amount = price_components&.find { |el| el.key.value == 'vat_item_price' }&.total&.amount
         amount.present? && amount > 0 ? amount : prev_tax_amount
       end
     end

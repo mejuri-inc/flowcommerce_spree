@@ -2,7 +2,6 @@
 
 module Spree
   Order.class_eval do
-
     store_accessor :meta, :zone_id
 
     def zone
