@@ -3,7 +3,7 @@
 module FlowcommerceSpree
   # communicates with flow api, responds to webhook events
   class WebhookService
-    attr_accessor :errors, :product, :variant
+    attr_accessor :errors
     alias full_messages errors
 
     def self.process(data, opts = {})
@@ -53,9 +53,7 @@ module FlowcommerceSpree
     end
 
     def hook_fraud_status_changed
-      errors << { message: 'Order param missing' } unless (received_order = @data['order'])
-
-      if errors.none? && (order_number = received_order['number'])
+      if (order_number = @data.dig('order', 'number'))
         if @data['status'] == 'declined'
           if (order = Spree::Order.find_by(number: order_number))
             order.update_columns(fraudulent: true)
@@ -73,56 +71,50 @@ module FlowcommerceSpree
     end
 
     def hook_local_item_upserted
-      if (local_item = @data['local_item'])
-        if (received_sku = local_item.dig('item', 'number'))
-          if (@variant = Spree::Variant.find_by(sku: received_sku))
-            @variant.add_flow_io_experience_data(
-              local_item.dig('experience', 'key'),
-              'prices' => [local_item.dig('pricing', 'price')], 'status' => local_item['status']
-            )
+      errors << { message: 'Local item param missing' } && (return self) unless (local_item = @data['local_item'])
 
-            @variant.update_column(:meta, @variant.meta.to_json)
-            return @variant
-          else
-            errors << { message: "Variant with sku [#{received_sku}] not found!" }
-          end
-        else
-          errors << { message: 'SKU param missing' }
-        end
+      errors << { message: 'SKU param missing' } && (return self) unless (flow_sku = local_item.dig('item', 'number'))
+
+      if (variant = Spree::Variant.find_by(sku: flow_sku))
+        variant.add_flow_io_experience_data(
+          local_item.dig('experience', 'key'),
+          'prices' => [local_item.dig('pricing', 'price')], 'status' => local_item['status']
+        )
+
+        variant.update_column(:meta, variant.meta.to_json)
+        return variant
       else
-        errors << { message: 'Local item param missing' }
+        errors << { message: "Variant with sku [#{flow_sku}] not found!" }
       end
 
       self
     end
 
     def hook_order_upserted_v2
-      errors << { message: 'Order param missing' } unless (received_order = @data['order'])
+      errors << { message: 'Order param missing' } && (return self) unless (flow_order = @data['order'])
 
-      if errors.none? && (order_number = received_order['number'])
-        if (order = Spree::Order.find_by(number: order_number))
-          order.flow_data['order'] = received_order.to_hash
-          order_flow_data = order.flow_data['order']
-          attrs_to_update = { meta: order.meta.to_json }
-          flow_data_submitted = order_flow_data['submitted_at'].present?
-          if flow_data_submitted && !order.complete?
-            if order_flow_data['payments'].present? && (order_flow_data.dig('balance', 'amount')&.to_i == 0)
-              attrs_to_update[:state] = 'complete'
-              attrs_to_update[:payment_state] = 'paid'
-              attrs_to_update[:completed_at] = Time.zone.now.utc
-            else
-              attrs_to_update[:state] = 'confirmed'
-            end
+      errors << { message: 'Order number param missing' } && (return self) unless (order_number = flow_order['number'])
+
+      if (order = Spree::Order.find_by(number: order_number))
+        order.flow_data['order'] = flow_order.to_hash
+        order_flow_data = order.flow_data['order']
+        attrs_to_update = { meta: order.meta.to_json }
+        flow_data_submitted = order_flow_data['submitted_at'].present?
+        if flow_data_submitted && !order.complete?
+          if order_flow_data['payments'].present? && (order_flow_data.dig('balance', 'amount')&.to_i == 0)
+            attrs_to_update[:state] = 'complete'
+            attrs_to_update[:payment_state] = 'paid'
+            attrs_to_update[:completed_at] = Time.zone.now.utc
+          else
+            attrs_to_update[:state] = 'confirmed'
           end
-
-          order.update_columns(attrs_to_update)
-          order.create_tax_charge! if flow_data_submitted
-          return order
-        else
-          errors << { message: "Order #{order_number} not found" }
         end
+
+        order.update_columns(attrs_to_update)
+        order.create_tax_charge! if flow_data_submitted
+        return order
       else
-        errors << { message: 'Order number param missing' }
+        errors << { message: "Order #{order_number} not found" }
       end
 
       self
