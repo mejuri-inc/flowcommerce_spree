@@ -30,14 +30,21 @@ module FlowcommerceSpree
     private
 
     def hook_capture_upserted_v2
-      capture = Io::Flow::V0::Models::Capture.new(@data['capture'])
-      if (order = Spree::Order.find_by(number: capture.authorization.order.number))
-        # return order
+      capture = @data['capture']
+      if (order = Spree::Order.find_by(number: capture.dig('authorization', 'order', 'number')))
+        order.flow_data['captures'] ||= []
+        order_captures = order.flow_data['captures']
+        order_captures.delete_if do |c|
+          c['id'] == capture['id']
+        end
+        order_captures << capture
+
+        order.update_column(:meta, order.meta.to_json)
+        order
       else
         errors << { message: "Order #{order_number} not found" }
+        self
       end
-
-      order.update_column :flow_data, order.flow_data.merge('capture': @data['capture'])
     end
 
     def hook_experience_upserted_v2
