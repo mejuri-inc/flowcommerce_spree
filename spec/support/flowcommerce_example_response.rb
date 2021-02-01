@@ -1,6 +1,6 @@
 # frozen_string_literal: true
 
-def flow_example_allocation(order_number, variant_sku, amount)
+def flow_example_allocation(order_number, variant_sku, amount) # rubocop:disable Metrics/MethodLength
   response = {
     'id' => 'alc-5c6c3b5e10b44e4fb4063ec19fa10f65',
     'order' => {
