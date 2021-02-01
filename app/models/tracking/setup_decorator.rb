@@ -5,7 +5,7 @@ module Tracking
     private
 
     def setup_tracking
-      return if request.path.start_with?('/shop/admin/')
+      return if request.path.start_with?(ADMIN_PATH)
 
       user_consents = UserConsent.new(cookies)
       setup_visitor_cookie(user_consents)
