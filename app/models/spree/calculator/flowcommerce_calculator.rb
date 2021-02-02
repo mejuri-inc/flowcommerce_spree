@@ -11,7 +11,7 @@ module Spree
         order = item.order
 
         if can_calculate_tax?(order)
-          flow_response = get_flow_response(order)
+          flow_response = get_flow_tax_data(order)
           tax_for_item(item, flow_response)
         else
           prev_tax_amount(item)
@@ -37,7 +37,7 @@ module Spree
         true
       end
 
-      def get_flow_response(order)
+      def get_flow_tax_data(order)
         flow_io_tax_response = Rails.cache.fetch(order.flow_tax_cache_key, time_to_idle: 5.minutes) do
           FlowcommerceSpree.client.orders.get_allocations_by_number(FlowcommerceSpree::ORGANIZATION, order.number)
         end
