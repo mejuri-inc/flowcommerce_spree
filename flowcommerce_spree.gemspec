@@ -27,4 +27,6 @@ Gem::Specification.new do |s|
   s.add_dependency 'oj'
   s.add_dependency 'pg', '~> 0.21'
   s.add_dependency 'spree_backend', '~> 2.3.0'
+
+  s.add_development_dependency 'github_changelog_generator'
 end
