@@ -1,0 +1,57 @@
+<% content_for :page_title do %>
+  <%= Spree.t(:editing_promotion) %>
+<% end %>
+
+<% content_for :page_actions do %>
+  <li>
+    <%= button_link_to Spree.t(:back_to_promotions_list), admin_promotions_path, icon: 'arrow-left' %>
+  </li>
+<% end %>
+
+<%= form_for @promotion, url: object_url, method: :put do |f| %>
+  <fieldset class="no-border-top">
+    <%= render partial: 'form', locals: { f: f } %>
+    <%= render partial: 'spree/admin/shared/edit_resource_links' %>
+  </fieldset>
+<% end %>
+
+<div id="promotion-filters" class="row">
+  <div id="rules_container" class="alpha eight columns">
+    <%= render partial: 'rules' %>
+  </div>
+
+  <div id="actions_container" class="omega eight columns">
+    <%= render partial: 'actions' %>
+  </div>
+</div>
+
+<%= render partial: 'spree/admin/variants/autocomplete', :formats => [:js] %>
+
+<!-- Flow filters experience -->
+
+<%
+  @promotion_keys = @promotion.flow_data.dig('filter', 'experience') || []
+%>
+
+<script>
+window.promotion_set_option = function(key_name, value) {
+  var opts = {
+    id: <%= @promotion.id %>,
+    type: 'experience',
+    name: key_name,
+    value: value ? 1 : 0
+  };
+
+  $.post('/flow/promotion_set_option', opts, function(r) { console.log(r); });
+}
+</script>
+
+<fieldset>
+  <legend align="center">Enable for Flow experiences</legend>
+
+  <p>Promotion will be enabled for all experiences unless a selection is made.</p>
+
+  <% for experience in FlowcommerceSpree::ExperienceService.all %>
+    <p><label><input type="checkbox" onclick="promotion_set_option('<%= experience.key %>', this.checked);" <%= @promotion_keys.include?(experience.key) ? 'checked="1"' : '' %> /> <%= experience.key %></label></p>
+  <% end %>
+</fieldset>

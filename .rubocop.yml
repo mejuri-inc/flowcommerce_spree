@@ -1,0 +1,91 @@
+AllCops:
+  Exclude:
+    - 'bin/**/*'
+    - 'db/**/*'
+  TargetRubyVersion: 2.3
+
+Documentation:
+  Enabled: false
+
+Layout/CaseIndentation:
+  Enabled: true
+  EnforcedStyle: case
+  IndentOneStep: true
+
+Layout/HashAlignment:
+  EnforcedColonStyle: key
+  EnforcedHashRocketStyle: key
+
+Layout/LineLength:
+  Max: 120
+  Exclude:
+
+# Lint/RaiseException:
+#   Enabled: true
+
+# Lint/StructNewOverride:
+#   Enabled: true
+
+GlobalVars:
+  AllowedVariables:
+
+Metrics/AbcSize:
+  Enabled: true
+  Exclude:
+
+Metrics/BlockLength:
+  Exclude:
+    - 'Rakefile'
+    - '**/*.rake'
+    - 'spec/**/*'
+  ExcludedMethods: ['class_eval']
+
+Metrics/ClassLength:
+  Exclude:
+
+Metrics/CyclomaticComplexity:
+  Exclude:
+
+Metrics/MethodLength:
+  Enabled: true
+  Exclude:
+
+Metrics/PerceivedComplexity:
+  Exclude:
+
+Naming/PredicateName:
+  Exclude:
+
+Style/Documentation:
+  Enabled: false
+
+# Style/HashEachMethods:
+#   Enabled: true
+
+# Style/HashTransformKeys:
+#   Enabled: true
+#
+# Style/HashTransformValues:
+#   Enabled: true
+
+Style/FrozenStringLiteralComment:
+  Exclude:
+
+Style/GuardClause:
+  Enabled: true
+  Exclude:
+
+Style/NumericPredicate:
+  Enabled: true
+  EnforcedStyle: comparison
+
+Style/PercentLiteralDelimiters:
+  PreferredDelimiters:
+    default: '[]'
+
+Style/RedundantSelf:
+  Enabled: true
+  Exclude:
+
+Style/ZeroLengthPredicate:
+  Enabled: false

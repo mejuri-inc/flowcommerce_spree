@@ -1,0 +1,67 @@
+env:
+  RUBY_VERSION: 2.3.7
+  FLOW_TOKEN: ${{ secrets.FLOW_TOKEN }}
+  DATABASE_USERNAME: ${{ secrets.POSTGRES_USER }}
+  DATABASE_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+  DATABASE_HOST: ${{ secrets.POSTGRES_HOST }}
+  DATABASE_NAME: ${{ secrets.POSTGRES_DB }}
+
+name: Code Quality
+
+on: [push]
+
+jobs:
+  rspec-test:
+    name: RSpec
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:11.6
+        ports: ["5432:5432"]
+        env:
+          POSTGRES_USER: ${{ secrets.POSTGRES_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.POSTGRES_PASSWORD }}
+          POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
+    steps:
+      - uses: actions/checkout@v2
+      - uses: actions/cache@v2.1.3
+        with: 
+          key: ${{ runner.os }}-gems-${{ hashFiles('**/Gemfile.lock') }}  
+          path: vendor/bundle
+      - uses: ruby/setup-ruby@master
+        id: ruby
+        with:
+          ruby-version: ${{ env.RUBY_VERSION }}
+      - name: Install postgres client
+        run: sudo apt-get install libpq-dev
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install libcurl3-dev
+          gem install bundler -v 1.17.3
+          bundle install
+      - name: Create database
+        run: |
+          bundle exec rake db:create RAILS_ENV=test
+      - name: Load Schema
+        run: |
+          bundle exec rake db:schema:load RAILS_ENV=test
+      - name: Run tests
+        run: REPORT_COVERAGE=true bundle exec rspec
+      - name: Upload coverage results  
+        uses: actions/upload-artifact@master
+        if: always()	
+        with:
+          name: coverage
+          path: coverage
+  code-check:
+    name:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - uses: adwerx/pronto-ruby@v2.5
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        runners: rubocop rails_best_practices flay
+        target: origin/develop
