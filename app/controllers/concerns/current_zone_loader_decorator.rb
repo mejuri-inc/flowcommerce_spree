@@ -20,7 +20,9 @@ CurrentZoneLoader.module_eval do
                       Spree::Zones::Product.new(name: 'International', taxon_ids: [], currencies: %w[USD CAD])
 
     current_zone_name = @current_zone.name
-    session['region'] = { name: current_zone_name, available_currencies: @current_zone.available_currencies }
+    session['region'] = { name: current_zone_name,
+                          available_currencies: @current_zone.available_currencies,
+                          request_iso_code: request_iso_code }
     Rails.logger.debug("Using product zone: #{current_zone_name}")
     @current_zone
   end
