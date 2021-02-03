@@ -141,7 +141,7 @@ RSpec.describe Users::SessionsController, type: :controller do
 
               expect(response).to have_http_status(:success)
               current_session_attrs = Oj.load(response.body)['current']
-              expect(current_session_attrs['region']).to eql(zone_hash)
+              expect(current_session_attrs['region']).to eql(zone_hash.merge!('request_iso_code' => nil))
               expect(current_session_attrs['external_checkout']).to eql('true')
             end
           end
@@ -171,7 +171,7 @@ RSpec.describe Users::SessionsController, type: :controller do
 
               expect(response).to have_http_status(:success)
               current_session_attrs = Oj.load(response.body)['current']
-              expect(current_session_attrs['region']).to eql(zone_hash)
+              expect(current_session_attrs['region']).to eql(zone_hash.merge!('request_iso_code' => nil))
               expect(current_session_attrs['external_checkout']).to eql('false')
             end
           end
