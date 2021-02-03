@@ -26,7 +26,14 @@ module Dummy
       Dir.glob(File.join(File.dirname(__FILE__), '../app/**/*_decorator*.rb')).sort.each do |c|
         Rails.configuration.cache_classes ? require(c) : load(c)
       end
-    end
 
+      # TODO: Remove on Rails 4.2.x and factory_bot v.5.x.x, where it was implemented
+      # https://github.com/thoughtbot/factory_bot/commit/0c17434b4a35256a20e5ce60559345e398f64721
+      if Rails.env.test?
+        Dir.glob(File.join(File.dirname(__FILE__), '../lib/factory_bot/**/*_decorator*.rb')).sort.each do |c|
+          Rails.configuration.cache_classes ? require(c) : load(c)
+        end
+      end
+    end
   end
 end

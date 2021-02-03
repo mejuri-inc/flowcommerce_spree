@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 # This file is copied to spec/ when you run 'rails generate rspec:install'
 require 'spec_helper'
 ENV['RAILS_ENV'] ||= 'test'
@@ -8,6 +10,8 @@ require File.expand_path('dummy/config/environment', __dir__)
 abort('The Rails environment is running in production mode!') if Rails.env.production?
 require 'rspec/rails'
 require 'ffaker'
+require 'ffaker/utils/module_utils_unique' # TODO: Remove on ffaker v.2.7.0, where it was implemented
+require 'ffaker/utils/unique_utils' # TODO: Remove on ffaker v.2.7.0, where it was implemented
 require 'support/factory_bot'
 require 'support/database_cleaner.rb'
 require 'support/flow.rb'
@@ -63,6 +67,8 @@ RSpec.configure do |config|
 
   # Filter lines from Rails gems in backtraces.
   config.filter_rails_from_backtrace!
+
+  config.include Devise::Test::ControllerHelpers, type: :controller
   # arbitrary gems may also be filtered via:
   # config.filter_gems_from_backtrace("gem name")
 end
