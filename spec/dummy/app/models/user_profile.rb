@@ -23,7 +23,7 @@ class UserProfile < ActiveRecord::Base
   end
 
   def full_name_capitalized
-    (first_name + ' ' + last_name).split(' ').map{|name| name.capitalize}.join(' ') if !first_name.nil? && !last_name.nil?
+    (first_name + ' ' + last_name).split(' ').map(&:capitalize).join(' ') if first_name && last_name
   end
 
   def full_name_or_username
@@ -37,7 +37,7 @@ class UserProfile < ActiveRecord::Base
   def location
     location = current_city || ''
     location += ', ' if !current_city.blank? && !country.blank?
-    location += country || ''
+    location + country || ''
   end
 
   def to_s
@@ -54,15 +54,15 @@ class UserProfile < ActiveRecord::Base
 
   ####### Address interaction API ######
   def update_shipping_address(address_params)
-    shipping_address = self.address || self.build_address
+    shipping_address = address || build_address
     shipping_address.assign_attributes(address_params)
     shipping_address.save
   end
 
-  def get_shipping_address
+  def adjust_shipping_address
     return address if address&.valid?
 
-    last_address = shipping_address_from_last_order
+    last_address = last_order_shipping_address
     return unless last_address.present?
 
     self.address = last_address
@@ -70,7 +70,7 @@ class UserProfile < ActiveRecord::Base
     address
   end
 
-  def shipping_address_from_last_order
+  def last_order_shipping_address
     completed_orders = orders.completed.reject(&:pick_up?)
     return if completed_orders.empty?
 
@@ -79,7 +79,7 @@ class UserProfile < ActiveRecord::Base
   end
 
   def default_address_for_spree
-    address = get_shipping_address
+    address = adjust_shipping_address
     if address
       Spree::Address
         .new(address.attributes.except('id', 'created_at', 'updated_at', 'company', 'email', 'user_profile_id'))
@@ -103,7 +103,7 @@ class UserProfile < ActiveRecord::Base
   end
 
   def order_history_start_date
-    Date.new(2016,11,01)
+    Date.new(2016, 11, 01)
   end
 
   def orders_since_beggining_of_history
