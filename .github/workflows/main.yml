@@ -25,21 +25,21 @@ jobs:
     steps:
       - uses: actions/checkout@v2
       - uses: actions/cache@v2.1.3
-        with: 
-          key: ${{ runner.os }}-gems-${{ hashFiles('**/Gemfile.lock') }}  
+        with:
+          key: ${{ runner.os }}-gems-${{ hashFiles('**/Gemfile.lock') }}
           path: vendor/bundle
       - uses: ruby/setup-ruby@master
         id: ruby
         with:
           ruby-version: ${{ env.RUBY_VERSION }}
+          bundler: 1.17.3
+          bundler-cache: true
       - name: Install postgres client
         run: sudo apt-get install libpq-dev
       - name: Install dependencies
         run: |
           sudo apt-get update
           sudo apt-get install libcurl3-dev
-          gem install bundler -v 1.17.3
-          bundle install
       - name: Create database
         run: |
           bundle exec rake db:create RAILS_ENV=test
@@ -48,9 +48,9 @@ jobs:
           bundle exec rake db:schema:load RAILS_ENV=test
       - name: Run tests
         run: REPORT_COVERAGE=true bundle exec rspec
-      - name: Upload coverage results  
+      - name: Upload coverage results
         uses: actions/upload-artifact@master
-        if: always()	
+        if: always()
         with:
           name: coverage
           path: coverage

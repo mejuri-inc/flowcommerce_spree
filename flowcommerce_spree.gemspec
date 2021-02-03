@@ -9,8 +9,8 @@ require 'flowcommerce_spree/version'
 Gem::Specification.new do |s|
   s.name        = 'flowcommerce_spree'
   s.version     = FlowcommerceSpree::VERSION
-  s.authors     = ['Aurel Branzeanu']
-  s.email       = ['a.branzeanu@datarockets.com']
+  s.authors     = ['Aurel Branzeanu', 'Sebastian De Luca']
+  s.email       = ['a.branzeanu@datarockets.com', 'sebastian.deluca@mejuri.com']
   s.homepage    = 'https://github.com/mejuri-inc/flowcommerce_spree'
   s.summary     = 'Integration of Spree with Flow API'
   s.description = 'Integration of popular Rails/Spree store framework with e-commerce Flow API'
@@ -23,10 +23,8 @@ Gem::Specification.new do |s|
   s.add_dependency 'colorize'
   s.add_dependency 'concurrent-ruby', '~> 1.0', '>= 1.1.7'
   s.add_dependency 'flowcommerce'
-  # s.add_dependency 'flowcommerce-activemerchant'
   s.add_dependency 'flowcommerce-reference'
   s.add_dependency 'oj'
+  s.add_dependency 'pg', '~> 0.21'
   s.add_dependency 'spree_backend', '~> 2.3.0'
-
-  s.add_development_dependency 'sqlite3'
 end

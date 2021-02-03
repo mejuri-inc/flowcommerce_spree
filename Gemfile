@@ -2,6 +2,8 @@
 
 source 'https://rubygems.org'
 
+gemspec
+
 group :development, :test do
   gem 'dotenv-rails', require: 'dotenv/rails-now'
 
@@ -19,7 +21,6 @@ group :development, :test do
   gem 'byebug'
   gem 'countries'
   gem 'factory_bot_rails', '~> 4.0'
-  gem 'pg', '~> 0.21'
 end
 
 group :test do
