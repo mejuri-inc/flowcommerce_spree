@@ -1,12 +1,10 @@
-<img align="right" src="http://i.imgur.com/tov8bTw.png">
+<img src="https://i.imgur.com/tov8bTw.png" alt="flowcommerce_spree" style="float:right">
 
 # Flow.io < - > Spree adapter
 
-All flow libs are located in ./app/flow folder with exception of two controllers
-ApplicationController and FlowController that are present in ./app/controllers folder.
+All flowcommerce_spree code is located in the ./app and ./lib folders.
 
-
-## Instalation
+## Installation
 - Add the gem to main application's Gemfile:
 
     ```
@@ -62,11 +60,11 @@ ApplicationController and FlowController that are present in ./app/controllers f
 
 ## Flow API specific
 
-Classes that begin with Flow are responsible for comunicating with flow API.
+Classes that begin with Flow are responsible for communicating with flow API.
 
 ### Flow
 
-Helper class that offeres low level flow api access and few helper methods.
+Helper class that offers low level flow api access and few helper methods.
 
 ### FlowcommerceSpree::ExperienceService
 
