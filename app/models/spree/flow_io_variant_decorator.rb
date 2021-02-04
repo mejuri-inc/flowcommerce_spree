@@ -22,8 +22,8 @@ module Spree
       raise ArgumentError, 'Value should be a hash' unless value.is_a?(Hash)
 
       self.flow_data = flow_data || {}
-      self.flow_data['exp'] ||= {}
-      self.flow_data['exp'][exp] = value
+      self.flow_data['exp'] ||= {} # rubocop:disable Style/RedundantSelf
+      self.flow_data['exp'][exp] = value # rubocop:disable Style/RedundantSelf
     end
 
     # clears flow_data from the records

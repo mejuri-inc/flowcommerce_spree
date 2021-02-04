@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 FactoryBot.define do
   factory :stock_location, class: Spree::StockLocation do
     id { Rails.configuration.main_warehouse_id }

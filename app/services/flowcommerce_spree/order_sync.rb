@@ -129,7 +129,8 @@ module FlowcommerceSpree
 
     private
 
-    def fetch_session_id # rubocop:disable Metrics/MethodLength, AbcSize, CyclomaticComplexity, PerceivedComplexity
+    # rubocop:disable Metrics/MethodLength, Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+    def fetch_session_id
       session = RequestStore.store[:session]
       current_session_id = session&.[]('_f60_session')
       session_expire_at = session&.[]('_f60_expires_at')&.to_datetime
@@ -177,6 +178,7 @@ module FlowcommerceSpree
 
       current_session_id
     end
+    # rubocop:enable Metrics/MethodLength, Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 
     def flow_io_session_expired?(expiration_time)
       expiration_time - Time.zone.now.utc.to_i < SESSION_EXPIRATION_THRESHOLD

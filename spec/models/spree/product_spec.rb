@@ -112,7 +112,7 @@ RSpec.describe Spree::Product, type: :model do
         it 'returns price ranges for currencies' do
           price_ranges = product.price_range(spree_zone)
 
-          expect(price_ranges['EUR']).to(eq({ min: min_price.to_s, max: max_price.to_s }))
+          expect(price_ranges['EUR']).to(eq(min: min_price.to_s, max: max_price.to_s))
         end
 
         include_examples 'only_currencies_in_master_variant'
@@ -152,9 +152,9 @@ RSpec.describe Spree::Product, type: :model do
 
         it 'returns price ranges for currencies' do
           price_ranges = product.price_range(spree_zone)
-          expect(price_ranges['USD']).to(eq({ min: min_price.to_s, max: max_price.to_s }))
-          expect(price_ranges['CAD']).to(eq({ min: min_price.to_s, max: max_price.to_s }))
-          expect(price_ranges['AUD']).to(eq({ min: min_price.to_s, max: max_price.to_s }))
+          expect(price_ranges['USD']).to(eq(min: min_price.to_s, max: max_price.to_s))
+          expect(price_ranges['CAD']).to(eq(min: min_price.to_s, max: max_price.to_s))
+          expect(price_ranges['AUD']).to(eq(min: min_price.to_s, max: max_price.to_s))
         end
 
         include_examples 'only_currencies_in_master_variant'

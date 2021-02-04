@@ -5,7 +5,7 @@ module Spree
     Coupon.class_eval do
       def apply
         if order.coupon_code.present?
-          if promotion&.actions.exists?
+          if promotion&.actions&.exists?
             experience_key  = order.flow_order&.dig('experience', 'key')
             forbiden_keys   = promotion.flow_data&.dig('filter', 'experience') || []
 

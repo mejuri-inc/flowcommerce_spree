@@ -2,10 +2,8 @@ AllCops:
   Exclude:
     - 'bin/**/*'
     - 'db/**/*'
+    - 'spec/dummy/db/**/*'
   TargetRubyVersion: 2.3
-
-Documentation:
-  Enabled: false
 
 Layout/CaseIndentation:
   Enabled: true
@@ -25,9 +23,6 @@ Layout/LineLength:
 
 # Lint/StructNewOverride:
 #   Enabled: true
-
-GlobalVars:
-  AllowedVariables:
 
 Metrics/AbcSize:
   Enabled: true
@@ -61,6 +56,9 @@ Naming/PredicateName:
 Style/Documentation:
   Enabled: false
 
+Style/GlobalVars:
+  AllowedVariables:
+
 # Style/HashEachMethods:
 #   Enabled: true
 
@@ -76,6 +74,9 @@ Style/FrozenStringLiteralComment:
 Style/GuardClause:
   Enabled: true
   Exclude:
+
+Style/NumericLiteralPrefix:
+  EnforcedOctalStyle: zero_only
 
 Style/NumericPredicate:
   Enabled: true

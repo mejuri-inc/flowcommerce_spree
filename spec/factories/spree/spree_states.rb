@@ -1,3 +1,5 @@
+# frozen_string_literal: true
+
 FactoryBot.define do
   factory :state, class: Spree::State do
     sequence(:name) { |n| "STATE_NAME_#{n}" }
