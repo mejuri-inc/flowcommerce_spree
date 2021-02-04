@@ -35,7 +35,7 @@ RSpec.describe Spree::Product, type: :model do
   end
 
   describe '#price_in_zone' do
-    describe 'when Spree::Zone has experience in flow' do
+    describe 'when Spree::Zone has experience in flow_io' do
       let(:product) { create(:product, :with_master_variant_flow_data) }
       let(:spree_zone) { Spree::Zones::Product.find_by(name: 'Germany') }
       let(:experience) { 'germany' }
@@ -76,21 +76,21 @@ RSpec.describe Spree::Product, type: :model do
       end
     end
 
-    describe 'when Spree::Zone does has experience in flow' do
+    describe 'when Spree::Zone does has experience in flow_io' do
       let(:product) { create(:product, :with_master_variant_flow_data, :with_cad_price, :with_aud_price) }
       let(:variant1) { create(:base_variant, :with_flow_data, product: product) }
       let(:variant2) { create(:base_variant, :with_flow_data, product: product) }
       let(:spree_zone) { Spree::Zones::Product.find_by(name: 'Germany') }
 
       describe 'when variants have same price' do
-        it 'includes currency for flow experience' do
+        it 'includes currency for flow_io experience' do
           price_ranges = product.price_range(spree_zone)
           master_flow_price = product.master.flow_local_price(spree_zone.flow_data['key'])
 
-          expect(price_ranges['USD']).to(eq({ amount: product.price.round.to_s }))
-          expect(price_ranges['CAD']).to(eq({ amount: product.price.round.to_s }))
-          expect(price_ranges['AUD']).to(eq({ amount: product.price.round.to_s }))
-          expect(price_ranges['EUR']).to(eq({ amount: master_flow_price.amount.round.to_s }))
+          expect(price_ranges['USD']).to(eq(amount: product.price.round.to_s))
+          expect(price_ranges['CAD']).to(eq(amount: product.price.round.to_s))
+          expect(price_ranges['AUD']).to(eq(amount: product.price.round.to_s))
+          expect(price_ranges['EUR']).to(eq(amount: master_flow_price.amount.round.to_s))
         end
 
         include_examples 'only_currencies_in_master_variant'
@@ -111,14 +111,14 @@ RSpec.describe Spree::Product, type: :model do
         it 'returns price ranges for currencies' do
           price_ranges = product.price_range(spree_zone)
 
-          expect(price_ranges['EUR']).to(eq({ min: min_price.to_s, max: max_price.to_s }))
+          expect(price_ranges['EUR']).to(eq(min: min_price.to_s, max: max_price.to_s))
         end
 
         include_examples 'only_currencies_in_master_variant'
       end
     end
 
-    describe 'when Spree::Zone does not have experience in flow' do
+    describe 'when Spree::Zone does not have experience in flow_io' do
       let(:product) { create(:product, :with_cad_price, :with_aud_price) }
       let(:variant1) { create(:base_variant, product: product) }
       let(:variant2) { create(:base_variant, product: product) }
@@ -127,9 +127,9 @@ RSpec.describe Spree::Product, type: :model do
       describe 'when variants have same price' do
         it 'returns amount for each currency' do
           price_ranges = product.price_range(spree_zone)
-          expect(price_ranges['USD']).to(eq({ amount: product.price.round.to_s }))
-          expect(price_ranges['CAD']).to(eq({ amount: product.price.round.to_s }))
-          expect(price_ranges['AUD']).to(eq({ amount: product.price.round.to_s }))
+          expect(price_ranges['USD']).to(eq(amount: product.price.round.to_s))
+          expect(price_ranges['CAD']).to(eq(amount: product.price.round.to_s))
+          expect(price_ranges['AUD']).to(eq(amount: product.price.round.to_s))
         end
 
         include_examples 'only_currencies_in_master_variant'
@@ -150,9 +150,9 @@ RSpec.describe Spree::Product, type: :model do
 
         it 'returns price ranges for currencies' do
           price_ranges = product.price_range(spree_zone)
-          expect(price_ranges['USD']).to(eq({ min: min_price.to_s, max: max_price.to_s }))
-          expect(price_ranges['CAD']).to(eq({ min: min_price.to_s, max: max_price.to_s }))
-          expect(price_ranges['AUD']).to(eq({ min: min_price.to_s, max: max_price.to_s }))
+          expect(price_ranges['USD']).to(eq(min: min_price.to_s, max: max_price.to_s))
+          expect(price_ranges['CAD']).to(eq(min: min_price.to_s, max: max_price.to_s))
+          expect(price_ranges['AUD']).to(eq(min: min_price.to_s, max: max_price.to_s))
         end
 
         include_examples 'only_currencies_in_master_variant'

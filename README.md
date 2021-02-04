@@ -11,32 +11,36 @@ All flowcommerce_spree code is located in the ./app and ./lib folders.
     gem 'flowcommerce_spree', git: 'https://github.com/mejuri-inc/flowcommerce_spree'
     ```
 
-- If the main application's Rails version is less than 4.2, add also  to main application's Gemfile the `activerecord
--postgres-json` gem (the mejuri-inc fork allows using a recent Rake version:
+- If the main application's Rails version is less than 4.2, add also to main application's Gemfile the `activerecord
+-postgres-json` gem (at least version 0.2.3):
 
     ```
-    gem 'activerecord-postgres-json', git: 'https://github.com/mejuri-inc/activerecord-postgres-json'
+    gem 'activerecord-postgres-json', '>= 0.2.3'
     ```
- 
 
 - Run `bundle install`.
 
-- Define this additional ENV variables. You will find them in 
+- Define this additional ENV variables. You will find all of them, except FLOW_MOUNT_PATH in 
   [Flow console](https://console.flow.io/org_account_name/organization/integrations):
 
     ```
     FLOW_TOKEN='SUPERsecretTOKEN' # API_KEY
     FLOW_ORGANIZATION='spree-app-sandbox'
     FLOW_BASE_COUNTRY='usa'
+    # The path to which the FlowcommerceSpree engine will be mounted (default, if this variable is missing, will be the 
+    # '/flow' path)
+    FLOW_MOUNT_PATH='/flow' 
     ```
 
-- The only piece of code that is needed to enable payments with the FlowCommerce engine
+- To enable payments with the FlowCommerce engine, the payment method `flow.io` with `Spree::Gateway::FlowIo` should be 
+  added in the Spree Admin. This payment method is automatically registered in the gem in an after_initialize Rails 
+  engine callback:
 
     ```
-      # config/application.rb
+      # lib/flowcommerce_spree/engine.rb
       config.after_initialize do |app|
         # init Flow payments as an option
-        app.config.spree.payment_methods << Spree::Gateway::Flow
+        app.config.spree.payment_methods << Spree::Gateway::FlowIo
       end
     ```
 
@@ -56,7 +60,6 @@ All flowcommerce_spree code is located in the ./app and ./lib folders.
   
   `serialize :flow_data, ActiveRecord::Coders::JSON.new(symbolize_keys: true)`
  
-
 
 ## Flow API specific
 
@@ -86,6 +89,6 @@ All methods are prefixed with ```flow_```.
 
 ## Helper lib
 
-### Spree::Flow::Gateway
+### Spree::Gateway::FlowIo
 
 Adapter for Spree, that allows using [Flow.io](https://www.flow.io) as payment gateway. Flow is PCI compliant payment processor.
