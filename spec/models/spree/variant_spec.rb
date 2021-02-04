@@ -109,8 +109,8 @@ RSpec.describe Spree::Variant, type: :model do
           all_prices = variant.all_prices_in_zone(spree_zone)
 
           flow_price = variant.flow_local_price('germany')
-          expect(all_prices).to(include({ amount: variant.price.round.to_s, currency: 'USD' }))
-          expect(all_prices).to(include({ amount: flow_price.amount.round.to_s, currency: flow_price.currency }))
+          expect(all_prices).to(include(amount: variant.price.round.to_s, currency: 'USD'))
+          expect(all_prices).to(include(amount: flow_price.amount.round.to_s, currency: flow_price.currency))
         end
       end
 
@@ -120,8 +120,8 @@ RSpec.describe Spree::Variant, type: :model do
           all_prices = variant.all_prices_in_zone(spree_zone)
 
           flow_price = variant.flow_local_price('germany')
-          expect(all_prices).to(include({ amount: variant.price.round.to_s, currency: 'USD' }))
-          expect(all_prices).not_to(include({ amount: flow_price.amount.round.to_s, currency: flow_price.currency }))
+          expect(all_prices).to(include(amount: variant.price.round.to_s, currency: 'USD'))
+          expect(all_prices).not_to(include(amount: flow_price.amount.round.to_s, currency: flow_price.currency))
         end
       end
     end
