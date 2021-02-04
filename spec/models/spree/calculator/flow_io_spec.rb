@@ -3,7 +3,7 @@
 require 'rails_helper'
 require 'support/flowcommerce_example_response'
 
-RSpec.describe Spree::Calculator::FlowcommerceCalculator, type: :model do
+RSpec.describe Spree::Calculator::FlowIo, type: :model do
   describe '#compute' do
     context 'when taxes and duties are included in price' do
       let(:tax_rate) { create(:included_tax_rate) }

@@ -2,7 +2,7 @@
 
 module Spree
   class Calculator
-    class FlowcommerceCalculator < Calculator::DefaultTax
+    class FlowIo < Calculator::DefaultTax
       def self.description
         'FlowCommerce Calculator'
       end

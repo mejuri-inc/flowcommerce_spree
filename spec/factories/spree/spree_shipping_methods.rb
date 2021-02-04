@@ -18,5 +18,9 @@ FactoryBot.define do
     factory :shipping_method, class: Spree::ShippingMethod do
       association(:calculator, factory: :shipping_calculator, strategy: :build)
     end
+
+    factory :flow_shipping_method, class: Spree::ShippingMethod do
+      association(:calculator, factory: :shipping_flow_io_calculator, strategy: :build)
+    end
   end
 end
