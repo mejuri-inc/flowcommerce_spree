@@ -12,16 +12,6 @@ FactoryBot.define do
     end
   end
 
-  factory :zone, class: Spree::Zone do
-    name { Faker::Address.country }
-    description { 'Description for Zone' }
-    status { 'active' }
-
-    trait :default_zone do
-      default_tax true
-    end
-  end
-
   factory :germany_zone, class: Spree::Zones::Product do
     name { 'Germany' }
     description { 'Germany Zone' }
