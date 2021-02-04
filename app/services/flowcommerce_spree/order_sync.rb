@@ -129,7 +129,8 @@ module FlowcommerceSpree
 
     private
 
-    def fetch_session_id # rubocop:disable Metrics/MethodLength, AbcSize, CyclomaticComplexity, PerceivedComplexity
+    # rubocop:disable Metrics/MethodLength, Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
+    def fetch_session_id
       session = RequestStore.store[:session]
       current_session_id = session&.[]('_f60_session')
       session_expire_at = session&.[]('_f60_expires_at')&.to_datetime
@@ -177,6 +178,7 @@ module FlowcommerceSpree
 
       current_session_id
     end
+    # rubocop:enable Metrics/MethodLength, Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 
     def flow_io_session_expired?(expiration_time)
       expiration_time - Time.zone.now.utc.to_i < SESSION_EXPIRATION_THRESHOLD
@@ -202,7 +204,14 @@ module FlowcommerceSpree
     def try_to_add_customer
       return unless (customer = @order.user)
 
-      address = customer.ship_address || customer.user_profile&.address
+      address = nil
+      customer_ship_address = customer.ship_address
+      address = customer_ship_address if customer_ship_address&.country&.iso3 == @order.zone.flow_io_experience_country
+
+      unless address
+        user_profile_address = customer.user_profile&.address
+        address = user_profile_address if user_profile_address&.country&.iso3 == @order.zone.flow_io_experience_country
+      end
 
       @body[:customer] = { name: { first: address&.firstname,
                                    last: address&.lastname },
@@ -210,7 +219,7 @@ module FlowcommerceSpree
                            number: customer.flow_number,
                            phone: address&.phone }
 
-      add_customer_address(address) if address&.country&.iso3 == @order.zone.flow_io_experience_country
+      add_customer_address(address) if address
     end
 
     def add_customer_address(address)

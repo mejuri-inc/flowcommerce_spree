@@ -6,21 +6,21 @@ CurrentZoneLoader.module_eval do
   def current_zone
     return @current_zone if defined?(@current_zone)
 
-    RequestStore.store[:session] = session
-    if (session_region_name = session['region']&.[]('name'))
-      @current_zone ||= Spree::Zones::Product.find_by(name: session_region_name)
-    end
-
-    if request_iso_code.present?
-      @current_zone ||= flow_zone
-      @current_zone ||= Spree::Country.find_by(iso: request_iso_code)&.product_zones&.active&.first
-    end
+    @current_zone = if (session_region_name = session['region']&.[]('name'))
+                      Spree::Zones::Product.find_by(name: session_region_name)
+                    elsif request_iso_code.present?
+                      @current_zone = flow_zone
+                      @current_zone ||= Spree::Country.find_by(iso: request_iso_code)&.product_zones&.active&.first
+                    end
 
     @current_zone ||= Spree::Zones::Product.find_by(name: 'International') ||
                       Spree::Zones::Product.new(name: 'International', taxon_ids: [], currencies: %w[USD CAD])
 
     current_zone_name = @current_zone.name
-    session['region'] = { name: current_zone_name, available_currencies: @current_zone.available_currencies }
+    session['region'] = { name: current_zone_name, available_currencies: @current_zone.available_currencies,
+                          request_iso_code: request_iso_code }
+
+    RequestStore.store[:session] = session
     Rails.logger.debug("Using product zone: #{current_zone_name}")
     @current_zone
   end
