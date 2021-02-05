@@ -45,7 +45,12 @@ FactoryBot.define do
   end
 
   factory :zone, class: Spree::Zone do
-    name { Faker::Address.unique.country }
+    name do
+      loop do
+        faker_name = Faker::Address.unique.country
+        break faker_name if ISO3166::Country.find_country_by_name(faker_name)
+      end
+    end
     description { 'Description for Zone' }
     status { 'active' }
 
