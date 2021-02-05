@@ -14,6 +14,7 @@ RSpec.shared_examples 'refreshes flow.io session and checkout_token' do
       .to receive(:post_organizations_by_organization).and_return(new_session)
     allow_any_instance_of(Io::Flow::V0::Clients::CheckoutTokens)
       .to receive(:post_checkout_and_tokens_by_organization).and_return(new_checkout_token)
+    allow_any_instance_of(FlowcommerceSpree::OrderSync).to receive(:sync_body!)
   end
 
   it 'refresh the session and checkout_token on flow.io and returns the checkout_url based on new token' do

@@ -12,12 +12,16 @@ RSpec.describe Users::SessionsController, type: :controller do
       create(:order, zone_id: current_zone.id, flow_data: { exp: current_zone.flow_io_experience,
                                                             order: { id: Faker::Guid.guid },
                                                             checkout_token: token,
+                                                            session_id: Faker::Guid.guid,
                                                             session_expires_at: session_expiration })
     end
     let(:session_expiration) { Time.zone.now.utc + 30.minutes }
     let(:token) { Faker::Guid.guid }
 
-    before { allow(controller).to receive(:current_order).and_return(order) }
+    before do
+      allow(controller).to receive(:current_order).and_return(order)
+      allow_any_instance_of(FlowcommerceSpree::OrderSync).to receive(:sync_body!)
+    end
 
     context 'and the flow.io session is not expired' do
       it 'do not refresh flow.io session and checkout_token and returns http success and the flow.io checkout_url' do
@@ -45,14 +49,10 @@ RSpec.describe Users::SessionsController, type: :controller do
       it_behaves_like 'refreshes flow.io session and checkout_token'
     end
 
-    context 'when current_order has no flow order_id and no checkout_token' do
+    context 'when current_order is a flow.io order, but returns nil checkout_url' do
       let(:order) { create(:order, zone_id: current_zone.id, flow_data: { exp: current_zone.flow_io_experience }) }
-      let(:new_session) { build(:flow_organization_session) }
 
-      before do
-        allow_any_instance_of(Io::Flow::V0::Clients::Sessions)
-          .to receive(:post_organizations_by_organization).and_return(new_session)
-      end
+      before { allow(order).to receive(:checkout_url).and_return(nil) }
 
       it 'returns :unprocessable_entity and empty body' do
         get :checkout_url
