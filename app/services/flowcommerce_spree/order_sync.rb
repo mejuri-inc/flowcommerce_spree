@@ -134,23 +134,23 @@ module FlowcommerceSpree
       session = RequestStore.store[:session]
       current_session_id = session&.[]('_f60_session')
       session_expire_at = session&.[]('_f60_expires_at')&.to_datetime
+      session_expired = flow_io_session_expired?(session_expire_at.to_i)
       order_flow_session_id = @order.flow_data['session_id']
       order_session_expire_at = @order.flow_io_session_expires_at
+      order_session_expired = flow_io_session_expired?(order_session_expire_at.to_i)
 
-      if current_session_id && session_expire_at && !flow_io_session_expired?(session_expire_at.to_i)
+      if order_flow_session_id == current_session_id && session_expire_at == order_session_expire_at &&
+         @order.flow_io_checkout_token.present? && session_expired == false
+        return current_session_id
+      elsif current_session_id && session_expire_at && session_expired == false
         # If request flow_session is not expired, don't refresh the flow_session (i.e., don't mark the refresh_session
         # lvar as true), just store the flow_session data into the order, if it is new, and refresh the checkout_token
         refresh_session = nil
-      elsif order_flow_session_id && order_session_expire_at && !flow_io_session_expired?(order_session_expire_at.to_i)
+      elsif order_flow_session_id && order_session_expire_at && order_session_expired == false && session_expired.nil?
         refresh_checkout_token if @order.flow_io_order_id && @order.flow_io_checkout_token.blank?
         return order_flow_session_id
       else
         refresh_session = true
-      end
-
-      if order_flow_session_id == current_session_id && session_expire_at == order_session_expire_at &&
-         @order.flow_io_checkout_token.present?
-        return current_session_id
       end
 
       if refresh_session
@@ -181,6 +181,8 @@ module FlowcommerceSpree
     # rubocop:enable Metrics/MethodLength, Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
 
     def flow_io_session_expired?(expiration_time)
+      return nil if expiration_time == 0
+
       expiration_time - Time.zone.now.utc.to_i < SESSION_EXPIRATION_THRESHOLD
     end
 
@@ -243,7 +245,7 @@ module FlowcommerceSpree
       @use_get = false
 
       # use get if order is completed and closed
-      @use_get = true if @order.state == 'complete'
+      @use_get = true if @order.flow_data['order']['submitted_at'].present? || @order.state == 'complete'
 
       # use get if local digest hash check said there is no change
       @use_get ||= true if @order.flow_data['digest'] == @digest
@@ -252,9 +254,9 @@ module FlowcommerceSpree
       @use_get = false unless @order.flow_data['order']
 
       if @use_get
-        @response ||= FlowcommerceSpree::Api.run :get, "/:organization/orders/#{@body[:number]}", expand: 'experience'
+        @response ||= @client.orders.get_by_number(ORGANIZATION, @order.number).to_hash
       else
-        @response = @client.orders.put_by_number(FlowcommerceSpree::ORGANIZATION, @order.number,
+        @response = @client.orders.put_by_number(ORGANIZATION, @order.number,
                                                  Io::Flow::V0::Models::OrderPutForm.new(@body), @opts).to_hash
       end
     end
@@ -298,7 +300,7 @@ module FlowcommerceSpree
         return if @use_get && response_total == cache_total
 
         # update local order
-        @order.flow_data.merge!('digest' => @digest, 'order' => @response.to_hash)
+        @order.flow_data.merge!('digest' => @digest, 'order' => @response)
       end
     end
   end
