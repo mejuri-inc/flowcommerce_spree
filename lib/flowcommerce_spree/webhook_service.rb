@@ -31,7 +31,8 @@ module FlowcommerceSpree
 
     def hook_capture_upserted_v2
       capture = @data['capture']
-      if (order = Spree::Order.find_by(number: capture.dig('authorization', 'order', 'number')))
+      order_number = capture.dig('authorization', 'order', 'number')
+      if (order = Spree::Order.find_by(number: order_number))
         order.flow_data['captures'] ||= []
         order_captures = order.flow_data['captures']
         order_captures.delete_if do |c|
