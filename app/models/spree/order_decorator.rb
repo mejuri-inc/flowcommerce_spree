@@ -154,11 +154,7 @@ module Spree # rubocop:disable Metrics/ModuleLength
     end
 
     def checkout_url
-      session_expire_at = flow_io_session_expires_at.to_i
-      if (session_expire_at - Time.zone.now.utc.to_i) < FlowcommerceSpree::OrderSync::SESSION_EXPIRATION_THRESHOLD
-        FlowcommerceSpree::OrderSync.new(order: self)
-        update_column(:meta, meta.to_json)
-      end
+      FlowcommerceSpree::OrderSync.new(order: self).synchronize!
 
       checkout_token = flow_io_checkout_token
       return "https://checkout.flow.io/tokens/#{checkout_token}" if checkout_token
