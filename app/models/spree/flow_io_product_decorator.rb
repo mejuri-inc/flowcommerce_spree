@@ -49,7 +49,7 @@ module Spree
         rmin = min&.amount&.to_s(:rounded, precision: 0) || 0
         rmax = max&.amount&.to_s(:rounded, precision: 0) || 0
 
-        prices[currency] = rmin == rmax ? { amount: rmin } : { min: rmin, max: rmax }
+        prices[currency] = { min: rmin, max: rmax }
       end
 
       add_flow_price_range(prices, product_zone)
@@ -82,7 +82,7 @@ module Spree
       rmin = min&.amount&.to_s(:rounded, precision: 0) || 0
       rmax = max&.amount&.to_s(:rounded, precision: 0) || 0
 
-      prices[currency] = rmin == rmax ? { amount: rmin } : { min: rmin, max: rmax }
+      prices[currency] = { min: rmin, max: rmax }
       prices
     end
 
