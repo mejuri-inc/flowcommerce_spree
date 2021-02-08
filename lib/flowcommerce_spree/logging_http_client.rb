@@ -14,15 +14,12 @@ module FlowcommerceSpree
       # original_read = client.read_timeout
 
       start_time = Time.now.utc.round(10)
-      @logger.info "start #{request.method} #{request.path}"
-      @logger.info "body: #{request.instance_variable_get(:@header)}"
-      @logger.info "body: #{request.body}"
 
-      if request.path.start_with?('/organizations')
+      # if request.path.start_with?('/organizations')
         # Contrived example to show how client settings can be adjusted
         # client.open_timeout = 60
         # client.read_timeout = 60
-      end
+      # end
 
       begin
         response = super
@@ -32,10 +29,15 @@ module FlowcommerceSpree
         # client.open_timeout = original_open
         # client.read_timeout = original_read
 
-        end_time = Time.now.utc.round(10)
-        duration = ((end_time - start_time) * 1000).round(0)
-        @logger.info "complete #{request.method} #{request.path} #{duration} ms"
-        @logger.info "response: #{response}"
+        duration = ((Time.now.utc.round(10) - start_time) * 1000).round(0)
+
+        @logger.info(
+          "Started #{request.method} #{request.path}\n"\
+          "headers: #{request.instance_variable_get(:@header)}\nbody: #{request.body}\n"\
+          "response: #{response.force_encoding('utf-8')}\n"\
+          "Completed #{request.method} #{request.path} #{duration} ms\n"
+        )
+
         @logger.info "Error: #{e.inspect}" if e
       end
     end

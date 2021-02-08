@@ -21,11 +21,20 @@ module FlowcommerceSpree
   end
 
   def self.logger
-    logger = ActiveSupport::Logger.new(STDOUT, 3, 10_485_760)
+    logger = ActiveSupport::Logger.new(STDOUT)
+
+    logger_formatter = proc do |severity, datetime, _progname, msg|
+      "\n#{datetime}, #{severity}: #{msg}\n"
+    end
+
+    logger.formatter = logger_formatter
 
     # Broadcast the log into the file besides STDOUT, if `log` folder exists
     if Dir.exist?('log')
-      logger.extend(ActiveSupport::Logger.broadcast(ActiveSupport::Logger.new('log/flowcommerce_spree.log')))
+      file_logger = ActiveSupport::Logger.new('log/flowcommerce_spree.log', 3, 10_485_760)
+      file_logger.formatter = logger_formatter
+
+      logger.extend(ActiveSupport::Logger.broadcast(file_logger))
     end
     logger
   end
