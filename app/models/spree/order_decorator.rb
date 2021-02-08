@@ -193,33 +193,27 @@ module Spree # rubocop:disable Metrics/ModuleLength
     end
 
     def flow_customer_email
-      flow_data['order']&.[]('customer')&.[]('email')
+      flow_data['order'].dig('customer', 'email')
     end
 
     def flow_ship_address
-      flow_destination = flow_data['order']&.[]('destination')
+      flow_destination = flow_data['order'].dig('destination')
       return unless flow_destination.present?
 
-      flow_contact = flow_destination['contact']
+      flow_destination['name'] = flow_destination['contact']['name']
+      flow_destination['phone'] = flow_destination['contact']['phone']
       s_address = ship_address || build_ship_address
-      s_address.attributes = { first_name: flow_contact['name']['first'], last_name: flow_contact['name']['last'],
-                               phone: flow_contact['phone'], address1: flow_destination['streets'][0],
-                               address2: flow_destination['streets'][1], zipcode: flow_destination['postal'],
-                               city: flow_destination['city'], state_name: flow_destination['province'] || 'something',
-                               country: Spree::Country.find_by(iso3: flow_destination['country']) }
+      s_address.update_attributes_from_params(flow_destination)
       s_address
     end
 
     def flow_bill_address
-      flow_bill_address = flow_data['order']&.[]('payments')&.last&.[]('address')
+      flow_bill_address = flow_data.dig('order', 'payments')&.last&.[]('address')
       return unless flow_bill_address
 
+      flow_bill_address['phone'] = ship_address['phone']
       b_address = bill_address || build_bill_address
-      b_address.attributes = { first_name: flow_bill_address['name']['first'], last_name: flow_bill_address['name']['last'],
-                               phone: ship_address['phone'], address1: flow_bill_address['streets'][0],
-                               address2: flow_bill_address['streets'][1], zipcode: flow_bill_address['postal'],
-                               city: flow_bill_address['city'], state_name: flow_bill_address['province'] || 'something',
-                               country: Spree::Country.find_by(iso3: flow_bill_address['country']) }
+      b_address.update_attributes_from_params(flow_bill_address)
       b_address
     end
 
