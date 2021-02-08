@@ -106,10 +106,13 @@ module FlowcommerceSpree
             attrs_to_update[:state] = 'complete'
             attrs_to_update[:payment_state] = 'paid'
             attrs_to_update[:completed_at] = Time.zone.now.utc
+            attrs_to_update[:email] = order.flow_customer_email
           else
             attrs_to_update[:state] = 'confirmed'
           end
         end
+
+        attrs_to_update.merge!(order.prepare_flow_addresses) if order.complete? || attrs_to_update[:state] == 'complete'
 
         order.update_columns(attrs_to_update)
         order.create_tax_charge! if flow_data_submitted

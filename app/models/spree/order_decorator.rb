@@ -191,5 +191,54 @@ module Spree # rubocop:disable Metrics/ModuleLength
         'cc' # creait card is default
       end
     end
+
+    def flow_customer_email
+      flow_data['order']&.[]('customer')&.[]('email')
+    end
+
+    def flow_ship_address
+      flow_destination = flow_data['order']&.[]('destination')
+      return unless flow_destination.present?
+
+      flow_contact = flow_destination['contact']
+      s_address = ship_address || build_ship_address
+      s_address.attributes = { first_name: flow_contact['name']['first'], last_name: flow_contact['name']['last'],
+                               phone: flow_contact['phone'], address1: flow_destination['streets'][0],
+                               address2: flow_destination['streets'][1], zipcode: flow_destination['postal'],
+                               city: flow_destination['city'], state_name: flow_destination['province'] || 'something',
+                               country: Spree::Country.find_by(iso3: flow_destination['country']) }
+      s_address
+    end
+
+    def flow_bill_address
+      flow_bill_address = flow_data['order']&.[]('payments')&.last&.[]('address')
+      return unless flow_bill_address
+
+      b_address = bill_address || build_bill_address
+      b_address.attributes = { first_name: flow_bill_address['name']['first'], last_name: flow_bill_address['name']['last'],
+                               phone: ship_address['phone'], address1: flow_bill_address['streets'][0],
+                               address2: flow_bill_address['streets'][1], zipcode: flow_bill_address['postal'],
+                               city: flow_bill_address['city'], state_name: flow_bill_address['province'] || 'something',
+                               country: Spree::Country.find_by(iso3: flow_bill_address['country']) }
+      b_address
+    end
+
+    def prepare_flow_addresses
+      address_attributes = {}
+
+      s_address = flow_ship_address
+      if s_address&.changes&.any?
+        s_address.save
+        address_attributes[:ship_address_id] = s_address.id unless ship_address_id
+      end
+
+      b_address = flow_bill_address
+      if b_address&.changes&.any?
+        b_address.save
+        address_attributes[:bill_address_id] = b_address.id unless bill_address_id
+      end
+
+      address_attributes
+    end
   end
 end
