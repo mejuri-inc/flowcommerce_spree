@@ -23,20 +23,33 @@ RSpec.describe Users::SessionsController, type: :controller do
       allow_any_instance_of(FlowcommerceSpree::OrderSync).to receive(:sync_body!)
     end
 
-    context 'and the flow.io session is not expired' do
-      it 'do not refresh flow.io session and checkout_token and returns http success and the flow.io checkout_url' do
-        expect_any_instance_of(Io::Flow::V0::Clients::Sessions).not_to receive(:post_organizations_by_organization)
-        expect_any_instance_of(Io::Flow::V0::Clients::CheckoutTokens)
-          .not_to receive(:post_checkout_and_tokens_by_organization)
+    context 'when the order`s flow.io session is not expired' do
+      context 'and the request session expiration is missing' do
+        it 'do not refresh flow.io session and checkout_token and returns http success and the flow.io checkout_url' do
+          expect_any_instance_of(Io::Flow::V0::Clients::Sessions).not_to receive(:post_organizations_by_organization)
+          expect_any_instance_of(Io::Flow::V0::Clients::CheckoutTokens)
+            .not_to receive(:post_checkout_and_tokens_by_organization)
 
-        get :checkout_url
+          RequestStore.store[:session]&.delete('_f60_expires_at')
+          get :checkout_url
 
-        expect(response).to have_http_status(:success)
-        expect(Oj.load(response.body)).to eql('checkout_url' => "https://checkout.flow.io/tokens/#{token}")
+          expect(response).to have_http_status(:success)
+          expect(Oj.load(response.body)).to eql('checkout_url' => "https://checkout.flow.io/tokens/#{token}")
+        end
+      end
+
+      context 'but the request session is expired' do
+        before do
+          RequestStore.store = { session: { '_f60_expires_at' => Time.zone.now.utc + 3.seconds } }
+        end
+
+        it_behaves_like 'refreshes flow.io session and checkout_token'
       end
     end
 
     context 'and the flow.io session is expired' do
+      let(:session_expiration) { Time.zone.now.utc + 3.seconds }
+
       it_behaves_like 'refreshes flow.io session and checkout_token'
     end
 
