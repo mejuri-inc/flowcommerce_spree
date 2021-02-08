@@ -3,7 +3,6 @@
 require 'rails_helper'
 
 RSpec.shared_examples 'refreshes flow.io session and checkout_token' do
-  let(:session_expiration) { Time.zone.now.utc + 3.seconds }
   let(:new_session) { build(:flow_organization_session) }
   let(:new_checkout_token) do
     build(:flow_checkout_token, order: { number: order.number }, session: { id: new_session.id })
