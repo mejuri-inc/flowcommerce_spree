@@ -193,27 +193,32 @@ module Spree # rubocop:disable Metrics/ModuleLength
     end
 
     def flow_customer_email
-      flow_data['order'].dig('customer', 'email')
+      flow_data.dig('order', 'customer', 'email')
     end
 
     def flow_ship_address
-      flow_destination = flow_data['order'].dig('destination')
+      flow_destination = flow_data.dig('order', 'destination')
       return unless flow_destination.present?
 
-      flow_destination['name'] = flow_destination['contact']['name']
-      flow_destination['phone'] = flow_destination['contact']['phone']
+      flow_destination['first'] = flow_destination.dig('contact', 'name', 'first')
+      flow_destination['last']  = flow_destination.dig('contact', 'name', 'last')
+      flow_destination['phone'] = flow_destination.dig('contact', 'phone')
+
       s_address = ship_address || build_ship_address
-      s_address.update_attributes_from_params(flow_destination)
+      s_address.prepare_from_flow_attributes(flow_destination)
       s_address
     end
 
     def flow_bill_address
-      flow_bill_address = flow_data.dig('order', 'payments')&.last&.[]('address')
-      return unless flow_bill_address
+      flow_payment_address = flow_data.dig('order', 'payments')&.last&.[]('address')
+      return unless flow_payment_address
 
-      flow_bill_address['phone'] = ship_address['phone']
+      flow_payment_address['first'] = flow_payment_address.dig('name', 'first')
+      flow_payment_address['last']  = flow_payment_address.dig('name', 'last')
+      flow_payment_address['phone'] = ship_address['phone']
+
       b_address = bill_address || build_bill_address
-      b_address.update_attributes_from_params(flow_bill_address)
+      b_address.prepare_from_flow_attributes(flow_payment_address)
       b_address
     end
 
@@ -221,6 +226,7 @@ module Spree # rubocop:disable Metrics/ModuleLength
       address_attributes = {}
 
       s_address = flow_ship_address
+
       if s_address&.changes&.any?
         s_address.save
         address_attributes[:ship_address_id] = s_address.id unless ship_address_id
