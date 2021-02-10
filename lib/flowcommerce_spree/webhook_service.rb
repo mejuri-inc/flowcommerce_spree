@@ -91,6 +91,42 @@ module FlowcommerceSpree
       self
     end
 
+    def hook_order_placed_v2
+      order_placed = @data['order_placed']
+      flow_order = order_placed['order']
+      flow_allocation = order_placed['allocation']
+
+      errors << { message: 'Order number param missing' } && (return self) unless (order_number = flow_order['number'])
+
+      if (order = Spree::Order.find_by(number: order_number))
+        order.flow_data['order'] = flow_order.to_hash
+        order.flow_data['allocations'] = flow_allocation.to_hash
+        order_flow_data = order.flow_data['order']
+        attrs_to_update = { meta: order.meta.to_json }
+        flow_data_submitted = order_flow_data['submitted_at'].present?
+        if flow_data_submitted && !order.complete?
+          if order_flow_data['payments'].present? && (order_flow_data.dig('balance', 'amount')&.to_i == 0)
+            attrs_to_update[:state] = 'complete'
+            attrs_to_update[:payment_state] = 'paid'
+            attrs_to_update[:completed_at] = Time.zone.now.utc
+            attrs_to_update[:email] = order.flow_customer_email
+          else
+            attrs_to_update[:state] = 'confirmed'
+          end
+        end
+
+        attrs_to_update.merge!(order.prepare_flow_addresses) if order.complete? || attrs_to_update[:state] == 'complete'
+
+        order.update_columns(attrs_to_update)
+        order.create_tax_charge! if flow_data_submitted
+        return order
+      else
+        errors << { message: "Order #{order_number} not found" }
+      end
+
+      self
+    end
+
     def hook_order_upserted_v2
       errors << { message: 'Order param missing' } && (return self) unless (flow_order = @data['order'])
 
