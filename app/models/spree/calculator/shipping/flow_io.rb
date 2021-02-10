@@ -12,7 +12,7 @@ module Spree
           flow_order = flow_order(package)
           return unless flow_order
 
-          flow_order&.prices&.find { |x| x.key('shipping') }&.amount || 0
+          flow_order['prices'].find { |x| x['key'] == 'shipping' }['amount'] || 0
         end
 
         def default_charge(_country)
@@ -28,7 +28,7 @@ module Spree
         def flow_order(package)
           return @flow_order if defined?(@flow_order)
 
-          @flow_order = package.order.flow_order
+          @flow_order = package.order.flow_data&.[]('order')
           @flow_order
         end
       end

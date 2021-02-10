@@ -11,7 +11,6 @@ group :development, :test do
   gem 'devise'
   gem 'dotenv-rails', require: 'dotenv/rails-now'
   gem 'factory_bot_rails', '~> 4.0'
-  gem 'hashie'
   gem 'oj', '= 3.7.12'
   gem 'rails', '4.1.16'
   gem 'rspec-rails', '~> 3.5'

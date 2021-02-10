@@ -18,7 +18,7 @@ RSpec.describe Spree::Calculator::Shipping::FlowIo, type: :model do
       let(:package) { double(Spree::Stock::Package, order: order) }
 
       it 'returns amount from flow_io info' do
-        expected_amount = package.order.flow_order&.prices&.find { |x| x.key('shipping') }&.amount
+        expected_amount = package.order.flow_data.dig('order', 'prices')&.find { |x| x.key('shipping') }&.[]('amount')
         expect(subject.compute_package(package)).to(be(expected_amount))
       end
     end
