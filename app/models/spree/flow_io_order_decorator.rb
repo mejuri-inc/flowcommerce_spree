@@ -1,15 +1,16 @@
 # frozen_string_literal: true
 
-# `:display_total` modifications to display total prices beside Spree default. Example: https://i.imgur.com/7v2ix2G.png
-module Spree # rubocop:disable Metrics/ModuleLength
+module Spree
   # Added flow specific methods to Spree::Order
-  Order.class_eval do
-    serialize :meta, ActiveRecord::Coders::JSON.new(symbolize_keys: true)
+  module FlowIoOrderDecorator
+    def self.included(base)
+      base.serialize :meta, ActiveRecord::Coders::JSON.new(symbolize_keys: true)
 
-    store_accessor :meta, :flow_data
+      base.store_accessor :meta, :flow_data
 
-    before_save :sync_to_flow_io
-    after_touch :sync_to_flow_io
+      base.before_save :sync_to_flow_io
+      base.after_touch :sync_to_flow_io
+    end
 
     def flow_tax_cache_key
       [number, 'flowcommerce', 'allocation', line_items.sum(:quantity)].join('-')
@@ -24,21 +25,19 @@ module Spree # rubocop:disable Metrics/ModuleLength
     end
 
     def display_total
-      price = FlowcommerceSpree::Api.format_default_price total
-      price += " (#{flow_total})" if flow_order
-      price.html_safe
+      return unless flow_data&.[]('order')
+
+      Spree::Money.new(flow_io_total_amount, currency: currency)
     end
 
     def flow_order
-      return unless flow_data&.[]('order')
-
-      Hashie::Mash.new flow_data['order']
+      flow_data&.[]('order')
     end
 
     # accepts line item, usually called from views
     def flow_line_item_price(line_item, total = false)
-      result = if flow_order
-                 item = flow_order.lines&.find { |el| el['item_number'] == line_item.variant.sku }
+      result = if (order = flow_order)
+                 item = order['lines']&.find { |el| el['item_number'] == line_item.variant.sku }
 
                  return 'n/a' unless item
 
@@ -95,10 +94,8 @@ module Spree # rubocop:disable Metrics/ModuleLength
     end
 
     # shows localized total, if possible. if not, fall back to Spree default
-    def flow_total
-      # r flow_order.total.label
-      price = flow_order&.total&.label
-      price || FlowcommerceSpree::Api.format_default_price(total)
+    def flow_io_total_amount
+      flow_data&.dig('order', 'total', 'amount')
     end
 
     def flow_experience
@@ -240,5 +237,7 @@ module Spree # rubocop:disable Metrics/ModuleLength
 
       address_attributes
     end
+
+    Spree::Order.include(self) if Spree::Order.included_modules.exclude?(self)
   end
 end

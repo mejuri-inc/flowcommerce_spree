@@ -96,10 +96,6 @@ module FlowcommerceSpree
       delivery_list
     end
 
-    def total_price
-      @order.flow_total
-    end
-
     def delivered_duty
       # paid is default
       @order.flow_data['delivered_duty'] || ::Io::Flow::V0::Models::DeliveredDuty.paid.value
