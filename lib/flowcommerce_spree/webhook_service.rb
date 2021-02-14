@@ -93,46 +93,13 @@ module FlowcommerceSpree
 
     def hook_order_placed_v2
       order_placed = @data['order_placed']
-      flow_order = order_placed['order']
-      flow_allocation = order_placed['allocation']
+      errors << { message: 'Order param missing' } && (return self) unless (flow_order = order_placed['order'])
 
       errors << { message: 'Order number param missing' } && (return self) unless (order_number = flow_order['number'])
 
       if (order = Spree::Order.find_by(number: order_number))
-        order.flow_data['order'] = flow_order.to_hash
-        order.flow_data['allocations'] = flow_allocation.to_hash
-        order_flow_data = order.flow_data['order']
-        attrs_to_update = { meta: order.meta.to_json }
-        flow_data_submitted = order_flow_data['submitted_at'].present?
-        if flow_data_submitted && !order.complete?
-          if order_flow_data['payments'].present? && (order_flow_data.dig('balance', 'amount')&.to_i == 0)
-            attrs_to_update[:state] = 'complete'
-            attrs_to_update[:payment_state] = 'paid'
-            attrs_to_update[:completed_at] = Time.zone.now.utc
-            attrs_to_update[:email] = order.flow_customer_email
-          else
-            attrs_to_update[:state] = 'confirmed'
-          end
-        end
-
-        attrs_to_update.merge!(order.prepare_flow_addresses) if order.complete? || attrs_to_update[:state] == 'complete'
-
-        if flow_data_submitted
-          order.create_proposed_shipments
-          order.shipment.update_amounts
-          order.line_items.each(&:store_ets)
-        end
-
-        order.update_columns(attrs_to_update)
-
-        # TODO: To be refactored once we have the capture_upserted_v2 webhook configured
-        if flow_data_submitted
-          order.create_tax_charge!
-          order.finalize!
-          order.update_totals
-          order.save
-        end
-
+        order.flow_data['allocations'] = order_placed['allocation'].to_hash
+        upsert_order(flow_order, order)
         return order
       else
         errors << { message: "Order #{order_number} not found" }
@@ -147,25 +114,7 @@ module FlowcommerceSpree
       errors << { message: 'Order number param missing' } && (return self) unless (order_number = flow_order['number'])
 
       if (order = Spree::Order.find_by(number: order_number))
-        order.flow_data['order'] = flow_order.to_hash
-        order_flow_data = order.flow_data['order']
-        attrs_to_update = { meta: order.meta.to_json }
-        flow_data_submitted = order_flow_data['submitted_at'].present?
-        if flow_data_submitted && !order.complete?
-          if order_flow_data['payments'].present? && (order_flow_data.dig('balance', 'amount')&.to_i == 0)
-            attrs_to_update[:state] = 'complete'
-            attrs_to_update[:payment_state] = 'paid'
-            attrs_to_update[:completed_at] = Time.zone.now.utc
-            attrs_to_update[:email] = order.flow_customer_email
-          else
-            attrs_to_update[:state] = 'confirmed'
-          end
-        end
-
-        attrs_to_update.merge!(order.prepare_flow_addresses) if order.complete? || attrs_to_update[:state] == 'complete'
-
-        order.update_columns(attrs_to_update)
-        order.create_tax_charge! if flow_data_submitted
+        upsert_order(flow_order, order)
         return order
       else
         errors << { message: "Order #{order_number} not found" }
@@ -179,6 +128,43 @@ module FlowcommerceSpree
       Spree::OrderMailer.refund_complete_email(@data).deliver
 
       'Email delivered'
+    end
+
+    def upsert_order(flow_io_order, order)
+      order.flow_data['order'] = flow_io_order.to_hash
+      order_flow_data = order.flow_data['order']
+      attrs_to_update = { meta: order.meta.to_json }
+      flow_data_submitted = order_flow_data['submitted_at'].present?
+      if flow_data_submitted && !order.complete?
+        if order_flow_data['payments'].present? && (order_flow_data.dig('balance', 'amount')&.to_i == 0)
+          attrs_to_update[:state] = 'complete'
+          attrs_to_update[:payment_state] = 'paid'
+          attrs_to_update[:completed_at] = Time.zone.now.utc
+          attrs_to_update[:email] = order.flow_customer_email
+        else
+          attrs_to_update[:state] = 'confirmed'
+        end
+      end
+      new_amount = order.flow_io_total_amount&.to_d
+      attrs_to_update[:total] = new_amount if new_amount != order.total
+
+      attrs_to_update.merge!(order.prepare_flow_addresses) if order.complete? || attrs_to_update[:state] == 'complete'
+
+      if flow_data_submitted
+        order.create_proposed_shipments
+        order.shipment.update_amounts
+        order.line_items.each(&:store_ets)
+      end
+
+      order.update_columns(attrs_to_update)
+
+      # TODO: To be refactored once we have the capture_upserted_v2 webhook configured
+      if flow_data_submitted
+        order.create_tax_charge!
+        order.finalize!
+        order.update_totals
+        order.save
+      end
     end
   end
 end
