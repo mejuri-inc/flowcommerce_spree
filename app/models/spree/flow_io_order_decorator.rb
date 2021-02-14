@@ -169,8 +169,15 @@ module Spree
       flow_data&.[]('authorization') ? true : false
     end
 
-    def flow_order_captured?
-      flow_data['capture'] ? true : false
+    def flow_io_captures_sum
+      captures_sum = 0
+      # flow_data&.[]('captures')&.select { |c| c['status'] == 'succeeded' }&.map { |c| c['amount'] }&.sum.to_d
+      flow_data&.[]('captures')&.each do |c|
+        next if c['status'] != 'succeeded'
+
+        captures_sum += c['amount']
+      end
+      captures_sum.to_d
     end
 
     # completes order and sets all states to finalized and complete
