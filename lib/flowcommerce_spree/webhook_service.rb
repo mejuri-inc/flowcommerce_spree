@@ -1,7 +1,7 @@
 # frozen_string_literal: true
 
 module FlowcommerceSpree
-  # communicates with flow api, responds to webhook events
+  # responds to webhook events from flow.io
   class WebhookService
     attr_accessor :errors
     alias full_messages errors
@@ -17,20 +17,20 @@ module FlowcommerceSpree
     end
 
     def process
-      discriminator = @data['discriminator']
-      hook_method = "hook_#{discriminator}"
+      hook_method = @data['discriminator']
       # If hook processing method registered an error, a self.object of WebhookService with this error will be
       # returned, else an ActiveRecord object will be returned
       return __send__(hook_method) if respond_to?(hook_method, true)
 
-      errors << { message: "No hook for #{discriminator}" }
+      errors << { message: "No hook for #{hook_method}" }
       self
     end
 
     private
 
-    def hook_capture_upserted_v2
-      capture = @data['capture']
+    def capture_upserted_v2
+      errors << { message: 'Capture param missing' } && (return self) unless (capture = @data['capture'])
+
       order_number = capture.dig('authorization', 'order', 'number')
       if (order = Spree::Order.find_by(number: order_number))
         order.flow_data['captures'] ||= []
@@ -48,12 +48,12 @@ module FlowcommerceSpree
       end
     end
 
-    def hook_experience_upserted_v2
+    def experience_upserted_v2
       experience = @data['experience']
       Spree::Zones::Product.find_or_initialize_by(name: experience['key'].titleize).store_flow_io_data(experience)
     end
 
-    def hook_fraud_status_changed
+    def fraud_status_changed
       if (order_number = @data.dig('order', 'number'))
         if @data['status'] == 'declined'
           if (order = Spree::Order.find_by(number: order_number))
@@ -71,7 +71,7 @@ module FlowcommerceSpree
       self
     end
 
-    def hook_local_item_upserted
+    def local_item_upserted
       errors << { message: 'Local item param missing' } && (return self) unless (local_item = @data['local_item'])
 
       errors << { message: 'SKU param missing' } && (return self) unless (flow_sku = local_item.dig('item', 'number'))
@@ -91,8 +91,9 @@ module FlowcommerceSpree
       self
     end
 
-    def hook_order_placed_v2
-      order_placed = @data['order_placed']
+    def order_placed_v2
+      errors << { message: 'Order placed param missing' } && (return self) unless (order_placed = @data['order_placed'])
+
       errors << { message: 'Order param missing' } && (return self) unless (flow_order = order_placed['order'])
 
       errors << { message: 'Order number param missing' } && (return self) unless (order_number = flow_order['number'])
@@ -108,7 +109,7 @@ module FlowcommerceSpree
       self
     end
 
-    def hook_order_upserted_v2
+    def order_upserted_v2
       errors << { message: 'Order param missing' } && (return self) unless (flow_order = @data['order'])
 
       errors << { message: 'Order number param missing' } && (return self) unless (order_number = flow_order['number'])
@@ -124,7 +125,7 @@ module FlowcommerceSpree
     end
 
     # send en email when order is refunded
-    def hook_refund_upserted_v2
+    def refund_upserted_v2
       Spree::OrderMailer.refund_complete_email(@data).deliver
 
       'Email delivered'
