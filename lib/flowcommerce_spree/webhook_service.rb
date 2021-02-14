@@ -35,12 +35,10 @@ module FlowcommerceSpree
       if (order = Spree::Order.find_by(number: order_number))
         order.flow_data['captures'] ||= []
         order_captures = order.flow_data['captures']
-        order_captures.delete_if do |c|
-          c['id'] == capture['id']
-        end
+        order_captures.delete_if { |c| c['id'] == capture['id'] }
         order_captures << capture
-
-        order.update_column(:meta, order.meta.to_json)
+        attrs_to_update = update_order_native_attrs(order)
+        order.update_columns(attrs_to_update)
         order
       else
         errors << { message: "Order #{order_number} not found" }
@@ -133,23 +131,9 @@ module FlowcommerceSpree
 
     def upsert_order(flow_io_order, order)
       order.flow_data['order'] = flow_io_order.to_hash
-      order_flow_data = order.flow_data['order']
-      attrs_to_update = { meta: order.meta.to_json }
-      flow_data_submitted = order_flow_data['submitted_at'].present?
-      if flow_data_submitted && !order.complete?
-        if order_flow_data['payments'].present? && (order_flow_data.dig('balance', 'amount')&.to_i == 0)
-          attrs_to_update[:state] = 'complete'
-          attrs_to_update[:payment_state] = 'paid'
-          attrs_to_update[:completed_at] = Time.zone.now.utc
-          attrs_to_update[:email] = order.flow_customer_email
-        else
-          attrs_to_update[:state] = 'confirmed'
-        end
-      end
-      new_amount = order.flow_io_total_amount&.to_d
-      attrs_to_update[:total] = new_amount if new_amount != order.total
-
+      attrs_to_update = update_order_native_attrs(order)
       attrs_to_update.merge!(order.prepare_flow_addresses) if order.complete? || attrs_to_update[:state] == 'complete'
+      flow_data_submitted = flow_io_order['submitted_at'].present?
 
       if flow_data_submitted
         order.create_proposed_shipments
@@ -166,6 +150,27 @@ module FlowcommerceSpree
         order.update_totals
         order.save
       end
+    end
+
+    def update_order_native_attrs(order)
+      order_flow_data = order.flow_data['order']
+      attrs_to_update = { meta: order.meta.to_json }
+      flow_io_total_amount = order.flow_io_total_amount&.to_d
+      attrs_to_update[:total] = flow_io_total_amount if flow_io_total_amount != order.total
+      attrs_to_update[:updated_at] = Time.zone.now.utc
+      return attrs_to_update if order_flow_data['submitted_at'].blank? || order.complete?
+
+      if order.flow_io_captures_sum >= flow_io_total_amount && order_flow_data.dig('balance', 'amount').to_i <= 0
+        attrs_to_update[:state] = 'complete'
+        attrs_to_update[:payment_state] = 'paid'
+        attrs_to_update[:completed_at] = Time.zone.now.utc
+        attrs_to_update[:email] = order.flow_customer_email
+      else
+        attrs_to_update[:state] = 'confirmed'
+        attrs_to_update[:payment_state] = 'pending'
+      end
+
+      attrs_to_update
     end
   end
 end
