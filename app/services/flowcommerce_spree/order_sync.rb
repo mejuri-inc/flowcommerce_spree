@@ -49,7 +49,9 @@ module FlowcommerceSpree
       # the checkout_token is fetched in the `fetch_session_id` method, calling the refresh_checkout_token method when
       # necessary.
       refresh_checkout_token if @order.flow_io_checkout_token.blank?
-      @order.update_column(:meta, @order.meta.to_json)
+      attr_to_update = { meta: @order.meta.to_json }
+      attr_to_update[:total] = @order.total if @order.total_changed?
+      @order.update_columns(attr_to_update)
       @response
     end
 
@@ -293,13 +295,15 @@ module FlowcommerceSpree
         @order.flow_data.delete('digest')
         @order.flow_data.delete('order')
       else
-        response_total = @response.dig('total', 'label')
-        cache_total    = @order.flow_data.dig('order', 'total', 'label')
+        response_total = @response[:total]
+        response_total_label = response_total&.[](:label)
+        cache_total = @order.flow_data.dig('order', 'total', 'label')
 
         # return if total is not changed, no products removed or added
-        return if @use_get && response_total == cache_total
+        return if @use_get && response_total_label == cache_total
 
         # update local order
+        @order.total = response_total&.[](:amount)
         @order.flow_data.merge!('digest' => @digest, 'order' => @response)
       end
     end
