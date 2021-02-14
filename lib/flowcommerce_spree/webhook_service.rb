@@ -99,7 +99,7 @@ module FlowcommerceSpree
       errors << { message: 'Order number param missing' } && (return self) unless (order_number = flow_order['number'])
 
       if (order = Spree::Order.find_by(number: order_number))
-        order.flow_data['allocations'] = order_placed['allocation'].to_hash
+        order.flow_data['allocation'] = order_placed['allocation'].to_hash
         upsert_order(flow_order, order)
         return order
       else
