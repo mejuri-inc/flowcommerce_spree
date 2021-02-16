@@ -23,7 +23,7 @@ module Spree
       end
 
       def method_type
-        'gateway'
+        'flow_io_gateway'
       end
 
       def preferences
