@@ -39,6 +39,7 @@ module FlowcommerceSpree
         order_captures << capture
         attrs_to_update = update_order_native_attrs(order)
         order.update_columns(attrs_to_update)
+        upsert_captures(order)
         order
       else
         errors << { message: "Order #{order_number} not found" }
@@ -98,6 +99,8 @@ module FlowcommerceSpree
 
       if (order = Spree::Order.find_by(number: order_number))
         order.flow_data['allocation'] = order_placed['allocation'].to_hash
+        upsert_payments(flow_order, order)
+        upsert_captures(order)
         upsert_order(flow_order, order)
         return order
       else
@@ -113,6 +116,8 @@ module FlowcommerceSpree
       errors << { message: 'Order number param missing' } && (return self) unless (order_number = flow_order['number'])
 
       if (order = Spree::Order.find_by(number: order_number))
+        upsert_payments(flow_order, order)
+        upsert_captures(order)
         upsert_order(flow_order, order)
         return order
       else
@@ -171,6 +176,37 @@ module FlowcommerceSpree
       end
 
       attrs_to_update
+    end
+
+    def upsert_payments(flow_order, order)
+      @payment_method_id ||= Spree::PaymentMethod.find_by(active: true, type: 'Spree::Gateway::FlowIo').id
+      flow_order['payments']&.each do |p|
+        payment =
+          order.payments.find_or_initialize_by(response_code: p['reference'], payment_method_id: @payment_method_id)
+        next unless payment.new_record?
+
+        payment.amount = p.dig('total', 'amount')
+        payment.save!(validate: false)
+
+        # For now this additional update is overwriting the generated identifier with flow.io payment identifier.
+        # TODO: Check and possibly refactor in Spree 3.0, where the `before_create :set_unique_identifier`
+        # has been removed.
+        payment.update_column(:identifier, p['id'])
+      end
+    end
+
+    def upsert_captures(order)
+      payments = order.flow_data.dig('order', 'payments')
+      order.flow_data['captures']&.each do |c|
+        next unless c['status'] == 'succeeded'
+
+        auth = c.dig('authorization', 'id')
+        next unless payments.find { |p| p['reference'] == auth }
+
+        next unless (payment = Spree::Payment.find_by(response_code: auth))
+
+        payment.capture_events.create!(amount: c['amount'])
+      end
     end
   end
 end
