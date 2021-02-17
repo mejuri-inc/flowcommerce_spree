@@ -117,12 +117,14 @@ module FlowcommerceSpree
 
         attrs_to_update.merge!(order.prepare_flow_addresses) if order.complete? || attrs_to_update[:state] == 'complete'
 
-        order.create_proposed_shipments
-        order.shipment.update_amounts
+        if flow_data_submitted
+          order.create_proposed_shipments
+          order.shipment.update_amounts
+          order.line_items.each(&:store_ets)
+        end
 
         order.update_columns(attrs_to_update)
         order.create_tax_charge! if flow_data_submitted
-
         return order
       else
         errors << { message: "Order #{order_number} not found" }
