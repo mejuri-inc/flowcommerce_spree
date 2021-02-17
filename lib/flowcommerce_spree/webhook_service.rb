@@ -47,6 +47,32 @@ module FlowcommerceSpree
       end
     end
 
+    def card_authorization_upserted_v2
+      errors << { message: 'Authorization param missing' } && (return self) unless (card_auth = @data['authorization'])
+
+      errors << { message: 'Card param missing' } && (return self) unless (flow_io_card = card_auth.delete('card'))
+
+      errors << { message: 'Order number param missing' } && (return self) unless card_auth.dig('order', 'number')
+
+      flow_io_card_expiration = flow_io_card.delete('expiration')
+
+      card = Spree::CreditCard.find_or_initialize_by(month: flow_io_card_expiration['month'].to_s,
+                                                     year: flow_io_card_expiration['year'].to_s,
+                                                     cc_type: flow_io_card.delete('type'),
+                                                     last_digits: flow_io_card.delete('last4'),
+                                                     name: flow_io_card.delete('name'))
+      card.flow_data ||= {}
+      card.flow_data.merge!(flow_io_card.except('discriminator')) if card.new_record?
+      card.push_authorization(card_auth.except('discriminator'))
+      if card.new_record?
+        card.imported = true
+        card.save!
+      else
+        card.update_column(:meta, card.meta.to_json)
+      end
+      card
+    end
+
     def experience_upserted_v2
       experience = @data['experience']
       Spree::Zones::Product.find_or_initialize_by(name: experience['key'].titleize).store_flow_io_data(experience)
@@ -179,10 +205,9 @@ module FlowcommerceSpree
     end
 
     def upsert_payments(flow_order, order)
-      @payment_method_id ||= Spree::PaymentMethod.find_by(active: true, type: 'Spree::Gateway::FlowIo').id
       flow_order['payments']&.each do |p|
         payment =
-          order.payments.find_or_initialize_by(response_code: p['reference'], payment_method_id: @payment_method_id)
+          order.payments.find_or_initialize_by(response_code: p['reference'], payment_method_id: payment_method_id)
         next unless payment.new_record?
 
         payment.amount = p.dig('total', 'amount')
@@ -207,6 +232,10 @@ module FlowcommerceSpree
 
         payment.capture_events.create!(amount: c['amount'])
       end
+    end
+
+    def payment_method_id
+      @payment_method_id ||= Spree::PaymentMethod.find_by(active: true, type: 'Spree::Gateway::FlowIo').id
     end
   end
 end

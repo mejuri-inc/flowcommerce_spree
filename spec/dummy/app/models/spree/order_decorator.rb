@@ -2,7 +2,7 @@
 
 module Spree
   Order.class_eval do
-    serialize :meta, ActiveRecord::Coders::JSON.new(symbolize_keys: true)
+    serialize :meta, ActiveRecord::Coders::JSON.new(symbolize_keys: true) unless serialized_attributes['meta']
 
     store_accessor :meta, :zone_id
 
