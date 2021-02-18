@@ -57,35 +57,59 @@ All flowcommerce_spree code is located in the ./app and ./lib folders.
   `serialize :flow_data, ActiveRecord::Coders::JSON.new(symbolize_keys: true)`
  
 
+## FlowcommerceSpree::Api module
 
-## Flow API specific
-
-Classes that begin with Flow are responsible for communicating with flow API.
-
-### Flow
-
-Helper class that offers low level flow api access and few helper methods.
+This is a legacy module using the `curl` gem for making direct calls to flow.io API. It will be refactored out in 
+future versions of the gem in favor of using the official flow.io API client from the `flowcommerce` gem.
 
 ### FlowcommerceSpree::ExperienceService
 
 Responsible for selecting current experience. You have to define available experiences in flow console.
 
-### Flow::Order
+### FlowcommerceSpree::OrderSync
 
 Maintain and synchronizes Spree::Order with Flow API.
 
-### Flow::Session
+### FlowcommerceSpree::Session
 
 Every shop user has a session. This class helps in creating and maintaining session with Flow.
 
-## Decorators
+### Decorators
 
-Decorators are found in ./app/flow/decorators folders and they decorate Spree models with Flow specific methods.
-
-All methods are prefixed with ```flow_```.
-
-## Helper lib
+Decorators are used extensively across the gem to modify or add behaviour of several Spree classes and modules. To 
+properly deal with the precedence in the Ruby ancestor chain, the `class_eval`, `include` and `prepend` methods are 
+being used, depending on the level of modification.
 
 ### Spree::Flow::Gateway
 
 Adapter for Spree, that allows using [Flow.io](https://www.flow.io) as payment gateway. Flow is PCI compliant payment processor.
+
+## Gem Maintenance
+
+### RubyGems credentials
+
+Ensure you have the RubyGems credentials located in the `~/.gem/credentials` file.
+
+### Adding a gem owner
+
+```
+gem owner flowcommerce_spree -a sebastian.deluca@mejuri.com
+```
+
+### Building a new gem version
+
+Adjust the new gem version number in the `lib/flowcommerce_spree/version.rb` file. It is used when building the gem 
+by the following command:
+
+```
+gem build flowcommerce_spree.gemspec
+```
+
+Asuming the version was set to `0.0.1`, a `flowcommerce_spree-0.0.1.gem` will be generated at the root of the app 
+(repo).
+
+### Pushing a new gem release to RubyGems
+
+```
+gem push flowcommerce_spree-0.0.1.gem # don't forget to specify the correct version number
+```
