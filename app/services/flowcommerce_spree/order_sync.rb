@@ -245,7 +245,7 @@ module FlowcommerceSpree
       @use_get = false
 
       # use get if order is completed and closed
-      @use_get = true if @order.flow_data['order']['submitted_at'].present? || @order.state == 'complete'
+      @use_get = true if @order.flow_data.dig('order', 'submitted_at').present? || @order.state == 'complete'
 
       # use get if local digest hash check said there is no change
       @use_get ||= true if @order.flow_data['digest'] == @digest
