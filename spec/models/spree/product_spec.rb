@@ -85,12 +85,13 @@ RSpec.describe Spree::Product, type: :model do
       describe 'when variants have same price' do
         it 'includes currency for flow experience' do
           price_ranges = product.price_range(spree_zone)
-          master_flow_price = product.master.flow_local_price(spree_zone.flow_data['key'])
+          master_flow_price = product.master.flow_local_price(spree_zone.flow_data['key']).amount.round.to_s
 
-          expect(price_ranges['USD']).to(eq({ amount: product.price.round.to_s }))
-          expect(price_ranges['CAD']).to(eq({ amount: product.price.round.to_s }))
-          expect(price_ranges['AUD']).to(eq({ amount: product.price.round.to_s }))
-          expect(price_ranges['EUR']).to(eq({ amount: master_flow_price.amount.round.to_s }))
+          price_range_hash = { max: product.price.round.to_s, min: product.price.round.to_s }
+          expect(price_ranges['USD']).to(eq(price_range_hash))
+          expect(price_ranges['CAD']).to(eq(price_range_hash))
+          expect(price_ranges['AUD']).to(eq(price_range_hash))
+          expect(price_ranges['EUR']).to(eq(max: master_flow_price, min: master_flow_price))
         end
 
         include_examples 'only_currencies_in_master_variant'
@@ -127,9 +128,10 @@ RSpec.describe Spree::Product, type: :model do
       describe 'when variants have same price' do
         it 'returns amount for each currency' do
           price_ranges = product.price_range(spree_zone)
-          expect(price_ranges['USD']).to(eq({ amount: product.price.round.to_s }))
-          expect(price_ranges['CAD']).to(eq({ amount: product.price.round.to_s }))
-          expect(price_ranges['AUD']).to(eq({ amount: product.price.round.to_s }))
+          price_range_hash = { max: product.price.round.to_s, min: product.price.round.to_s }
+          expect(price_ranges['USD']).to(eq(price_range_hash))
+          expect(price_ranges['CAD']).to(eq(price_range_hash))
+          expect(price_ranges['AUD']).to(eq(price_range_hash))
         end
 
         include_examples 'only_currencies_in_master_variant'
