@@ -98,9 +98,10 @@ git pull
 github_changelog_generator -u mejuri-inc -p flowcommerce_spree --future-release v0.0.2
 ```
 
-Then push the `Preparing the new release` commit directly into the `main` branch:
+Then add the changes to `git`, commit and push the `Preparing the new release` commit directly into the `main` branch:
 
 ```
+git add .
 git commit -m 'Preparing the new v0.0.2 release'
 git push
 ```
