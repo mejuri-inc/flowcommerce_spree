@@ -1,11 +1,20 @@
 # Changelog
 
+## [v0.0.2](https://github.com/mejuri-inc/flowcommerce_spree/tree/v0.0.2) (2021-02-18)
+
+[Full Changelog](https://github.com/mejuri-inc/flowcommerce_spree/compare/v0.0.1...v0.0.2)
+
+**Merged pull requests:**
+
+- \[TEC-4792\] Configuring price\_range to return min/max only [\#21](https://github.com/mejuri-inc/flowcommerce_spree/pull/21) ([sebastiandl](https://github.com/sebastiandl))
+
 ## [v0.0.1](https://github.com/mejuri-inc/flowcommerce_spree/tree/v0.0.1) (2021-02-03)
 
 [Full Changelog](https://github.com/mejuri-inc/flowcommerce_spree/compare/b9071fa9cdf3afd5de85ff97de7141cdf5250419...v0.0.1)
 
 **Merged pull requests:**
 
+- \[NOTICKET\] Prepare the v0.0.1 release [\#15](https://github.com/mejuri-inc/flowcommerce_spree/pull/15) ([texpert](https://github.com/texpert))
 - Fix the use of bundler by GitHub Actions and adding gemspec to the Gemfile [\#14](https://github.com/mejuri-inc/flowcommerce_spree/pull/14) ([texpert](https://github.com/texpert))
 - \[TEC-4696\] GitHub check fix [\#11](https://github.com/mejuri-inc/flowcommerce_spree/pull/11) ([sebastiandl](https://github.com/sebastiandl))
 - \[NO-TICKET\] configuring dotenvs to automatically load envs from env files [\#10](https://github.com/mejuri-inc/flowcommerce_spree/pull/10) ([sebastiandl](https://github.com/sebastiandl))

@@ -86,6 +86,25 @@ Adapter for Spree, that allows using [Flow.io](https://www.flow.io) as payment g
 
 ## Gem Maintenance
 
+### Preparing a release
+
+Merge all the pull requests that should make it into the new release into the `main` branch, then checkout and pull the 
+branch and run the `github_changelog_generator`, specifying the new version as a `--future-release` cli parameter:
+
+```
+git checkout main
+git pull
+
+github_changelog_generator -u mejuri-inc -p flowcommerce_spree --future-release v0.0.2
+```
+
+Then push the `Preparing the new release` commit directly into the `main` branch:
+
+```
+git commit -m 'Preparing the new v0.0.2 release'
+git push
+```
+
 ### RubyGems credentials
 
 Ensure you have the RubyGems credentials located in the `~/.gem/credentials` file.
