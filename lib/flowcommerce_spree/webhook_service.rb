@@ -52,25 +52,35 @@ module FlowcommerceSpree
 
       errors << { message: 'Card param missing' } && (return self) unless (flow_io_card = card_auth.delete('card'))
 
-      errors << { message: 'Order number param missing' } && (return self) unless card_auth.dig('order', 'number')
+      if (order_number = card_auth.dig('order', 'number'))
+        if (order = Spree::Order.find_by(number: order_number))
+          flow_io_card_expiration = flow_io_card.delete('expiration')
 
-      flow_io_card_expiration = flow_io_card.delete('expiration')
+          card = Spree::CreditCard.find_or_initialize_by(month: flow_io_card_expiration['month'].to_s,
+                                                         year: flow_io_card_expiration['year'].to_s,
+                                                         cc_type: flow_io_card.delete('type'),
+                                                         last_digits: flow_io_card.delete('last4'),
+                                                         name: flow_io_card.delete('name'),
+                                                         user_id: order.user.id)
+          card.flow_data ||= {}
+          card.flow_data.merge!(flow_io_card.except('discriminator')) if card.new_record?
+          card.push_authorization(card_auth.except('discriminator'))
+          if card.new_record?
+            card.imported = true
+            card.save!
+          else
+            card.update_column(:meta, card.meta.to_json)
+          end
 
-      card = Spree::CreditCard.find_or_initialize_by(month: flow_io_card_expiration['month'].to_s,
-                                                     year: flow_io_card_expiration['year'].to_s,
-                                                     cc_type: flow_io_card.delete('type'),
-                                                     last_digits: flow_io_card.delete('last4'),
-                                                     name: flow_io_card.delete('name'))
-      card.flow_data ||= {}
-      card.flow_data.merge!(flow_io_card.except('discriminator')) if card.new_record?
-      card.push_authorization(card_auth.except('discriminator'))
-      if card.new_record?
-        card.imported = true
-        card.save!
+          return card
+        else
+          errors << { message: "Order #{order_number} not found" }
+        end
       else
-        card.update_column(:meta, card.meta.to_json)
+        errors << { message: 'Order number param missing' }
       end
-      card
+
+      self
     end
 
     def experience_upserted_v2
@@ -211,6 +221,13 @@ module FlowcommerceSpree
         next unless payment.new_record?
 
         payment.amount = p.dig('total', 'amount')
+        if p['type'] == 'card'
+          card = Spree::CreditCard.where("user_id = ? AND meta -> 'flow_data' -> 'authorizations' @> ?",
+                                         order.user.id,
+                                         [{id: p['reference']}].to_json
+          ).first
+          payment.source = card if card
+        end
         payment.save!(validate: false)
 
         # For now this additional update is overwriting the generated identifier with flow.io payment identifier.
