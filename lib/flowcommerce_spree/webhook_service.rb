@@ -124,7 +124,12 @@ module FlowcommerceSpree
         end
 
         order.update_columns(attrs_to_update)
-        order.create_tax_charge! if flow_data_submitted
+
+        if flow_data_submitted
+          order.create_tax_charge!
+          order.finalize!
+        end
+
         return order
       else
         errors << { message: "Order #{order_number} not found" }
