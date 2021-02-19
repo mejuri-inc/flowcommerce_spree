@@ -125,6 +125,7 @@ module FlowcommerceSpree
 
         order.update_columns(attrs_to_update)
 
+        # TODO: To be refactored once we have the capture_upserted_v2 webhook configured
         if flow_data_submitted
           order.create_tax_charge!
           order.finalize!
