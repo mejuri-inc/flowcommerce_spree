@@ -128,6 +128,7 @@ module FlowcommerceSpree
         if flow_data_submitted
           order.create_tax_charge!
           order.finalize!
+          order.update_totals
         end
 
         return order
