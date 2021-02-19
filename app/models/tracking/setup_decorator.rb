@@ -25,7 +25,7 @@ module Tracking
         next if current_order.flow_io_attributes[gdpr_group_name] == group_value
 
         consents_changed ||= true
-        current_order.add_user_consent_to_flow_data(gdpr_group_name, group_value)
+        current_order.flow_io_attribute_add(gdpr_group_name, group_value)
       end
 
       consents_changed

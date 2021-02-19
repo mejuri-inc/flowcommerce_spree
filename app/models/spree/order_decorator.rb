@@ -137,10 +137,10 @@ module Spree # rubocop:disable Metrics/ModuleLength
       self.flow_data['checkout_token'] = token
     end
 
-    def add_user_consent_to_flow_data(consent, value)
+    def flow_io_attribute_add(attr_key, value)
       self.flow_data['order'] ||= {}
       self.flow_data['order']['attributes'] ||= {}
-      self.flow_data['order']['attributes'][consent] = value
+      self.flow_data['order']['attributes'][attr_key] = value
     end
 
     def add_user_uuid_to_flow_data
