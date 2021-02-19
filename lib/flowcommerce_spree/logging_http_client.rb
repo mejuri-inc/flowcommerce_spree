@@ -34,7 +34,7 @@ module FlowcommerceSpree
         @logger.info(
           "Started #{request.method} #{request.path}\n"\
           "headers: #{request.instance_variable_get(:@header)}\nbody: #{request.body}\n"\
-          "response: #{response.force_encoding('utf-8')}\n"\
+          "response: #{response&.force_encoding('utf-8')}\n"\
           "Completed #{request.method} #{request.path} #{duration} ms\n"
         )
 
