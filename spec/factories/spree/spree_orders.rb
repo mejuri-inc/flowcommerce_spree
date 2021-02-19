@@ -53,7 +53,29 @@ FactoryBot.define do
              'total' => { 'base' => { 'label' => 'US$88.85', 'amount' => 88.85, 'currency' => 'USD' },
                           'label' => '80.95 €', 'amount' => 80.95, 'currency' => 'EUR' },
              'quantity' => 2,
-             'item_number' => 'p52505531' }] }
+             'item_number' => 'p52505531' }],
+          'prices' =>
+          [{ 'key' => 'shipping',
+             'currency' => 'EUR',
+             'amount' => 283.3,
+             'label' => '283,30 €',
+             'base' => { 'amount' => 338.3, 'currency' => 'USD', 'label' => 'US$338.30' },
+             'components' =>
+              [{ 'key' => 'shipping', 'currency' => 'EUR', 'amount' => 283.3, 'label' => '283,30 €', 'base' =>
+                { 'amount' => 338.3, 'currency' => 'USD', 'label' => 'US$338.30' }, 'name' => 'Shipping' },
+               { 'key' => 'vat_deminimis', 'currency' => 'EUR', 'amount' => -6.46,
+                 'label' => '-6,46 €', 'base' => { 'amount' => -7.71, 'currency' => 'USD', 'label' => '-US$7.71' },
+                 'name' => 'VAT de minimis adjustment' },
+               { 'key' => 'vat_duties_freight', 'currency' => 'EUR', 'amount' => 6.46,
+                 'label' => '6,46 €', 'base' => { 'amount' => 7.71, 'currency' => 'USD', 'label' => 'US$7.71' },
+                 'name' => 'VAT on duties on freight' },
+               { 'key' => 'vat_freight', 'currency' => 'EUR', 'amount' => 53.83, 'label' => '53,83 €', 'base' =>
+               { 'amount' => 64.28, 'currency' => 'USD', 'label' => 'US$64.28' }, 'name' => 'VAT on freight' },
+               { 'key' => 'vat_subsidy', 'currency' => 'EUR', 'amount' => -53.83,
+                 'label' => '-53,83 €', 'base' => { 'amount' => -64.28, 'currency' => 'USD', 'label' => '-US$64.28' },
+                 'name' => 'VAT subsidy' }],
+             'accuracy' => 'calculated',
+             'name' => 'Shipping' }] }
         } }
       end
     end

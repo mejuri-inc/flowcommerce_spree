@@ -117,8 +117,22 @@ module FlowcommerceSpree
 
         attrs_to_update.merge!(order.prepare_flow_addresses) if order.complete? || attrs_to_update[:state] == 'complete'
 
+        if flow_data_submitted
+          order.create_proposed_shipments
+          order.shipment.update_amounts
+          order.line_items.each(&:store_ets)
+        end
+
         order.update_columns(attrs_to_update)
-        order.create_tax_charge! if flow_data_submitted
+
+        # TODO: To be refactored once we have the capture_upserted_v2 webhook configured
+        if flow_data_submitted
+          order.create_tax_charge!
+          order.finalize!
+          order.update_totals
+          order.save
+        end
+
         return order
       else
         errors << { message: "Order #{order_number} not found" }

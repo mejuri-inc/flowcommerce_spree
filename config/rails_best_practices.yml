@@ -27,9 +27,13 @@ RemoveUnusedMethodsInControllersCheck: { except_methods: [] }
 RemoveUnusedMethodsInHelpersCheck: { except_methods: [] }
 RemoveUnusedMethodsInModelsCheck: { except_methods: 
   [
-  'Spree::FlowcommerceCalculator#compute_shipment', # Used by Spree::Calculator
-  'Spree::FlowcommerceCalculator#compute_line_item', # Used by Spree::Calculator
-  'Spree::FlowcommerceCalculator#description', # Used by Spree
+  'Spree::Calculator::FlowIo#compute_shipment', # Used by Spree::Calculator
+  'Spree::Calculator::FlowIo#compute_line_item', # Used by Spree::Calculator
+  'Spree::Calculator::FlowIo#description', # Used by Spree
+  'Spree::Shipping::FlowIo#compute_package', # Used by Spree
+  'Spree::Shipping::FlowIo#default_charge', # Used by Spree
+  'Spree::Shipping::FlowIo#threshold', # Used by Spree
+  'Spree::Shipping::FlowIo#description', # Used by Spree
   ] }
 ReplaceComplexCreationWithFactoryMethodCheck: { attribute_assignment_count: 2 }
 ReplaceInstanceVariableWithLocalVariableCheck: { }
