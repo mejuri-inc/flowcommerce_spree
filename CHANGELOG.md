@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.0.3](https://github.com/mejuri-inc/flowcommerce_spree/tree/v0.0.3) (2021-02-22)
+
+[Full Changelog](https://github.com/mejuri-inc/flowcommerce_spree/compare/v0.0.2...v0.0.3)
+
+**Merged pull requests:**
+
+- \[TEC-4453\] Adding Flow IO Shipping calcualtor and renaming tax calculator to match naming convention [\#18](https://github.com/mejuri-inc/flowcommerce_spree/pull/18) ([sebastiandl](https://github.com/sebastiandl))
+- \[TEC-3473\] \[TEC-3791\] \[TEC-4297\] Transition to checkout page, capture payments, tax calculator [\#16](https://github.com/mejuri-inc/flowcommerce_spree/pull/16) ([texpert](https://github.com/texpert))
+
 ## [v0.0.2](https://github.com/mejuri-inc/flowcommerce_spree/tree/v0.0.2) (2021-02-18)
 
 [Full Changelog](https://github.com/mejuri-inc/flowcommerce_spree/compare/v0.0.1...v0.0.2)
