@@ -95,7 +95,7 @@ module Spree
 
     # shows localized total, if possible. if not, fall back to Spree default
     def flow_io_total_amount
-      flow_data&.dig('order', 'total', 'amount')
+      flow_data&.dig('order', 'total', 'amount')&.to_d
     end
 
     def flow_experience
@@ -169,6 +169,10 @@ module Spree
       flow_data&.[]('authorization') ? true : false
     end
 
+    def flow_io_captures
+      flow_data&.[]('captures')
+    end
+
     def flow_io_captures_sum
       captures_sum = 0
       # flow_data&.[]('captures')&.select { |c| c['status'] == 'succeeded' }&.map { |c| c['amount'] }&.sum.to_d
@@ -178,6 +182,10 @@ module Spree
         captures_sum += c['amount']
       end
       captures_sum.to_d
+    end
+
+    def flow_io_payments
+      flow_data.dig('order', 'payments')
     end
 
     # completes order and sets all states to finalized and complete
