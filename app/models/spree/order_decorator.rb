@@ -11,6 +11,10 @@ module Spree # rubocop:disable Metrics/ModuleLength
     before_save :sync_to_flow_io
     after_touch :sync_to_flow_io
 
+    def flow_tax_cache_key
+      [number, 'flowcommerce', 'allocation', line_items.sum(:quantity)].join('-')
+    end
+
     def sync_to_flow_io
       return unless zone&.flow_io_active_experience? && state == 'cart' && line_items.size > 0
 
@@ -34,10 +38,7 @@ module Spree # rubocop:disable Metrics/ModuleLength
     # accepts line item, usually called from views
     def flow_line_item_price(line_item, total = false)
       result = if flow_order
-                 id = line_item.variant.sku
-
-                 lines = flow_order.lines || []
-                 item  = lines.find { |el| el['item_number'] == id }
+                 item = flow_order.lines&.find { |el| el['item_number'] == line_item.variant.sku }
 
                  return 'n/a' unless item
 
@@ -107,6 +108,10 @@ module Spree # rubocop:disable Metrics/ModuleLength
       model.new ENV.fetch('FLOW_BASE_COUNTRY')
     end
 
+    def flow_io_checkout_token
+      flow_data&.[]('checkout_token')
+    end
+
     def flow_io_experience_key
       flow_data&.[]('exp')
     end
@@ -119,29 +124,40 @@ module Spree # rubocop:disable Metrics/ModuleLength
       flow_data&.dig('order', 'id')
     end
 
+    def flow_io_session_expires_at
+      flow_data&.[]('session_expires_at')&.to_datetime
+    end
+
     def flow_io_attributes
       flow_data&.dig('order', 'attributes') || {}
     end
 
-    def add_user_consent_to_flow_data(consent, value)
+    def add_flow_checkout_token(token)
+      self.flow_data ||= {}
+      self.flow_data['checkout_token'] = token
+    end
+
+    def flow_io_attribute_add(attr_key, value)
       self.flow_data['order'] ||= {}
       self.flow_data['order']['attributes'] ||= {}
-      self.flow_data['order']['attributes'][consent] = value
+      self.flow_data['order']['attributes'][attr_key] = value
     end
 
     def add_user_uuid_to_flow_data
       self.flow_data['order'] ||= {}
       self.flow_data['order']['attributes'] ||= {}
-      self.flow_data['order']['attributes']['user_uuid'] = user&.uuid
+      self.flow_data['order']['attributes']['user_uuid'] = user&.uuid || ''
     end
 
-    def flow_io_user_uuid
+    def flow_io_attr_user_uuid
       flow_data&.dig('order', 'attributes', 'user_uuid')
     end
 
     def checkout_url
-      "https://checkout.flow.io/#{FlowcommerceSpree::ORGANIZATION}/checkout/#{number}/" \
-        "contact-info?flow_session_id=#{flow_data['session_id']}"
+      FlowcommerceSpree::OrderSync.new(order: self).synchronize!
+
+      checkout_token = flow_io_checkout_token
+      return "https://checkout.flow.io/tokens/#{checkout_token}" if checkout_token
     end
 
     # clear invalid zero amount payments. Solidus bug?
@@ -174,6 +190,55 @@ module Spree # rubocop:disable Metrics/ModuleLength
       else
         'cc' # creait card is default
       end
+    end
+
+    def flow_customer_email
+      flow_data.dig('order', 'customer', 'email')
+    end
+
+    def flow_ship_address
+      flow_destination = flow_data.dig('order', 'destination')
+      return unless flow_destination.present?
+
+      flow_destination['first'] = flow_destination.dig('contact', 'name', 'first')
+      flow_destination['last']  = flow_destination.dig('contact', 'name', 'last')
+      flow_destination['phone'] = flow_destination.dig('contact', 'phone')
+
+      s_address = ship_address || build_ship_address
+      s_address.prepare_from_flow_attributes(flow_destination)
+      s_address
+    end
+
+    def flow_bill_address
+      flow_payment_address = flow_data.dig('order', 'payments')&.last&.[]('address')
+      return unless flow_payment_address
+
+      flow_payment_address['first'] = flow_payment_address.dig('name', 'first')
+      flow_payment_address['last']  = flow_payment_address.dig('name', 'last')
+      flow_payment_address['phone'] = ship_address['phone']
+
+      b_address = bill_address || build_bill_address
+      b_address.prepare_from_flow_attributes(flow_payment_address)
+      b_address
+    end
+
+    def prepare_flow_addresses
+      address_attributes = {}
+
+      s_address = flow_ship_address
+
+      if s_address&.changes&.any?
+        s_address.save
+        address_attributes[:ship_address_id] = s_address.id unless ship_address_id
+      end
+
+      b_address = flow_bill_address
+      if b_address&.changes&.any?
+        b_address.save
+        address_attributes[:bill_address_id] = b_address.id unless bill_address_id
+      end
+
+      address_attributes
     end
   end
 end

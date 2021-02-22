@@ -8,7 +8,7 @@ RSpec.describe Spree::Variant, type: :model do
       let(:variant) { create(:base_variant, :with_flow_data) }
       let(:spree_zone) { Spree::Zones::Product.find_by(name: 'Germany') }
 
-      it 'deletes flow data' do
+      it 'deletes flow_io data' do
         variant.truncate_flow_data
         expect(variant.flow_data).to(be_nil)
       end
@@ -68,7 +68,7 @@ RSpec.describe Spree::Variant, type: :model do
   end
 
   describe '#price_in_zone' do
-    describe 'when Spree::Zone has experience in flow' do
+    describe 'when Spree::Zone has experience in flow_io' do
       let(:variant) { create(:base_variant, :with_flow_data) }
       let(:spree_zone) { Spree::Zones::Product.find_by(name: 'Germany') }
       let(:experience) { 'germany' }
@@ -103,25 +103,25 @@ RSpec.describe Spree::Variant, type: :model do
     describe 'when variant has flow_data' do
       let(:variant) { create(:base_variant, :with_flow_data) }
 
-      context 'when zone has flow experience' do
-        it 'includes flow price' do
+      context 'when zone has flow_io experience' do
+        it 'includes flow_io price' do
           spree_zone = create(:germany_zone, :with_flow_data)
           all_prices = variant.all_prices_in_zone(spree_zone)
 
           flow_price = variant.flow_local_price('germany')
-          expect(all_prices).to(include({ amount: variant.price.round.to_s, currency: 'USD' }))
-          expect(all_prices).to(include({ amount: flow_price.amount.round.to_s, currency: flow_price.currency }))
+          expect(all_prices).to(include(amount: variant.price.round.to_s, currency: 'USD'))
+          expect(all_prices).to(include(amount: flow_price.amount.round.to_s, currency: flow_price.currency))
         end
       end
 
-      context 'when zone does not have flow experience' do
-        it 'does not include flow price' do
+      context 'when zone does not have flow_io experience' do
+        it 'does not include flow_io price' do
           spree_zone = create(:germany_zone)
           all_prices = variant.all_prices_in_zone(spree_zone)
 
           flow_price = variant.flow_local_price('germany')
-          expect(all_prices).to(include({ amount: variant.price.round.to_s, currency: 'USD' }))
-          expect(all_prices).not_to(include({ amount: flow_price.amount.round.to_s, currency: flow_price.currency }))
+          expect(all_prices).to(include(amount: variant.price.round.to_s, currency: 'USD'))
+          expect(all_prices).not_to(include(amount: flow_price.amount.round.to_s, currency: flow_price.currency))
         end
       end
     end

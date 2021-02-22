@@ -12,16 +12,27 @@ module Spree
           update_meta = @current_order.zone_id ? nil : true
           @current_order.zone = current_zone
 
-          if @current_order.zone&.flow_io_active_experience? && @current_order.flow_io_experience_key.nil?
-            @current_order.flow_io_experience_from_zone
-            order_flow_io_session_id = @current_order.flow_data['session_id']
-            flow_io_session_id = session['_f60_session']
-            if order_flow_io_session_id.present? && flow_io_session_id.blank?
-              session['_f60_session'] = order_flow_io_session_id
-            elsif flow_io_session_id.present?
-              @current_order.flow_data['session_id'] = flow_io_session_id
+          if @current_order.zone&.flow_io_active_experience?
+            if @current_order.flow_io_experience_key.nil?
+              @current_order.flow_io_experience_from_zone
+              update_meta ||= true
             end
-            update_meta = true
+            order_flow_session_id = @current_order.flow_data['session_id']
+            order_session_expired = @current_order.flow_data['session_expires_at']
+            flow_io_session_id = session['_f60_session']
+            flow_io_session_expires = session['_f60_expires_at']
+            if flow_io_session_id.present?
+              if order_flow_session_id != flow_io_session_id &&
+                 order_session_expired&.to_datetime.to_i < flow_io_session_expires&.to_datetime.to_i
+                @current_order.flow_data['session_id'] = flow_io_session_id
+                @current_order.flow_data['session_expires_at'] = flow_io_session_expires
+                @current_order.flow_data['checkout_token'] = nil
+                update_meta ||= true
+              end
+            elsif order_flow_session_id.present?
+              session['_f60_session'] = order_flow_session_id
+              session['_f60_expires_at'] = order_session_expired
+            end
           end
 
           if @current_order.new_record?
