@@ -1203,6 +1203,7 @@ ActiveRecord::Schema.define(version: 20201116193935) do
     t.integer  "payment_id"
     t.datetime "created_at"
     t.datetime "updated_at"
+    t.jsonb    "meta",                        default: "{}"
   end
 
   add_index "spree_payment_capture_events", ["payment_id"], name: "index_spree_payment_capture_events_on_payment_id", using: :btree
