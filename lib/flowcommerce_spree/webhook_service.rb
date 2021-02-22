@@ -37,9 +37,8 @@ module FlowcommerceSpree
         order_captures = order.flow_data['captures']
         order_captures.delete_if { |c| c['id'] == capture['id'] }
         order_captures << capture
-        attrs_to_update = update_order_native_attrs(order)
-        order.update_columns(attrs_to_update)
-        upsert_captures(order)
+        order.update_columns(meta: order.meta.to_json)
+        map_payment_captures_to_spree(order) if order.flow_io_payments.present?
         order
       else
         errors << { message: "Order #{order_number} not found" }
@@ -135,9 +134,9 @@ module FlowcommerceSpree
 
       if (order = Spree::Order.find_by(number: order_number))
         order.flow_data['allocation'] = order_placed['allocation'].to_hash
-        upsert_payments(flow_order, order)
-        upsert_captures(order)
+        map_payments_to_spree(flow_order, order)
         upsert_order(flow_order, order)
+        map_payment_captures_to_spree(order) if order.flow_io_captures.present?
         return order
       else
         errors << { message: "Order #{order_number} not found" }
@@ -152,9 +151,9 @@ module FlowcommerceSpree
       errors << { message: 'Order number param missing' } && (return self) unless (order_number = flow_order['number'])
 
       if (order = Spree::Order.find_by(number: order_number))
-        upsert_payments(flow_order, order)
-        upsert_captures(order)
+        map_payments_to_spree(flow_order, order)
         upsert_order(flow_order, order)
+        map_payment_captures_to_spree(order) if order.flow_io_captures.present?
         return order
       else
         errors << { message: "Order #{order_number} not found" }
@@ -172,49 +171,30 @@ module FlowcommerceSpree
 
     def upsert_order(flow_io_order, order)
       order.flow_data['order'] = flow_io_order.to_hash
-      attrs_to_update = update_order_native_attrs(order)
-      attrs_to_update.merge!(order.prepare_flow_addresses) if order.complete? || attrs_to_update[:state] == 'complete'
-      flow_data_submitted = flow_io_order['submitted_at'].present?
+      attrs_to_update = { meta: order.meta.to_json }
+      if order.flow_data.dig('order', 'submitted_at').present? && !order.complete?
+        # flow_io_total_amount = order.flow_io_total_amount&.to_d
+        # attrs_to_update[:total] = flow_io_total_amount if flow_io_total_amount != order.total
+        # attrs_to_update[:updated_at] = Time.zone.now.utc
 
-      if flow_data_submitted
+        attrs_to_update[:email] = order.flow_customer_email
+        # attrs_to_update[:state] = 'confirmed'
+        attrs_to_update[:payment_state] = 'pending'
+        attrs_to_update.merge!(order.prepare_flow_addresses)
         order.create_proposed_shipments
         order.shipment.update_amounts
         order.line_items.each(&:store_ets)
+        order.charge_taxes
       end
 
       order.update_columns(attrs_to_update)
-
-      # TODO: To be refactored once we have the capture_upserted_v2 webhook configured
-      if flow_data_submitted
-        order.create_tax_charge!
-        order.finalize!
-        order.update_totals
-        order.save
-      end
+      order.state = 'confirm'
+      order.save!
     end
 
-    def update_order_native_attrs(order)
-      order_flow_data = order.flow_data['order']
-      attrs_to_update = { meta: order.meta.to_json }
-      flow_io_total_amount = order.flow_io_total_amount&.to_d
-      attrs_to_update[:total] = flow_io_total_amount if flow_io_total_amount != order.total
-      attrs_to_update[:updated_at] = Time.zone.now.utc
-      return attrs_to_update if order_flow_data['submitted_at'].blank? || order.complete?
-
-      if order.flow_io_captures_sum >= flow_io_total_amount && order_flow_data.dig('balance', 'amount').to_i <= 0
-        attrs_to_update[:state] = 'complete'
-        attrs_to_update[:payment_state] = 'paid'
-        attrs_to_update[:completed_at] = Time.zone.now.utc
-        attrs_to_update[:email] = order.flow_customer_email
-      else
-        attrs_to_update[:state] = 'confirmed'
-        attrs_to_update[:payment_state] = 'pending'
-      end
-
-      attrs_to_update
-    end
-
-    def upsert_payments(flow_order, order)
+    def map_payments_to_spree(flow_order, order)
+      order.state = 'payment'
+      order.save!
       flow_order['payments']&.each do |p|
         payment =
           order.payments.find_or_initialize_by(response_code: p['reference'], payment_method_id: payment_method_id)
@@ -228,7 +208,7 @@ module FlowcommerceSpree
           ).first
           payment.source = card if card
         end
-        payment.save!(validate: false)
+        payment.pend
 
         # For now this additional update is overwriting the generated identifier with flow.io payment identifier.
         # TODO: Check and possibly refactor in Spree 3.0, where the `before_create :set_unique_identifier`
@@ -237,8 +217,9 @@ module FlowcommerceSpree
       end
     end
 
-    def upsert_captures(order)
-      payments = order.flow_data.dig('order', 'payments')
+    def map_payment_captures_to_spree(order)
+      order_flow_data = order.flow_data['order']
+      payments = order_flow_data&.[]('payments')
       order.flow_data['captures']&.each do |c|
         next unless c['status'] == 'succeeded'
 
@@ -247,7 +228,21 @@ module FlowcommerceSpree
 
         next unless (payment = Spree::Payment.find_by(response_code: auth))
 
-        payment.capture_events.create!(amount: c['amount'])
+        next if Spree::PaymentCaptureEvent.where("meta -> 'flow_data' ->> 'id' = ?", c['id']).exists?
+
+        payment.capture_events.create!(amount: c['amount'], meta: { 'flow_data' => { 'id' => c['id'] }})
+        return if payment.completed? || payment.capture_events.sum(:amount) < payment.amount
+
+        payment.complete
+      end
+
+      return if order.complete?
+
+      if order.flow_io_captures_sum >= order.flow_io_total_amount && order_flow_data.dig('balance', 'amount').to_i <= 0
+        order.finalize!
+        order.update_totals
+        order.save
+        order.after_completed_order
       end
     end
 
