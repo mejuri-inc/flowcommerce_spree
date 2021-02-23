@@ -151,7 +151,7 @@ module Spree
     end
 
     def checkout_url
-      FlowcommerceSpree::OrderSync.new(order: self).synchronize!
+      sync_to_flow_io
 
       checkout_token = flow_io_checkout_token
       return "https://checkout.flow.io/tokens/#{checkout_token}" if checkout_token
