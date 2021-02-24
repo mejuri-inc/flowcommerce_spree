@@ -15,10 +15,10 @@ module FlowcommerceSpree
 
       start_time = Time.now.utc.round(10)
 
+      # Contrived example to show how client settings can be adjusted
       # if request.path.start_with?('/organizations')
-        # Contrived example to show how client settings can be adjusted
-        # client.open_timeout = 60
-        # client.read_timeout = 60
+      #   client.open_timeout = 60
+      #   client.read_timeout = 60
       # end
 
       begin

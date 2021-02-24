@@ -148,15 +148,17 @@ module FlowcommerceSpree
     def order_upserted_v2
       errors << { message: 'Order param missing' } && (return self) unless (flow_order = @data['order'])
 
-      errors << { message: 'Order number param missing' } && (return self) unless (order_number = flow_order['number'])
-
-      if (order = Spree::Order.find_by(number: order_number))
-        map_payments_to_spree(flow_order, order)
-        upsert_order(flow_order, order)
-        map_payment_captures_to_spree(order) if order.flow_io_captures.present?
-        return order
+      if (order_number = flow_order['number'])
+        if (order = Spree::Order.find_by(number: order_number))
+          map_payments_to_spree(flow_order, order)
+          upsert_order(flow_order, order)
+          map_payment_captures_to_spree(order) if order.flow_io_captures.present?
+          return order
+        else
+          errors << { message: "Order #{order_number} not found" }
+        end
       else
-        errors << { message: "Order #{order_number} not found" }
+        errors << { message: 'Order number param missing' }
       end
 
       self
@@ -202,10 +204,8 @@ module FlowcommerceSpree
 
         payment.amount = p.dig('total', 'amount')
         if p['type'] == 'card'
-          card = Spree::CreditCard.where("user_id = ? AND meta -> 'flow_data' -> 'authorizations' @> ?",
-                                         order.user.id,
-                                         [{id: p['reference']}].to_json
-          ).first
+          card = Spree::CreditCard.where("user_id = ? AND meta -> 'flow_data' -> 'authorizations' @> ?", order.user.id,
+                                         [{ id: p['reference'] }].to_json).first
           payment.source = card if card
         end
         payment.pend
@@ -218,19 +218,18 @@ module FlowcommerceSpree
     end
 
     def map_payment_captures_to_spree(order)
-      order_flow_data = order.flow_data['order']
-      payments = order_flow_data&.[]('payments')
+      payments = order.flow_data&.dig('order', 'payments')
       order.flow_data['captures']&.each do |c|
         next unless c['status'] == 'succeeded'
 
         auth = c.dig('authorization', 'id')
-        next unless payments.find { |p| p['reference'] == auth }
+        next unless payments&.find { |p| p['reference'] == auth }
 
         next unless (payment = Spree::Payment.find_by(response_code: auth))
 
         next if Spree::PaymentCaptureEvent.where("meta -> 'flow_data' ->> 'id' = ?", c['id']).exists?
 
-        payment.capture_events.create!(amount: c['amount'], meta: { 'flow_data' => { 'id' => c['id'] }})
+        payment.capture_events.create!(amount: c['amount'], meta: { 'flow_data' => { 'id' => c['id'] } })
         return if payment.completed? || payment.capture_events.sum(:amount) < payment.amount
 
         payment.complete
@@ -238,12 +237,12 @@ module FlowcommerceSpree
 
       return if order.complete?
 
-      if order.flow_io_captures_sum >= order.flow_io_total_amount && order_flow_data.dig('balance', 'amount').to_i <= 0
-        order.finalize!
-        order.update_totals
-        order.save
-        order.after_completed_order
-      end
+      return unless order.flow_io_captures_sum >= order.flow_io_total_amount && order.flow_io_balance_amount <= 0
+
+      order.finalize!
+      order.update_totals
+      order.save
+      order.after_completed_order
     end
 
     def payment_method_id
