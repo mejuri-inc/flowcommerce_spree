@@ -40,15 +40,14 @@ Metrics/ClassLength:
   Exclude:
 
 Metrics/CyclomaticComplexity:
-  Exclude:
+  Max: 10
 
 Metrics/MethodLength:
   Enabled: true
   Max: 15
-  Exclude:
 
 Metrics/PerceivedComplexity:
-  Exclude:
+  Max: 10
 
 Naming/PredicateName:
   Exclude:
