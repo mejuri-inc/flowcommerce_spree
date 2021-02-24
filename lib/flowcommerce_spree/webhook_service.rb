@@ -153,22 +153,10 @@ module FlowcommerceSpree
     end
 
     def upsert_order(flow_io_order, order)
-      return if order.state == 'complete'
+      order_updater = FlowcommerceSpree::OrderUpdater.new(order: order)
+      order_updater.upsert_order(flow_io_order)
 
-      order.flow_data['order'] = flow_io_order.to_hash
-      return if order.flow_data.dig('order', 'submitted_at').blank?
-
-      attrs_to_update = { meta: order.meta.to_json, email: order.flow_customer_email, payment_state: 'pending' }
-      attrs_to_update.merge!(order.prepare_flow_addresses)
-      order.state = 'delivery'
-      order.save!
-      order.create_proposed_shipments
-      order.shipment.update_amounts
-      order.line_items.each(&:store_ets)
-      order.charge_taxes
-
-      order.update_columns(attrs_to_update)
-      order.state = 'payment'
+      order.state = 'confirm'
       order.save!
     end
 
@@ -216,6 +204,7 @@ module FlowcommerceSpree
         payment.complete
       end
 
+<<<<<<< HEAD
       return unless order.flow_io_captures_sum >= order.flow_io_total_amount && order.flow_io_balance_amount <= 0
 
       order.finalize!
@@ -225,6 +214,12 @@ module FlowcommerceSpree
       order.update_totals
       order.save
       order.after_completed_order
+=======
+      return if order.complete?
+      return unless order.flow_io_captures_sum >= order.flow_io_total_amount && order.flow_io_balance_amount <= 0
+
+      FlowcommerceSpree::OrderUpdater.new(order).finalize_order
+>>>>>>> [TEC-4958] base changes to handle thank you page redirection
     end
 
     def payment_method_id

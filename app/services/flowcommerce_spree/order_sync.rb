@@ -187,7 +187,7 @@ module FlowcommerceSpree
     def refresh_checkout_token
       root_url = url_helpers.root_url
       order_number = @order.number
-      confirmation_url = "#{root_url}thankyou?order=#{order_number}&t=#{@order.guest_token}"
+      confirmation_url = "#{root_url}flow/order-completed?order=#{order_number}&t=#{@order.guest_token}"
       checkout_token = FlowcommerceSpree.client.checkout_tokens.post_checkout_and_tokens_by_organization(
         FlowcommerceSpree::ORGANIZATION,
         discriminator: 'checkout_token_reference_form',
