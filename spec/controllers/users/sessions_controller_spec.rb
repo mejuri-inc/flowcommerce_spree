@@ -10,10 +10,10 @@ RSpec.describe Users::SessionsController, type: :controller do
     let(:current_zone) { create(:product_zone_with_flow_experience) }
     let(:order) do
       create(:order_with_line_items, zone_id: current_zone.id, flow_data: { exp: current_zone.flow_io_experience,
-                                                               order: { id: Faker::Guid.guid },
-                                                               checkout_token: token,
-                                                               session_id: Faker::Guid.guid,
-                                                               session_expires_at: session_expiration })
+                                                                            order: { id: Faker::Guid.guid },
+                                                                            checkout_token: token,
+                                                                            session_id: Faker::Guid.guid,
+                                                                            session_expires_at: session_expiration })
     end
     let(:session_expiration) { Time.zone.now.utc + 30.minutes }
     let(:token) { Faker::Guid.guid }
@@ -49,8 +49,6 @@ RSpec.describe Users::SessionsController, type: :controller do
 
     context 'and the flow.io session is expired' do
       let(:session_expiration) { Time.zone.now.utc + 3.seconds }
-
-      # before { allow(order).to receive_message_chain('line_items.size') { 1 } }
 
       it_behaves_like 'refreshes flow.io session and checkout_token'
     end

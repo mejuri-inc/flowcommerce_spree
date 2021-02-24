@@ -184,6 +184,10 @@ module Spree
       captures_sum.to_d
     end
 
+    def flow_io_balance_amount
+      flow_data&.dig('order', 'balance', 'amount')&.to_d
+    end
+
     def flow_io_payments
       flow_data.dig('order', 'payments')
     end
