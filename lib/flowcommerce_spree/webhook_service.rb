@@ -237,6 +237,8 @@ module FlowcommerceSpree
 
       return unless order.flow_io_captures_sum >= order.flow_io_total_amount && order.flow_io_balance_amount <= 0
 
+      return if order.completed?
+
       order.finalize!
       order.update_totals
       order.save
