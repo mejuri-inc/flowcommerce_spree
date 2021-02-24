@@ -9,11 +9,11 @@ RSpec.describe Users::SessionsController, type: :controller do
   describe 'GET #checkout_url' do
     let(:current_zone) { create(:product_zone_with_flow_experience) }
     let(:order) do
-      create(:order, zone_id: current_zone.id, flow_data: { exp: current_zone.flow_io_experience,
-                                                            order: { id: Faker::Guid.guid },
-                                                            checkout_token: token,
-                                                            session_id: Faker::Guid.guid,
-                                                            session_expires_at: session_expiration })
+      create(:order_with_line_items, zone_id: current_zone.id, flow_data: { exp: current_zone.flow_io_experience,
+                                                               order: { id: Faker::Guid.guid },
+                                                               checkout_token: token,
+                                                               session_id: Faker::Guid.guid,
+                                                               session_expires_at: session_expiration })
     end
     let(:session_expiration) { Time.zone.now.utc + 30.minutes }
     let(:token) { Faker::Guid.guid }
@@ -50,22 +50,23 @@ RSpec.describe Users::SessionsController, type: :controller do
     context 'and the flow.io session is expired' do
       let(:session_expiration) { Time.zone.now.utc + 3.seconds }
 
+      # before { allow(order).to receive_message_chain('line_items.size') { 1 } }
+
       it_behaves_like 'refreshes flow.io session and checkout_token'
     end
 
     context "when current_order has flow order_id, but has no flow_data['checkout_token']" do
       let(:order) do
-        create(:order, zone_id: current_zone.id,
-                       flow_data: { exp: current_zone.flow_io_experience, order: { id: Faker::Guid.guid } })
+        create(:order_with_line_items,
+               zone_id: current_zone.id,
+               flow_data: { exp: current_zone.flow_io_experience, order: { id: Faker::Guid.guid } })
       end
 
       it_behaves_like 'refreshes flow.io session and checkout_token'
     end
 
-    context 'when current_order is a flow.io order, but returns nil checkout_url' do
+    context 'when current_order is a flow.io order, but has no line_items and, thus, returns nil checkout_url' do
       let(:order) { create(:order, zone_id: current_zone.id, flow_data: { exp: current_zone.flow_io_experience }) }
-
-      before { allow(order).to receive(:checkout_url).and_return(nil) }
 
       it 'returns :unprocessable_entity and empty body' do
         get :checkout_url
