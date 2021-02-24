@@ -134,8 +134,8 @@ module FlowcommerceSpree
 
       if (order = Spree::Order.find_by(number: order_number))
         order.flow_data['allocation'] = order_placed['allocation'].to_hash
-        map_payments_to_spree(flow_order, order)
         upsert_order(flow_order, order)
+        map_payments_to_spree(flow_order, order)
         map_payment_captures_to_spree(order) if order.flow_io_captures.present?
         return order
       else
@@ -173,30 +173,25 @@ module FlowcommerceSpree
 
     def upsert_order(flow_io_order, order)
       order.flow_data['order'] = flow_io_order.to_hash
-      attrs_to_update = { meta: order.meta.to_json }
-      if order.flow_data.dig('order', 'submitted_at').present? && !order.complete?
-        # flow_io_total_amount = order.flow_io_total_amount&.to_d
-        # attrs_to_update[:total] = flow_io_total_amount if flow_io_total_amount != order.total
-        # attrs_to_update[:updated_at] = Time.zone.now.utc
+      return if order.complete? || order.flow_data.dig('order', 'submitted_at').blank?
 
-        attrs_to_update[:email] = order.flow_customer_email
-        # attrs_to_update[:state] = 'confirmed'
-        attrs_to_update[:payment_state] = 'pending'
-        attrs_to_update.merge!(order.prepare_flow_addresses)
-        order.create_proposed_shipments
-        order.shipment.update_amounts
-        order.line_items.each(&:store_ets)
-        order.charge_taxes
-      end
+      attrs_to_update = { meta: order.meta.to_json }
+      attrs_to_update[:email] = order.flow_customer_email
+      attrs_to_update[:payment_state] = 'pending'
+      attrs_to_update.merge!(order.prepare_flow_addresses)
+      order.state = 'delivery'
+      order.save!
+      order.create_proposed_shipments
+      order.shipment.update_amounts
+      order.line_items.each(&:store_ets)
+      order.charge_taxes
 
       order.update_columns(attrs_to_update)
-      order.state = 'confirm'
+      order.state = 'payment'
       order.save!
     end
 
     def map_payments_to_spree(flow_order, order)
-      order.state = 'payment'
-      order.save!
       flow_order['payments']&.each do |p|
         payment =
           order.payments.find_or_initialize_by(response_code: p['reference'], payment_method_id: payment_method_id)
@@ -215,6 +210,11 @@ module FlowcommerceSpree
         # has been removed.
         payment.update_column(:identifier, p['id'])
       end
+
+      return if order.payments.sum(:amount) < order.amount
+
+      order.state = 'complete'
+      order.save!
     end
 
     def map_payment_captures_to_spree(order)
@@ -234,8 +234,6 @@ module FlowcommerceSpree
 
         payment.complete
       end
-
-      return if order.complete?
 
       return unless order.flow_io_captures_sum >= order.flow_io_total_amount && order.flow_io_balance_amount <= 0
 
