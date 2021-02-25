@@ -16,11 +16,11 @@ module FlowcommerceSpree
       Rails.logger.info "[!] Flow IO Order data #{flow_io_order}"
 
       @order.flow_data['order'] = flow_io_order
-      attrs_to_update = { meta: @order.meta.to_json }
+      attrs_to_update = { meta: @order.meta.to_json, email: @order.flow_customer_email, payment_state: 'pending' }
       if @order.flow_data.dig('order', 'submitted_at').present? && !@order.complete?
-        attrs_to_update[:email] = @order.flow_customer_email
-        attrs_to_update[:payment_state] = 'pending'
         attrs_to_update.merge!(@order.prepare_flow_addresses)
+        @order.state = 'delivery'
+        @order.save!
         @order.create_proposed_shipments
         @order.shipment.update_amounts
         @order.line_items.each(&:store_ets)
@@ -29,6 +29,7 @@ module FlowcommerceSpree
       end
 
       @order.update_columns(attrs_to_update)
+      @order.state = 'payment'
       @order.save!
     end
 
