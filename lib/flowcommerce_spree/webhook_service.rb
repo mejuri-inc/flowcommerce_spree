@@ -172,12 +172,12 @@ module FlowcommerceSpree
     end
 
     def upsert_order(flow_io_order, order)
-      order.flow_data['order'] = flow_io_order.to_hash
-      return if order.complete? || order.flow_data.dig('order', 'submitted_at').blank?
+      return if order.state == 'complete'
 
-      attrs_to_update = { meta: order.meta.to_json }
-      attrs_to_update[:email] = order.flow_customer_email
-      attrs_to_update[:payment_state] = 'pending'
+      order.flow_data['order'] = flow_io_order.to_hash
+      return if order.flow_data.dig('order', 'submitted_at').blank?
+
+      attrs_to_update = { meta: order.meta.to_json, email: order.flow_customer_email, payment_state: 'pending' }
       attrs_to_update.merge!(order.prepare_flow_addresses)
       order.state = 'delivery'
       order.save!
@@ -211,7 +211,7 @@ module FlowcommerceSpree
         payment.update_column(:identifier, p['id'])
       end
 
-      return if order.payments.sum(:amount) < order.amount
+      return if order.payments.sum(:amount) < order.amount || order.state == 'complete'
 
       order.state = 'complete'
       order.save!
@@ -237,9 +237,10 @@ module FlowcommerceSpree
 
       return unless order.flow_io_captures_sum >= order.flow_io_total_amount && order.flow_io_balance_amount <= 0
 
+      order.finalize!
+
       return if order.completed?
 
-      order.finalize!
       order.update_totals
       order.save
       order.after_completed_order
