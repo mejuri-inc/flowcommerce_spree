@@ -145,25 +145,6 @@ module FlowcommerceSpree
       self
     end
 
-    def order_upserted_v2
-      errors << { message: 'Order param missing' } && (return self) unless (flow_order = @data['order'])
-
-      if (order_number = flow_order['number'])
-        if (order = Spree::Order.find_by(number: order_number))
-          upsert_order(flow_order, order)
-          map_payments_to_spree(flow_order, order)
-          map_payment_captures_to_spree(order) if order.flow_io_captures.present?
-          return order
-        else
-          errors << { message: "Order #{order_number} not found" }
-        end
-      else
-        errors << { message: 'Order number param missing' }
-      end
-
-      self
-    end
-
     # send en email when order is refunded
     def refund_upserted_v2
       Spree::OrderMailer.refund_complete_email(@data).deliver
