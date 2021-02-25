@@ -18,12 +18,7 @@ module FlowcommerceSpree
       @order.flow_data['order'] = flow_io_order
       attrs_to_update = { meta: @order.meta.to_json }
       if @order.flow_data.dig('order', 'submitted_at').present? && !@order.complete?
-        # flow_io_total_amount = order.flow_io_total_amount&.to_d
-        # attrs_to_update[:total] = flow_io_total_amount if flow_io_total_amount != order.total
-        # attrs_to_update[:updated_at] = Time.zone.now.utc
-
         attrs_to_update[:email] = @order.flow_customer_email
-        # attrs_to_update[:state] = 'confirmed'
         attrs_to_update[:payment_state] = 'pending'
         attrs_to_update.merge!(@order.prepare_flow_addresses)
         @order.state = 'delivery'
@@ -37,7 +32,6 @@ module FlowcommerceSpree
       end
 
       @order.update_columns(attrs_to_update)
-      puts 'Order Updated'
       @order.save!
     end
 

@@ -186,7 +186,7 @@ module FlowcommerceSpree
       order.save!
     end
 
-    def map_payment_captures_to_spree(order)
+    def map_payment_captures_to_spree(order) # rubocop:disable Metrics/AbcSize
       payments = order.flow_data&.dig('order', 'payments')
       order.flow_data['captures']&.each do |c|
         next unless c['status'] == 'succeeded'
