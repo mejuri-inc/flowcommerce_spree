@@ -13,7 +13,7 @@ module FlowcommerceSpree
     def upsert_data(flow_io_order = nil)
       flow_io_order ||= @client.orders.get_by_number(FlowcommerceSpree::ORGANIZATION, @order.number).to_hash
 
-      Rails.logger "[!] Flow IO Order data #{flow_io_order}"
+      Rails.logger.info "[!] Flow IO Order data #{flow_io_order}"
 
       @order.flow_data['order'] = flow_io_order
       attrs_to_update = { meta: @order.meta.to_json }
@@ -21,12 +21,11 @@ module FlowcommerceSpree
         attrs_to_update[:email] = @order.flow_customer_email
         attrs_to_update[:payment_state] = 'pending'
         attrs_to_update.merge!(@order.prepare_flow_addresses)
-        @order.state = 'delivery'
-        @order.save!
+        # @order.state = 'delivery'
+        # @order.save!
         @order.create_proposed_shipments
         @order.shipment.update_amounts
         @order.line_items.each(&:store_ets)
-        @order.charge_taxes
 
         # TODO : Add payment mapping
       end
@@ -39,6 +38,7 @@ module FlowcommerceSpree
       @order.finalize!
       @order.update_totals
       @order.save
+      @order.charge_taxes
       @order.after_completed_order
     end
 
@@ -46,7 +46,7 @@ module FlowcommerceSpree
       upsert_data
 
       @order.state = 'complete'
-      @order.save
+      @order.save!
 
       finalize_order
     end
