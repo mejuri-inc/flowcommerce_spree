@@ -3,7 +3,7 @@
 module FlowcommerceSpree
   class OrderUpdater
     def initialize(order:)
-      raise(ArgumentError, 'Experience not defined or not active') unless order.zone&.flow_io_active_experience?
+      raise(ArgumentError, 'Experience not defined or not active') unless order&.zone&.flow_io_active_experience?
 
       @experience = order.flow_io_experience_key
       @order = order
@@ -21,8 +21,6 @@ module FlowcommerceSpree
         attrs_to_update[:email] = @order.flow_customer_email
         attrs_to_update[:payment_state] = 'pending'
         attrs_to_update.merge!(@order.prepare_flow_addresses)
-        # @order.state = 'delivery'
-        # @order.save!
         @order.create_proposed_shipments
         @order.shipment.update_amounts
         @order.line_items.each(&:store_ets)

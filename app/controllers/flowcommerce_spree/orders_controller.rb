@@ -12,7 +12,7 @@ module FlowcommerceSpree
       flow_updater = FlowcommerceSpree::OrderUpdater.new(order: current_order)
       flow_updater.complete_checkout
 
-      redirect_to "/thankyou?order=#{params[:order]}&t=#{params[:token]}"
+      redirect_to "/thankyou?order=#{params[:order]}&t=#{params[:t]}"
     end
   end
 end
