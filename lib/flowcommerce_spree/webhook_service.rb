@@ -154,7 +154,7 @@ module FlowcommerceSpree
 
     def upsert_order(flow_io_order, order)
       order_updater = FlowcommerceSpree::OrderUpdater.new(order: order)
-      order_updater.upsert_order(flow_io_order)
+      order_updater.upsert_data(flow_io_order)
 
       order.state = 'confirm'
       order.save!
