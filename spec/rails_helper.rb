@@ -15,6 +15,7 @@ require 'ffaker/utils/unique_utils' # TODO: Remove on ffaker v.2.7.0, where it w
 require 'support/factory_bot'
 require 'support/database_cleaner.rb'
 require 'support/flow.rb'
+require 'support/controller_requests.rb'
 
 # Add additional requires below this line. Rails is not loaded until this point!
 
@@ -67,6 +68,8 @@ RSpec.configure do |config|
 
   # Filter lines from Rails gems in backtraces.
   config.filter_rails_from_backtrace!
+
+  config.include ControllerRequests
 
   config.include Devise::Test::ControllerHelpers, type: :controller
   # arbitrary gems may also be filtered via:

@@ -24,7 +24,7 @@ module FlowcommerceSpree
 
       app.config.flowcommerce_spree[:mounted_path] = ENV.fetch('FLOW_MOUNT_PATH', '/flow')
 
-      app.routes.append do
+      app.routes.prepend do
         mount FlowcommerceSpree::Engine => app.config.flowcommerce_spree[:mounted_path]
       end
     end
