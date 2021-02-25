@@ -186,7 +186,7 @@ module FlowcommerceSpree
       order.save!
     end
 
-    def map_payment_captures_to_spree(order) # rubocop:disable Metrics/AbcSize
+    def map_payment_captures_to_spree(order)
       payments = order.flow_data&.dig('order', 'payments')
       order.flow_data['captures']&.each do |c|
         next unless c['status'] == 'succeeded'
@@ -204,22 +204,10 @@ module FlowcommerceSpree
         payment.complete
       end
 
-<<<<<<< HEAD
-      return unless order.flow_io_captures_sum >= order.flow_io_total_amount && order.flow_io_balance_amount <= 0
-
-      order.finalize!
-
-      return if order.completed?
-
-      order.update_totals
-      order.save
-      order.after_completed_order
-=======
       return if order.complete?
       return unless order.flow_io_captures_sum >= order.flow_io_total_amount && order.flow_io_balance_amount <= 0
 
       FlowcommerceSpree::OrderUpdater.new(order).finalize_order
->>>>>>> [TEC-4958] base changes to handle thank you page redirection
     end
 
     def payment_method_id
