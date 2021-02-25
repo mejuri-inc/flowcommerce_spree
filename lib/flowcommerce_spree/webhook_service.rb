@@ -150,8 +150,8 @@ module FlowcommerceSpree
 
       if (order_number = flow_order['number'])
         if (order = Spree::Order.find_by(number: order_number))
-          map_payments_to_spree(flow_order, order)
           upsert_order(flow_order, order)
+          map_payments_to_spree(flow_order, order)
           map_payment_captures_to_spree(order) if order.flow_io_captures.present?
           return order
         else
