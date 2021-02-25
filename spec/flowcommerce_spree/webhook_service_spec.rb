@@ -9,7 +9,7 @@ RSpec.describe FlowcommerceSpree::WebhookService do
     context 'when hook does not exists' do
       it 'returns error message' do
         discriminator = 'test_hook'
-        webhook_service = FlowcommerceSpree::WebhookService.new({ 'discriminator' => discriminator })
+        webhook_service = FlowcommerceSpree::WebhookService.new('discriminator' => discriminator)
 
         response = webhook_service.process
         expect(response.errors).to(eq([{ message: "No hook for #{discriminator}" }]))
