@@ -134,8 +134,9 @@ module FlowcommerceSpree
 
       if (order = Spree::Order.find_by(number: order_number))
         order.flow_data['allocation'] = order_placed['allocation'].to_hash
-        upsert_order(flow_order, order)
-        map_payments_to_spree(flow_order, order)
+        @order_updater = FlowcommerceSpree::OrderUpdater.new(order: order)
+        @order_updater.upsert_data(flow_order)
+        @order_updater.map_payments_to_spree
         map_payment_captures_to_spree(order) if order.flow_io_captures.present?
         return order
       else
@@ -153,36 +154,10 @@ module FlowcommerceSpree
     end
 
     def upsert_order(flow_io_order, order)
-      order_updater = FlowcommerceSpree::OrderUpdater.new(order: order)
-      order_updater.upsert_data(flow_io_order)
+      @order_updater = FlowcommerceSpree::OrderUpdater.new(order: order)
+      @order_updater.upsert_data(flow_io_order)
 
       order.state = 'confirm'
-      order.save!
-    end
-
-    def map_payments_to_spree(flow_order, order)
-      flow_order['payments']&.each do |p|
-        payment =
-          order.payments.find_or_initialize_by(response_code: p['reference'], payment_method_id: payment_method_id)
-        next unless payment.new_record?
-
-        payment.amount = p.dig('total', 'amount')
-        if p['type'] == 'card'
-          card = Spree::CreditCard.where("user_id = ? AND meta -> 'flow_data' -> 'authorizations' @> ?", order.user.id,
-                                         [{ id: p['reference'] }].to_json).first
-          payment.source = card if card
-        end
-        payment.pend
-
-        # For now this additional update is overwriting the generated identifier with flow.io payment identifier.
-        # TODO: Check and possibly refactor in Spree 3.0, where the `before_create :set_unique_identifier`
-        # has been removed.
-        payment.update_column(:identifier, p['id'])
-      end
-
-      return if order.payments.sum(:amount) < order.amount || order.state == 'complete'
-
-      order.state = 'complete'
       order.save!
     end
 
