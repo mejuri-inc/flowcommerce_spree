@@ -27,6 +27,7 @@ module FlowcommerceSpree
       @order.create_proposed_shipments
       @order.shipment.update_amounts
       @order.line_items.each(&:store_ets)
+      @order.charge_taxes
 
       @order.update_columns(attrs_to_update)
       @order.state = 'payment'
@@ -34,18 +35,16 @@ module FlowcommerceSpree
     end
 
     def finalize_order
+      @order.reload
       @order.finalize!
       @order.update_totals
       @order.save
-      @order.charge_taxes
       @order.after_completed_order
     end
 
     def complete_checkout
       upsert_data
       map_payments_to_spree
-
-      finalize_order
     end
 
     def map_payments_to_spree
@@ -55,11 +54,6 @@ module FlowcommerceSpree
         next unless payment.new_record?
 
         payment.amount = p.dig('total', 'amount')
-        if p['type'] == 'card'
-          card = Spree::CreditCard.where("user_id = ? AND meta -> 'flow_data' -> 'authorizations' @> ?", @order.user.id,
-                                         [{ id: p['reference'] }].to_json).first
-          payment.source = card if card
-        end
         payment.pend
 
         # For now this additional update is overwriting the generated identifier with flow.io payment identifier.
@@ -70,8 +64,14 @@ module FlowcommerceSpree
 
       return if @order.payments.sum(:amount) < @order.amount || @order.state == 'complete'
 
+      @order.state = 'confirm'
+      @order.save!
       @order.state = 'complete'
       @order.save!
+    end
+
+    def payment_method_id
+      @payment_method_id ||= Spree::PaymentMethod.find_by(active: true, type: 'Spree::Gateway::FlowIo').id
     end
   end
 end
