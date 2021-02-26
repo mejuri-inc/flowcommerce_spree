@@ -29,7 +29,7 @@ module FlowcommerceSpree
     private
 
     def capture_upserted_v2
-      errors << { message: 'Capture param missing' } && (return self) unless (capture = @data['capture'])
+      errors << { message: 'Capture param missing' } && (return self) unless (capture = @data['capture']&.to_hash)
 
       order_number = capture.dig('authorization', 'order', 'number')
       if (order = Spree::Order.find_by(number: order_number))
@@ -47,7 +47,8 @@ module FlowcommerceSpree
     end
 
     def card_authorization_upserted_v2
-      errors << { message: 'Authorization param missing' } && (return self) unless (card_auth = @data['authorization'])
+      card_auth = @data['authorization']&.to_hash
+      errors << { message: 'Authorization param missing' } && (return self) unless card_auth
 
       errors << { message: 'Card param missing' } && (return self) unless (flow_io_card = card_auth.delete('card'))
 
@@ -63,6 +64,7 @@ module FlowcommerceSpree
                                                          user_id: order.user.id)
           card.flow_data ||= {}
           card.flow_data.merge!(flow_io_card.except('discriminator')) if card.new_record?
+          card_auth['method'].delete('images')
           card.push_authorization(card_auth.except('discriminator'))
           if card.new_record?
             card.imported = true
@@ -70,6 +72,8 @@ module FlowcommerceSpree
           else
             card.update_column(:meta, card.meta.to_json)
           end
+
+          order.payments.where(response_code: card_auth['id']).update_all(source_id: card.id, source_type: 'Spree::CreditCard')
 
           return card
         else
@@ -88,21 +92,18 @@ module FlowcommerceSpree
     end
 
     def fraud_status_changed
-      if (order_number = @data.dig('order', 'number'))
-        if @data['status'] == 'declined'
-          if (order = Spree::Order.find_by(number: order_number))
-            order.update_columns(fraudulent: true)
-            order.cancel!
-            return order
-          else
-            errors << { message: "Order #{order_number} not found" }
-          end
-        end
-      else
-        errors << { message: 'Order number param missing' }
+      order_number = @data.dig('order', 'number')
+      errors << { message: 'Order number param missing' } && (return self) unless order_number
+
+      order = Spree::Order.find_by(number: order_number)
+      errors << { message: "Order #{order_number} not found" } && (return self) unless order
+
+      if @data['status'] == 'declined'
+        order.update_columns(fraudulent: true)
+        order.cancel!
       end
 
-      self
+      order
     end
 
     def local_item_upserted
@@ -153,14 +154,6 @@ module FlowcommerceSpree
       'Email delivered'
     end
 
-    def upsert_order(flow_io_order, order)
-      @order_updater = FlowcommerceSpree::OrderUpdater.new(order: order)
-      @order_updater.upsert_data(flow_io_order)
-
-      order.state = 'confirm'
-      order.save!
-    end
-
     def map_payment_captures_to_spree(order)
       payments = order.flow_data&.dig('order', 'payments')
       order.flow_data['captures']&.each do |c|
@@ -179,14 +172,10 @@ module FlowcommerceSpree
         payment.complete
       end
 
-      return if order.complete?
+      return if order.completed?
       return unless order.flow_io_captures_sum >= order.flow_io_total_amount && order.flow_io_balance_amount <= 0
 
-      FlowcommerceSpree::OrderUpdater.new(order).finalize_order
-    end
-
-    def payment_method_id
-      @payment_method_id ||= Spree::PaymentMethod.find_by(active: true, type: 'Spree::Gateway::FlowIo').id
+      FlowcommerceSpree::OrderUpdater.new(order: order).finalize_order
     end
   end
 end
