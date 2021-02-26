@@ -37,7 +37,7 @@ module FlowcommerceSpree
         order_captures = order.flow_data['captures']
         order_captures.delete_if { |c| c['id'] == capture['id'] }
         order_captures << capture
-        order.update_columns(meta: order.meta.to_json)
+        order.update_column(:meta, order.meta.to_json)
         map_payment_captures_to_spree(order) if order.flow_io_payments.present?
         order
       else
@@ -61,7 +61,7 @@ module FlowcommerceSpree
                                                          cc_type: flow_io_card.delete('type'),
                                                          last_digits: flow_io_card.delete('last4'),
                                                          name: flow_io_card.delete('name'),
-                                                         user_id: order.user.id)
+                                                         user_id: order.user&.id)
           card.flow_data ||= {}
           card.flow_data.merge!(flow_io_card.except('discriminator')) if card.new_record?
           card_auth['method'].delete('images')
