@@ -168,7 +168,6 @@ module FlowcommerceSpree
       @order.flow_data['session_expires_at'] = session_expire_at
 
       if session.respond_to?(:[])
-        cookie['_f60_session'] = current_session_id
         session['_f60_session'] = current_session_id
         session['_f60_expires_at'] = session_expire_at
       end
