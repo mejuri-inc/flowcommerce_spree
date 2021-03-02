@@ -13,7 +13,7 @@ module FlowcommerceSpree
       items      = []
       total = 0
 
-      while offset == 0 || items.length == 100
+      while offset == 0 || items.length != 0
         # show current list size
         @logger.info "\nGetting items: #{@experience_key.green}, rows #{offset} - #{offset + page_size}"
 
