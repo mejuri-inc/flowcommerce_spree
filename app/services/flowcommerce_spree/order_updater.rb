@@ -45,6 +45,7 @@ module FlowcommerceSpree
     def complete_checkout
       upsert_data
       map_payments_to_spree
+      finalize_order
     end
 
     def map_payments_to_spree
