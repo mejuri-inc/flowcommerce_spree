@@ -132,6 +132,7 @@ module FlowcommerceSpree
     # rubocop:disable Metrics/MethodLength, Metrics/AbcSize, Metrics/CyclomaticComplexity, Metrics/PerceivedComplexity
     def fetch_session_id
       session = RequestStore.store[:session]
+      cookies = RequestStore.store[:cookies]
       current_session_id = session&.[]('_f60_session')
       session_expire_at = session&.[]('_f60_expires_at')&.to_datetime
       session_expired = flow_io_session_expired?(session_expire_at.to_i)
@@ -168,6 +169,7 @@ module FlowcommerceSpree
       @order.flow_data['session_expires_at'] = session_expire_at
 
       if session.respond_to?(:[])
+        cookies['_f60_session'] = { value: current_session_id, domain: '.mejuri.com' }
         session['_f60_session'] = current_session_id
         session['_f60_expires_at'] = session_expire_at
       end

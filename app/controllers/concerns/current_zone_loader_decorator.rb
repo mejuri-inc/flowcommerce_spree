@@ -21,6 +21,7 @@ CurrentZoneLoader.module_eval do
                           request_iso_code: request_iso_code }
 
     RequestStore.store[:session] = session
+    RequestStore.store[:cookies] = cookies
     Rails.logger.debug("Using product zone: #{current_zone_name}")
     @current_zone
   end
