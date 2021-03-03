@@ -65,12 +65,7 @@ module Spree
         response = FlowcommerceSpree.client.refunds.post(FlowcommerceSpree::ORGANIZATION, refund_form)
         response_status = response.status.value
         if response_status == REFUND_SUCCESS
-          refund = response.to_hash
-          order.flow_data['refunds'] ||= []
-          order_refunds = order.flow_data['refunds']
-          order_refunds.delete_if { |r| r['id'] == response.id }
-          order_refunds << refund
-          order.update_column(:meta, order.meta.to_json)
+          add_refund_to_order(response, order)
           ActiveMerchant::Billing::Response.new(true, REFUND_SUCCESS, {}, {})
         else
           msg = "Partial refund fail. Details: #{response_status}"
@@ -85,8 +80,6 @@ module Spree
       end
 
       def create_profile(payment)
-        # binding.pry
-
         # payment.order.state
         @credit_card = payment.source
 
@@ -95,6 +88,14 @@ module Spree
       end
 
       private
+
+      def add_refund_to_order(response, order)
+        order.flow_data['refunds'] ||= []
+        order_refunds = order.flow_data['refunds']
+        order_refunds.delete_if { |r| r['id'] == response.id }
+        order_refunds << response.to_hash
+        order.update_column(:meta, order.meta.to_json)
+      end
 
       # hard inject Flow as payment method unless defined
       def profile_ensure_payment_method_is_present!
