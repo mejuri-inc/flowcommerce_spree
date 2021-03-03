@@ -42,6 +42,7 @@ CurrentZoneLoader.module_eval do
     # response, will be available in the session object - flow_io_session.experience
 
     if (zone = Spree::Zones::Product.active.find_by(name: flow_io_session.experience&.key&.titleize))
+      cookies['_f60_session'] = { value: flow_io_session.id, domain: '.mejuri.com' }
       session['_f60_session'] = flow_io_session.id
       session['_f60_expires_at'] = flow_io_session.expires_at.to_s
     end

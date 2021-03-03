@@ -30,10 +30,10 @@ module Spree
                 update_meta ||= true
               end
             elsif order_flow_session_id.present?
+              cookies['_f60_session'] = { value: order_flow_session_id, domain: '.mejuri.com' }
               session['_f60_session'] = order_flow_session_id
               session['_f60_expires_at'] = order_session_expired
             end
-            cookies['_f60_session'] = { value: order_flow_session_id, domain: '.mejuri.com' }
           end
 
           if @current_order.new_record?
