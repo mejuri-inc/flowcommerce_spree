@@ -169,7 +169,7 @@ module FlowcommerceSpree
       @order.flow_data['session_expires_at'] = session_expire_at
 
       if session.respond_to?(:[])
-        cookies['_f60_session'] = { value: current_session_id, domain: '.mejuri.com' }
+        cookies['_f60_session'] = { value: current_session_id, domain: '.mejuri.com' } if cookies.respond_to?(:[])
         session['_f60_session'] = current_session_id
         session['_f60_expires_at'] = session_expire_at
       end
