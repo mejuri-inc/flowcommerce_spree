@@ -12,9 +12,6 @@ require 'flow/simple_gateway'
 require 'request_store'
 
 module FlowcommerceSpree
-  API_KEY = ENV.fetch('FLOW_TOKEN', 'test_key')
-  ENV['FLOW_TOKEN'] = API_KEY
-
   def self.client(logger: FlowcommerceSpree.logger, **opts)
     FlowCommerce.instance(http_handler: LoggingHttpHandler.new(logger: logger), **opts)
   end
