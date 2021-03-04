@@ -14,7 +14,7 @@ RSpec.describe FlowcommerceSpree::OrderSync do
 
     context 'when order is not present' do
       it 'raises exception' do
-        expect { subject.new(order: nil) }.to(raise_error.with_message('Experience not defined or not active'))
+        expect { subject.new(order: nil) }.to raise_error(ArgumentError, 'Experience not defined or not active')
       end
     end
 
@@ -22,7 +22,7 @@ RSpec.describe FlowcommerceSpree::OrderSync do
       let(:order) { create(:order) }
 
       it 'raises exception' do
-        expect { subject.new(order: order) }.to raise_error.with_message('Experience not defined or not active')
+        expect { subject.new(order: order) }.to raise_error(ArgumentError, 'Experience not defined or not active')
       end
     end
 
