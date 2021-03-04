@@ -14,11 +14,8 @@ RSpec.describe FlowcommerceSpree::OrderUpdater do
     end
   end
 
-  context 'when order is not assocaited to flow experience' do
-    before do
-      allow(zone).to(receive(:flow_io_active_experience?).and_return(false))
-      allow(order).to(receive(:zone).and_return(zone))
-    end
+  context 'when the order has no flow experience' do
+    let(:order) { create(:order) }
 
     subject { FlowcommerceSpree::OrderUpdater.new(order: order) }
 
