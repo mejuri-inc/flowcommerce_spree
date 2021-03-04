@@ -147,13 +147,6 @@ module FlowcommerceSpree
       self
     end
 
-    # send en email when order is refunded
-    def refund_upserted_v2
-      Spree::OrderMailer.refund_complete_email(@data).deliver
-
-      'Email delivered'
-    end
-
     def map_payment_captures_to_spree(order)
       payments = order.flow_data&.dig('order', 'payments')
       order.flow_data['captures']&.each do |c|
