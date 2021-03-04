@@ -17,5 +17,19 @@ module Spree
       @zone ||= zone.id == zone_id ? zone : Spree::Zones::Product.find_by(id: zone_id)
       # rubocop:enable Naming/MemoizedInstanceVariableName
     end
+
+    def shipment
+      shipments.first
+    end
+
+    def charge_taxes
+      create_tax_charge!
+      persist_totals
+      audit_taxes
+    end
+
+    def audit_taxes
+      all_adjustments.tax.each { |adjustment| TaxAudit.audit(adjustment) }
+    end
   end
 end
