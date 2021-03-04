@@ -72,7 +72,7 @@ module Spree
           ActiveMerchant::Billing::Response.new(false, msg, {}, {})
         end
       rescue StandardError => e
-        ActiveMerchant::Billing::Response.new(false, e, {}, {})
+        ActiveMerchant::Billing::Response.new(false, e.to_s, {}, {})
       end
 
       def void(money, authorization_key, options = {})
@@ -90,6 +90,7 @@ module Spree
       private
 
       def add_refund_to_order(response, order)
+        order.flow_data ||= {}
         order.flow_data['refunds'] ||= []
         order_refunds = order.flow_data['refunds']
         order_refunds.delete_if { |r| r['id'] == response.id }
