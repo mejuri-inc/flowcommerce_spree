@@ -45,7 +45,7 @@ module FlowcommerceSpree
     def complete_checkout
       upsert_data
       map_payments_to_spree
-      finalize_order unless @order.complete?
+      finalize_order if @order.state == 'complete'
     end
 
     def map_payments_to_spree
