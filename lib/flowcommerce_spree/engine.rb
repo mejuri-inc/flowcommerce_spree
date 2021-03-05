@@ -9,7 +9,6 @@ module FlowcommerceSpree
       FlowcommerceSpree::ORGANIZATION = ENV.fetch('FLOW_ORGANIZATION', 'flow.io')
       FlowcommerceSpree::BASE_COUNTRY = ENV.fetch('FLOW_BASE_COUNTRY', 'USA')
       FlowcommerceSpree::API_KEY = ENV.fetch('FLOW_TOKEN', 'test_key')
-      ENV['FLOW_TOKEN'] = FlowcommerceSpree::API_KEY
 
       FlowcommerceSpree::Config = FlowcommerceSpree::Settings.new
     end
