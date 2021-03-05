@@ -27,7 +27,10 @@ module FlowcommerceSpree
       @experience = order.flow_io_experience_key
       @flow_session_id = flow_session_id
       @order = order
-      @client = FlowcommerceSpree.client(session_id: flow_session_id)
+      @client = FlowcommerceSpree.client(
+        default_headers: { "Authorization": "Session #{flow_session_id}" },
+        authorization: nil
+      )
     end
 
     # helper method to send complete order from Spree to flow.io
