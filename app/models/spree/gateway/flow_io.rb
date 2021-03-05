@@ -5,6 +5,8 @@
 module Spree
   class Gateway
     class FlowIo < Gateway
+      REFUND_SUCCESS = 'succeeded'
+
       def provider_class
         self.class
       end
@@ -56,9 +58,21 @@ module Spree
         end
       end
 
-      def refund(_money, _authorization_key, options = {})
-        order = load_order options
-        order.cc_refund
+      def refund(payment, amount, _options = {})
+        order = payment.order
+        refund_form =
+          Io::Flow::V0::Models::RefundForm.new(order_number: order.number, amount: amount, currency: order.currency)
+        response = FlowcommerceSpree.client.refunds.post(FlowcommerceSpree::ORGANIZATION, refund_form)
+        response_status = response.status.value
+        if response_status == REFUND_SUCCESS
+          add_refund_to_order(response, order)
+          ActiveMerchant::Billing::Response.new(true, REFUND_SUCCESS, {}, {})
+        else
+          msg = "Partial refund fail. Details: #{response_status}"
+          ActiveMerchant::Billing::Response.new(false, msg, {}, {})
+        end
+      rescue StandardError => e
+        ActiveMerchant::Billing::Response.new(false, e.to_s, {}, {})
       end
 
       def void(money, authorization_key, options = {})
@@ -66,8 +80,6 @@ module Spree
       end
 
       def create_profile(payment)
-        # binding.pry
-
         # payment.order.state
         @credit_card = payment.source
 
@@ -76,6 +88,15 @@ module Spree
       end
 
       private
+
+      def add_refund_to_order(response, order)
+        order.flow_data ||= {}
+        order.flow_data['refunds'] ||= []
+        order_refunds = order.flow_data['refunds']
+        order_refunds.delete_if { |r| r['id'] == response.id }
+        order_refunds << response.to_hash
+        order.update_column(:meta, order.meta.to_json)
+      end
 
       # hard inject Flow as payment method unless defined
       def profile_ensure_payment_method_is_present!

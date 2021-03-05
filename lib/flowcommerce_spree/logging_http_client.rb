@@ -24,7 +24,8 @@ module FlowcommerceSpree
       begin
         response = super
       rescue Io::Flow::V0::HttpClient::ServerError => e
-        @error = { error: e }.to_json
+        @error = { error: Oj.load(e.body), code: e.code, status: e.details }
+        raise StandardError, @error.dig(:error, 'messages')
       ensure
         # client.open_timeout = original_open
         # client.read_timeout = original_read
@@ -38,7 +39,7 @@ module FlowcommerceSpree
           "Completed #{request.method} #{request.path} #{duration} ms\n"
         )
 
-        @logger.info "Error: #{e.inspect}" if e
+        @logger.info "Error: #{@error.inspect}" if @error
       end
     end
   end

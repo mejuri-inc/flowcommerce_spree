@@ -175,7 +175,6 @@ module Spree
 
     def flow_io_captures_sum
       captures_sum = 0
-      # flow_data&.[]('captures')&.select { |c| c['status'] == 'succeeded' }&.map { |c| c['amount'] }&.sum.to_d
       flow_data&.[]('captures')&.each do |c|
         next if c['status'] != 'succeeded'
 
