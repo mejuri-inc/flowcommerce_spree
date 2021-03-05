@@ -207,4 +207,6 @@ module Spree
 
     Spree::Order.include(self) if Spree::Order.included_modules.exclude?(self)
   end
+
+
 end

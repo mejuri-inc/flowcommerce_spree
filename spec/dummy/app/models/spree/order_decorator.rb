@@ -31,5 +31,7 @@ module Spree
     def audit_taxes
       all_adjustments.tax.each { |adjustment| TaxAudit.audit(adjustment) }
     end
+
+    def after_completed_order; end
   end
 end
