@@ -9,13 +9,8 @@ RSpec.describe Users::SessionsController, type: :controller do
     let(:current_zone) { create(:product_zone_with_flow_experience) }
     let(:order) do
       create(:order_with_line_items, zone_id: current_zone.id, flow_data: { exp: current_zone.flow_io_experience,
-                                                                            order: { id: Faker::Guid.guid },
-                                                                            checkout_token: token,
-                                                                            session_id: Faker::Guid.guid,
-                                                                            session_expires_at: session_expiration })
+                                                                            order: { id: Faker::Guid.guid } })
     end
-    let(:session_expiration) { Time.zone.now.utc + 30.minutes }
-    let(:token) { Faker::Guid.guid }
     let(:flow_session) { build(:flow_organization_session) }
     let(:checkout_token) do
       build(:flow_checkout_token, order: { number: order.number }, session: { id: flow_session.id })
@@ -43,7 +38,8 @@ RSpec.describe Users::SessionsController, type: :controller do
           get :checkout_url
 
           expect(response).to have_http_status(:success)
-          expect(Oj.load(response.body)).to eql('checkout_url' => "https://checkout.flow.io/tokens/#{checkout_token.id}")
+          expect(Oj.load(response.body))
+            .to eql('checkout_url' => "https://checkout.flow.io/tokens/#{checkout_token.id}")
         end
       end
 

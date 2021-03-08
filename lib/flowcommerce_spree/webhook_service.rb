@@ -73,7 +73,8 @@ module FlowcommerceSpree
             card.update_column(:meta, card.meta.to_json)
           end
 
-          order.payments.where(response_code: card_auth['id']).update_all(source_id: card.id, source_type: 'Spree::CreditCard')
+          order.payments.where(response_code: card_auth['id'])
+               .update_all(source_id: card.id, source_type: 'Spree::CreditCard')
 
           return card
         else
