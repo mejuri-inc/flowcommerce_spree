@@ -48,10 +48,5 @@ RSpec.describe FlowcommerceSpree::OrderSync do
         expect(instance.order).to eql(order)
       end
     end
-
-    context 'when the order has a flow experience defined' do
-      let(:zone) { create(:germany_zone, :with_flow_data) }
-      let(:order) { create(:order_with_line_items, :with_flow_data) }
-    end
   end
 end
