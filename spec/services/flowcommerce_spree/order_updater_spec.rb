@@ -27,7 +27,7 @@ RSpec.describe FlowcommerceSpree::OrderUpdater do
 
   context 'when the order has a flow experience defined' do
     let(:zone) { create(:germany_zone, :with_flow_data) }
-    let(:order) { create(:order_with_line_items, :with_flow_data, zone: zone) }
+    let(:order) { create(:order_with_line_items, :with_flow_data, line_items_count: 2, zone: zone) }
     let(:flowcommerce_client) { FlowcommerceSpree.client }
 
     before do
@@ -65,7 +65,7 @@ RSpec.describe FlowcommerceSpree::OrderUpdater do
 
         it 'updates order to state `payment` and calls several methods to update the order related records' do
           expect(order).to(receive(:create_proposed_shipments))
-          expect_any_instance_of(Spree::LineItem).to(receive(:store_ets))
+          order.line_items.each { |item| expect(item).to(receive(:store_ets).exactly(1).times) }
           expect(order).to(receive(:charge_taxes))
 
           subject.new(order: order).upsert_data
