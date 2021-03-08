@@ -13,6 +13,7 @@ require 'ffaker'
 require 'ffaker/utils/module_utils_unique' # TODO: Remove on ffaker v.2.7.0, where it was implemented
 require 'ffaker/utils/unique_utils' # TODO: Remove on ffaker v.2.7.0, where it was implemented
 require 'support/factory_bot'
+require 'support/controller_requests.rb'
 require 'support/database_cleaner.rb'
 require 'support/flow.rb'
 require 'support/controller_requests.rb'
@@ -74,4 +75,5 @@ RSpec.configure do |config|
   config.include Devise::Test::ControllerHelpers, type: :controller
   # arbitrary gems may also be filtered via:
   # config.filter_gems_from_backtrace("gem name")
+  config.include ControllerRequests
 end
