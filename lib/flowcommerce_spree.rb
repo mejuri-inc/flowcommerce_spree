@@ -9,7 +9,6 @@ require 'flowcommerce_spree/logging_http_handler'
 require 'flowcommerce_spree/webhook_service'
 require 'flowcommerce_spree/session'
 require 'flow/simple_gateway'
-require 'request_store'
 
 module FlowcommerceSpree
   API_KEY = ENV.fetch('FLOW_TOKEN', 'test_key')

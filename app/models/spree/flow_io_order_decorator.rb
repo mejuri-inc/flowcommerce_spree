@@ -7,21 +7,10 @@ module Spree
       base.serialize :meta, ActiveRecord::Coders::JSON.new(symbolize_keys: true)
 
       base.store_accessor :meta, :flow_data
-
-      base.before_save :sync_to_flow_io
-      base.after_touch :sync_to_flow_io
     end
 
     def flow_tax_cache_key
       [number, 'flowcommerce', 'allocation', line_items.sum(:quantity)].join('-')
-    end
-
-    def sync_to_flow_io
-      return unless zone&.flow_io_active_experience? && state == 'cart' && line_items.size > 0
-
-      flow_io_order = FlowcommerceSpree::OrderSync.new(order: self)
-      flow_io_order.build_flow_request
-      flow_io_order.synchronize! if flow_data['digest'] != flow_io_order.digest
     end
 
     def display_total
@@ -105,10 +94,6 @@ module Spree
       model.new ENV.fetch('FLOW_BASE_COUNTRY')
     end
 
-    def flow_io_checkout_token
-      flow_data&.[]('checkout_token')
-    end
-
     def flow_io_experience_key
       flow_data&.[]('exp')
     end
@@ -121,17 +106,8 @@ module Spree
       flow_data&.dig('order', 'id')
     end
 
-    def flow_io_session_expires_at
-      flow_data&.[]('session_expires_at')&.to_datetime
-    end
-
     def flow_io_attributes
       flow_data&.dig('order', 'attributes') || {}
-    end
-
-    def add_flow_checkout_token(token)
-      self.flow_data ||= {}
-      self.flow_data['checkout_token'] = token
     end
 
     def flow_io_attribute_add(attr_key, value)
@@ -148,25 +124,6 @@ module Spree
 
     def flow_io_attr_user_uuid
       flow_data&.dig('order', 'attributes', 'user_uuid')
-    end
-
-    def checkout_url
-      sync_to_flow_io
-
-      checkout_token = flow_io_checkout_token
-      return "https://checkout.flow.io/tokens/#{checkout_token}" if checkout_token
-    end
-
-    # clear invalid zero amount payments. Solidus bug?
-    def clear_zero_amount_payments!
-      # class attribute that can be set to true
-      return unless Flow::Order.clear_zero_amount_payments
-
-      payments.where(amount: 0, state: %w[invalid processing pending]).map(&:destroy)
-    end
-
-    def flow_order_authorized?
-      flow_data&.[]('authorization') ? true : false
     end
 
     def flow_io_captures
@@ -189,14 +146,6 @@ module Spree
 
     def flow_io_payments
       flow_data.dig('order', 'payments')
-    end
-
-    # completes order and sets all states to finalized and complete
-    # used when we have confirmed capture from Flow API or PayPal
-    def flow_finalize!
-      finalize! unless state == 'complete'
-      update_column :payment_state, 'paid' if payment_state != 'paid'
-      update_column :state, 'complete'     if state != 'complete'
     end
 
     def flow_payment_method
@@ -243,13 +192,13 @@ module Spree
       s_address = flow_ship_address
 
       if s_address&.changes&.any?
-        s_address.save
+        s_address.save!
         address_attributes[:ship_address_id] = s_address.id unless ship_address_id
       end
 
       b_address = flow_bill_address
       if b_address&.changes&.any?
-        b_address.save
+        b_address.save!
         address_attributes[:bill_address_id] = b_address.id unless bill_address_id
       end
 

@@ -54,23 +54,5 @@ module FlowcommerceSpree
     def id
       @session.id
     end
-
-    # because we do not get full experience from session, we have to get from exp list
-    def delivered_duty_options
-      return nil unless experience
-
-      return unless (flow_experience = Flow::Experience.get(experience.key))
-
-      Hashie::Mash.new(flow_experience.settings.delivered_duty.to_hash)
-    end
-
-    # if we have more than one choice, we show choice popup
-    def offers_delivered_duty_choice?
-      if (options = delivered_duty_options)
-        options.available.length > 1
-      else
-        false
-      end
-    end
   end
 end

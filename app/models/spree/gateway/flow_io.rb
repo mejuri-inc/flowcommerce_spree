@@ -42,22 +42,6 @@ module Spree
         order.cc_authorization
       end
 
-      def capture(_amount, _payment_method, options = {})
-        order = load_order options
-        order.cc_capture
-      end
-
-      def purchase(_amount, _payment_method, options = {})
-        order = load_order options
-        flow_auth = order.cc_authorization
-
-        if flow_auth.success?
-          order.cc_capture
-        else
-          flow_auth
-        end
-      end
-
       def refund(payment, amount, _options = {})
         order = payment.order
         refund_form =
