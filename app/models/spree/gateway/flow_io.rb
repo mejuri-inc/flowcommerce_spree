@@ -60,8 +60,13 @@ module Spree
         ActiveMerchant::Billing::Response.new(false, e.to_s, {}, {})
       end
 
-      def void(money, authorization_key, options = {})
-        # binding.pry
+      def void(authorization_id, _source, options = {})
+        amount = (options[:subtotal] + options[:shipping]) * 0.01
+        reversal_form = Io::Flow::V0::Models::ReversalForm.new(key: options[:order_id],
+                                                               authorization_id: authorization_id,
+                                                               amount: amount,
+                                                               currency: options[:currency])
+        FlowcommerceSpree.client.reversals.post(FlowcommerceSpree::ORGANIZATION, reversal_form)
       end
 
       def create_profile(payment)
