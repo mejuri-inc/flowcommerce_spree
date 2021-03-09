@@ -13,20 +13,25 @@ RSpec.describe Spree::Gateway::FlowIo do
 
   describe '#refund' do
     let(:order) { create(:order_with_line_items) }
-    let(:payment) { create(:payment, order: order, payment_method_id: gateway.id) }
+    let(:payment_auth) { build(:flow_authorization_reference) }
+    let!(:payment) { create(:payment, order: order, payment_method_id: gateway.id, response_code: payment_auth.id) }
     let(:amount) { order.item_total }
-    let(:refund) { build(:flow_refund, currency: order.currency, amount: amount) }
+    let(:refund) { build(:flow_refund, currency: order.currency, amount: amount, authorization: payment_auth) }
 
     context 'when refund has succeeded' do
       before do
         allow(FlowcommerceSpree).to receive_message_chain(:client, :refunds, :post).and_return(refund)
       end
 
-      it 'returns a successful ActiveMerchant::Billing::Response and ads refund to the order`s flow_data' do
+      it 'returns a successful response, ads refund to the order`s flow_data, creates negative amount payment' do
         allow(gateway).to receive(:add_refund_to_order).and_call_original
-        expect(gateway).to receive(:add_refund_to_order).with(refund, order)
+        allow(gateway).to receive(:map_refund_to_payment).and_call_original
 
-        result = gateway.refund(payment, amount)
+        expect(gateway).to receive(:add_refund_to_order).with(refund, order)
+        expect(gateway).to receive(:map_refund_to_payment).with(refund, order)
+
+        result = nil
+        expect { result = gateway.refund(payment, amount) }.to change { Spree::Payment.count }.from(1).to(2)
 
         expect(result).to be_instance_of(ActiveMerchant::Billing::Response)
         expect(result.message).to eql(Spree::Gateway::FlowIo::REFUND_SUCCESS)
@@ -45,6 +50,10 @@ RSpec.describe Spree::Gateway::FlowIo do
           .to eql(refund.to_hash.except(:captures, :created_at).deep_stringify_keys!)
         expect(refund_capture.except('created_at'))
           .to eql(refund.to_hash[:captures].first[:capture].deep_stringify_keys!.except('created_at'))
+
+        created_payment = Spree::Payment.find_by(identifier: refund.id)
+
+        expect(created_payment.amount).to eql(- amount)
       end
     end
 
