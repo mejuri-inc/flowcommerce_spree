@@ -50,6 +50,7 @@ module Spree
         response_status = response.status.value
         if response_status == REFUND_SUCCESS
           add_refund_to_order(response, order)
+          map_refund_to_payment(response, order)
           ActiveMerchant::Billing::Response.new(true, REFUND_SUCCESS, {}, {})
         else
           msg = "Partial refund fail. Details: #{response_status}"
@@ -80,6 +81,22 @@ module Spree
         order_refunds.delete_if { |r| r['id'] == response.id }
         order_refunds << response.to_hash
         order.update_column(:meta, order.meta.to_json)
+      end
+
+      def map_refund_to_payment(response, order)
+        original_payment = Spree::Payment.find_by(response_code: response.authorization.id)
+        payment = order.payments.create!(
+          response_code: response.authorization.id,
+          payment_method_id: original_payment&.payment_method_id,
+          amount: - response.amount,
+          source_id: original_payment&.source_id,
+          source_type: original_payment&.source_type
+        )
+
+        # For now this additional update is overwriting the generated identifier with flow.io payment identifier.
+        # TODO: Check and possibly refactor in Spree 3.0, where the `before_create :set_unique_identifier`
+        # has been removed.
+        payment.update_column(:identifier, response.id)
       end
 
       # hard inject Flow as payment method unless defined

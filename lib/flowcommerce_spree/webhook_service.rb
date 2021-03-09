@@ -127,27 +127,6 @@ module FlowcommerceSpree
       self
     end
 
-    def order_placed_v2
-      errors << { message: 'Order placed param missing' } && (return self) unless (order_placed = @data['order_placed'])
-
-      errors << { message: 'Order param missing' } && (return self) unless (flow_order = order_placed['order'])
-
-      errors << { message: 'Order number param missing' } && (return self) unless (order_number = flow_order['number'])
-
-      if (order = Spree::Order.find_by(number: order_number))
-        order.flow_data['allocation'] = order_placed['allocation'].to_hash
-        @order_updater = FlowcommerceSpree::OrderUpdater.new(order: order)
-        @order_updater.upsert_data(flow_order)
-        @order_updater.map_payments_to_spree
-        map_payment_captures_to_spree(order) if order.flow_io_captures.present?
-        return order
-      else
-        errors << { message: "Order #{order_number} not found" }
-      end
-
-      self
-    end
-
     def map_payment_captures_to_spree(order)
       payments = order.flow_data&.dig('order', 'payments')
       order.flow_data['captures']&.each do |c|

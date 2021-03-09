@@ -16,9 +16,8 @@ module FlowcommerceSpree
   #  flow_order.synchronize!                 # sends order to flow
   class OrderSync # rubocop:disable Metrics/ClassLength
     FLOW_CENTER = 'default'
-    SESSION_EXPIRATION_THRESHOLD = 10 # Refresh session if less than 10 seconds to session expiration remains
 
-    attr_reader :digest, :order, :response
+    attr_reader :order, :response
 
     delegate :url_helpers, to: 'Rails.application.routes'
 
@@ -62,19 +61,14 @@ module FlowcommerceSpree
 
       try_to_add_customer
 
-      if (flow_data = @order.flow_data['order'])
-        @body[:selections] = flow_data['selections'].presence
-        @body[:delivered_duty] = flow_data['delivered_duty'].presence
-        @body[:attributes] = flow_data['attributes'].presence
+      return unless (flow_data = @order.flow_data['order'])
 
-        if @order.adjustment_total != 0
-          # discount on full order is applied
-          @body[:discount] = { amount: @order.adjustment_total, currency: @order.currency }
-        end
-      end
+      @body[:selections] = flow_data['selections'].presence
+      @body[:delivered_duty] = flow_data['delivered_duty'].presence
+      @body[:attributes] = flow_data['attributes'].presence
 
-      # calculate digest body and cache it
-      @digest = Digest::SHA1.hexdigest(@opts.to_json + @body.to_json)
+      # discount on full order is applied
+      @body[:discount] = { amount: @order.adjustment_total, currency: @order.currency } if @order.adjustment_total != 0
     end
 
     private
@@ -143,9 +137,6 @@ module FlowcommerceSpree
       # use get if order is completed and closed
       @use_get = true if @order.flow_data.dig('order', 'submitted_at').present? || @order.state == 'complete'
 
-      # use get if local digest hash check said there is no change
-      @use_get ||= true if @order.flow_data['digest'] == @digest
-
       # do not use get if there is no local order cache
       @use_get = false unless @order.flow_data['order']
 
@@ -173,7 +164,6 @@ module FlowcommerceSpree
     # written in flow_data field inside spree_orders table
     def write_response_in_cache
       if !@response || error?
-        @order.flow_data.delete('digest')
         @order.flow_data.delete('order')
       else
         response_total = @response[:total]
@@ -185,7 +175,7 @@ module FlowcommerceSpree
 
         # update local order
         @order.total = response_total&.[](:amount)
-        @order.flow_data.merge!('digest' => @digest, 'order' => @response)
+        @order.flow_data.merge!('order' => @response)
       end
     end
   end
