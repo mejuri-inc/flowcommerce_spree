@@ -85,13 +85,12 @@ module Spree
 
       def map_refund_to_payment(response, order)
         original_payment = Spree::Payment.find_by(response_code: response.authorization.id)
-        payment = order.payments.create!(
-          response_code: response.authorization.id,
-          payment_method_id: original_payment&.payment_method_id,
-          amount: - response.amount,
-          source_id: original_payment&.source_id,
-          source_type: original_payment&.source_type
-        )
+        payment = order.payments.create!(state: 'completed',
+                                         response_code: response.authorization.id,
+                                         payment_method_id: original_payment&.payment_method_id,
+                                         amount: - response.amount,
+                                         source_id: original_payment&.source_id,
+                                         source_type: original_payment&.source_type)
 
         # For now this additional update is overwriting the generated identifier with flow.io payment identifier.
         # TODO: Check and possibly refactor in Spree 3.0, where the `before_create :set_unique_identifier`
