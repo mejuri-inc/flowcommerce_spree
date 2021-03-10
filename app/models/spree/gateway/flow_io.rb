@@ -43,19 +43,14 @@ module Spree
       end
 
       def refund(payment, amount, _options = {})
-        order = payment.order
-        refund_form =
-          Io::Flow::V0::Models::RefundForm.new(order_number: order.number, amount: amount, currency: order.currency)
-        response = FlowcommerceSpree.client.refunds.post(FlowcommerceSpree::ORGANIZATION, refund_form)
-        response_status = response.status.value
-        if response_status == REFUND_SUCCESS
-          add_refund_to_order(response, order)
-          map_refund_to_payment(response, order)
-          ActiveMerchant::Billing::Response.new(true, REFUND_SUCCESS, {}, {})
-        else
-          msg = "Partial refund fail. Details: #{response_status}"
-          ActiveMerchant::Billing::Response.new(false, msg, {}, {})
-        end
+        request_refund_store_result(payment.order, amount)
+      rescue StandardError => e
+        ActiveMerchant::Billing::Response.new(false, e.to_s, {}, {})
+      end
+
+      def cancel(authorization)
+        original_payment = Spree::Payment.find_by(response_code: authorization)
+        request_refund_store_result(original_payment.order, original_payment.amount)
       rescue StandardError => e
         ActiveMerchant::Billing::Response.new(false, e.to_s, {}, {})
       end
@@ -78,6 +73,22 @@ module Spree
       end
 
       private
+
+      def request_refund_store_result(order, amount)
+        refund_form = Io::Flow::V0::Models::RefundForm.new(order_number: order.number,
+                                                           amount: amount,
+                                                           currency: order.currency)
+        response = FlowcommerceSpree.client.refunds.post(FlowcommerceSpree::ORGANIZATION, refund_form)
+        response_status = response.status.value
+        if response_status == REFUND_SUCCESS
+          add_refund_to_order(response, order)
+          map_refund_to_payment(response, order)
+          ActiveMerchant::Billing::Response.new(true, REFUND_SUCCESS, {}, {})
+        else
+          msg = "Partial refund fail. Details: #{response_status}"
+          ActiveMerchant::Billing::Response.new(false, msg, {}, {})
+        end
+      end
 
       def add_refund_to_order(response, order)
         order.flow_data ||= {}
