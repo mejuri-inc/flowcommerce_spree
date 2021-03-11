@@ -15,8 +15,6 @@ module FlowcommerceSpree
 
       flow_io_order ||= @client.orders.get_by_number(FlowcommerceSpree::ORGANIZATION, @order.number).to_hash
 
-      Rails.logger.info "[!] Flow IO Order data #{flow_io_order}"
-
       @order.flow_data['order'] = flow_io_order
       return if @order.flow_data.dig('order', 'submitted_at').blank?
 
