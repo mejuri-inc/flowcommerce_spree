@@ -4,11 +4,11 @@ Api::V2::OrderSerializer.class_eval do
 
 
   def duty_included
-    flow_io_order_attributes['duty'] == 'included'
+    flow_io_order_attributes&.[]('duty') == 'included'
   end
 
   def vat_included
-    flow_io_order_attributes['vat'] == 'included'
+    flow_io_order_attributes&.[]('vat') == 'included'
   end
 
   private
