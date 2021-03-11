@@ -23,6 +23,13 @@ module Spree
       flow_data&.[]('order')
     end
 
+    def flow_order?
+      payment = payments.completed.first
+      return payment.payment_method.type == 'Spree::Gateway::FlowIo' if payment
+
+      flow_data.present?
+    end
+
     # accepts line item, usually called from views
     def flow_line_item_price(line_item, total = false)
       result = if (order = flow_order)
