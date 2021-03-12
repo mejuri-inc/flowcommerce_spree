@@ -22,9 +22,9 @@ module FlowcommerceSpree
     delegate :url_helpers, to: 'Rails.application.routes'
 
     def initialize(order:, flow_session_id:)
-      raise(ArgumentError, 'Experience not defined or not active') unless order.zone&.flow_io_active_experience?
+      raise(ArgumentError, 'Experience not defined or not active') unless order&.zone&.flow_io_active_experience?
 
-      @experience = order.flow_io_experience_key
+      @experience = order&.flow_io_experience_key
       @flow_session_id = flow_session_id
       @order = order
       @client = FlowcommerceSpree.client(

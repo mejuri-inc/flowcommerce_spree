@@ -32,7 +32,6 @@ RSpec.describe FlowcommerceSpree::OrderUpdater do
 
     before do
       allow(FlowcommerceSpree).to receive(:client).and_return(flowcommerce_client)
-      allow_any_instance_of(FlowcommerceSpree::OrderSync).to receive(:fetch_session_id)
       allow_any_instance_of(FlowcommerceSpree::OrderSync).to receive(:synchronize!)
     end
 
