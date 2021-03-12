@@ -10,7 +10,7 @@ Gem::Specification.new do |s|
   s.name        = 'flowcommerce_spree'
   s.version     = FlowcommerceSpree::VERSION
   s.authors     = ['Aurel Branzeanu', 'Sebastian De Luca']
-  s.email       = ['a.branzeanu@datarockets.com', 'sebastian.deluca@mejuri.com']
+  s.email       = %w[a.branzeanu@datarockets.com sebastian.deluca@mejuri.com]
   s.homepage    = 'https://github.com/mejuri-inc/flowcommerce_spree'
   s.summary     = 'Integration of Spree with Flow API'
   s.description = 'Integration of popular Rails/Spree store framework with e-commerce Flow API'

@@ -24,7 +24,7 @@ module FlowcommerceSpree
     def initialize(order:, flow_session_id:)
       raise(ArgumentError, 'Experience not defined or not active') unless order&.zone&.flow_io_active_experience?
 
-      @experience = order&.flow_io_experience_key
+      @experience = order.flow_io_experience_key
       @flow_session_id = flow_session_id
       @order = order
       @client = FlowcommerceSpree.client(
@@ -35,7 +35,7 @@ module FlowcommerceSpree
 
     # helper method to send complete order from Spree to flow.io
     def synchronize!
-      return unless @order.zone&.flow_io_active_experience? && @order.state == 'cart' && @order.line_items.size > 0
+      return unless @order.state == 'cart' && @order.line_items.size > 0
 
       sync_body!
       write_response_in_cache
@@ -57,6 +57,8 @@ module FlowcommerceSpree
       @response&.[]('code') && @response&.[]('messages') ? true : false
     end
 
+    private
+
     # builds object that can be sent to api.flow.io to sync order data
     def build_flow_request
       @opts = { experience: @experience, expand: ['experience'] }
@@ -73,8 +75,6 @@ module FlowcommerceSpree
       # discount on full order is applied
       @body[:discount] = { amount: @order.adjustment_total, currency: @order.currency } if @order.adjustment_total != 0
     end
-
-    private
 
     def refresh_checkout_token
       root_url = url_helpers.root_url

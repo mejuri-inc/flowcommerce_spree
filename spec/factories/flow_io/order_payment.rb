@@ -3,6 +3,7 @@
 FactoryBot.define do
   factory :flow_order_payment, class: Io::Flow::V0::Models::OrderPayment do
     id { Faker::Guid.guid }
+    number { Faker::Guid.guid }
     date { Time.current }
     type { 'card' }
     total { { 'base' => { 'label' => 'US$108.02', 'amount' => 108.02, 'currency' => 'USD' }, 'label' => '91,98 €', 'amount' => 91.98, 'currency' => 'EUR' } }
