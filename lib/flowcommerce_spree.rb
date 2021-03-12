@@ -1,5 +1,7 @@
 # frozen_string_literal: true
 
+require 'activerecord-postgres-json'
+require 'active_model_serializers'
 require 'flowcommerce'
 require 'flowcommerce_spree/api'
 require 'flowcommerce_spree/refresher'
@@ -8,6 +10,7 @@ require 'flowcommerce_spree/logging_http_client'
 require 'flowcommerce_spree/logging_http_handler'
 require 'flowcommerce_spree/session'
 require 'flow/simple_gateway'
+require 'oj'
 
 module FlowcommerceSpree
   API_KEY = ENV.fetch('FLOW_TOKEN', 'test_key')
