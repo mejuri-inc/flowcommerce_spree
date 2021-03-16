@@ -1,5 +1,21 @@
 # Changelog
 
+## [v0.0.4](https://github.com/mejuri-inc/flowcommerce_spree/tree/v0.0.4) (2021-03-16)
+
+[Full Changelog](https://github.com/mejuri-inc/flowcommerce_spree/compare/v0.0.3...v0.0.4)
+
+**Closed issues:**
+
+- Refactor Spree::Order.sync\_to\_flow\_io to avoid possible exceptions rolling back the AR transactions [\#23](https://github.com/mejuri-inc/flowcommerce_spree/issues/23)
+
+**Merged pull requests:**
+
+- Flow Phase 3 release [\#30](https://github.com/mejuri-inc/flowcommerce_spree/pull/30) ([texpert](https://github.com/texpert))
+- \[TEC-4525\] Create refund method for flow.io gateway [\#25](https://github.com/mejuri-inc/flowcommerce_spree/pull/25) ([texpert](https://github.com/texpert))
+- \[TEC-3477\] Localized order details for Spree Admin, payments mapping,  OrderUpdater service, refunds [\#20](https://github.com/mejuri-inc/flowcommerce_spree/pull/20) ([texpert](https://github.com/texpert))
+- \[NO-TICKET\] defauling FLOW\_TOKEN environment variable to avoid errors [\#19](https://github.com/mejuri-inc/flowcommerce_spree/pull/19) ([sebastiandl](https://github.com/sebastiandl))
+- \[TEC-3823\] flow endpoint for purchase validations [\#5](https://github.com/mejuri-inc/flowcommerce_spree/pull/5) ([texpert](https://github.com/texpert))
+
 ## [v0.0.3](https://github.com/mejuri-inc/flowcommerce_spree/tree/v0.0.3) (2021-02-22)
 
 [Full Changelog](https://github.com/mejuri-inc/flowcommerce_spree/compare/v0.0.2...v0.0.3)
