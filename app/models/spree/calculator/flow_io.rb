@@ -32,7 +32,7 @@ module Spree
 
       def can_calculate_tax?(order)
         return false if order.flow_data.blank?
-        return false if %w[cart address delivery].include?(order.state)
+        return false if %w[cart address].include?(order.state)
 
         true
       end

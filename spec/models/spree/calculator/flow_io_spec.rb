@@ -25,14 +25,14 @@ RSpec.describe Spree::Calculator::FlowIo, type: :model do
         let(:line_item) { order.line_items.first }
         let(:shipment) { order.shipments.first }
 
-        it 'returns previous tax value when order is in cart, address or delivery state' do
-          %w[cart address delivery].each do |stubed_state|
+        it 'returns previous tax value when order is in cart or address state' do
+          %w[cart address].each do |stubed_state|
             expect(order).to(receive(:state).and_return(stubed_state))
             expect(subject.compute(line_item)).to(eq(line_item.included_tax_total))
           end
         end
 
-        context 'when order is not cart, address not delivery state' do
+        context 'when order is not cart nor address state' do
           before(:each) do
             allow(order).to(receive(:state).and_return('complete'))
           end

@@ -11,7 +11,7 @@ module Spree
         address2: address_data['streets'][1],
         zipcode: address_data['postal'],
         city: address_data['city'],
-        state_name: address_data['province'] || 'something',
+        state_name: address_data['province'],
         country: Spree::Country.find_by(iso3: address_data['country'])
       }
     end

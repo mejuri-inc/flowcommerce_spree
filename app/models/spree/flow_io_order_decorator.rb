@@ -1,44 +1,32 @@
 # frozen_string_literal: true
 
-# `:display_total` modifications to display total prices beside Spree default. Example: https://i.imgur.com/7v2ix2G.png
-module Spree # rubocop:disable Metrics/ModuleLength
+module Spree
   # Added flow specific methods to Spree::Order
-  Order.class_eval do
-    serialize :meta, ActiveRecord::Coders::JSON.new(symbolize_keys: true)
+  module FlowIoOrderDecorator
+    def self.included(base)
+      base.serialize :meta, ActiveRecord::Coders::JSON.new(symbolize_keys: true)
 
-    store_accessor :meta, :flow_data
-
-    before_save :sync_to_flow_io
-    after_touch :sync_to_flow_io
+      base.store_accessor :meta, :flow_data
+    end
 
     def flow_tax_cache_key
       [number, 'flowcommerce', 'allocation', line_items.sum(:quantity)].join('-')
     end
 
-    def sync_to_flow_io
-      return unless zone&.flow_io_active_experience? && state == 'cart' && line_items.size > 0
-
-      flow_io_order = FlowcommerceSpree::OrderSync.new(order: self)
-      flow_io_order.build_flow_request
-      flow_io_order.synchronize! if flow_data['digest'] != flow_io_order.digest
-    end
-
     def display_total
-      price = FlowcommerceSpree::Api.format_default_price total
-      price += " (#{flow_total})" if flow_order
-      price.html_safe
+      return unless flow_data&.[]('order')
+
+      Spree::Money.new(flow_io_total_amount, currency: currency)
     end
 
     def flow_order
-      return unless flow_data&.[]('order')
-
-      Hashie::Mash.new flow_data['order']
+      flow_data&.[]('order')
     end
 
     # accepts line item, usually called from views
     def flow_line_item_price(line_item, total = false)
-      result = if flow_order
-                 item = flow_order.lines&.find { |el| el['item_number'] == line_item.variant.sku }
+      result = if (order = flow_order)
+                 item = order['lines']&.find { |el| el['item_number'] == line_item.variant.sku }
 
                  return 'n/a' unless item
 
@@ -95,10 +83,8 @@ module Spree # rubocop:disable Metrics/ModuleLength
     end
 
     # shows localized total, if possible. if not, fall back to Spree default
-    def flow_total
-      # r flow_order.total.label
-      price = flow_order&.total&.label
-      price || FlowcommerceSpree::Api.format_default_price(total)
+    def flow_io_total_amount
+      flow_data&.dig('order', 'total', 'amount')&.to_d
     end
 
     def flow_experience
@@ -106,10 +92,6 @@ module Spree # rubocop:disable Metrics/ModuleLength
       model.new flow_order.experience.key
     rescue StandardError => _e
       model.new ENV.fetch('FLOW_BASE_COUNTRY')
-    end
-
-    def flow_io_checkout_token
-      flow_data&.[]('checkout_token')
     end
 
     def flow_io_experience_key
@@ -124,17 +106,8 @@ module Spree # rubocop:disable Metrics/ModuleLength
       flow_data&.dig('order', 'id')
     end
 
-    def flow_io_session_expires_at
-      flow_data&.[]('session_expires_at')&.to_datetime
-    end
-
     def flow_io_attributes
       flow_data&.dig('order', 'attributes') || {}
-    end
-
-    def add_flow_checkout_token(token)
-      self.flow_data ||= {}
-      self.flow_data['checkout_token'] = token
     end
 
     def flow_io_attribute_add(attr_key, value)
@@ -153,35 +126,26 @@ module Spree # rubocop:disable Metrics/ModuleLength
       flow_data&.dig('order', 'attributes', 'user_uuid')
     end
 
-    def checkout_url
-      FlowcommerceSpree::OrderSync.new(order: self).synchronize!
-
-      checkout_token = flow_io_checkout_token
-      return "https://checkout.flow.io/tokens/#{checkout_token}" if checkout_token
+    def flow_io_captures
+      flow_data&.[]('captures')
     end
 
-    # clear invalid zero amount payments. Solidus bug?
-    def clear_zero_amount_payments!
-      # class attribute that can be set to true
-      return unless Flow::Order.clear_zero_amount_payments
+    def flow_io_captures_sum
+      captures_sum = 0
+      flow_data&.[]('captures')&.each do |c|
+        next if c['status'] != 'succeeded'
 
-      payments.where(amount: 0, state: %w[invalid processing pending]).map(&:destroy)
+        captures_sum += c['amount']
+      end
+      captures_sum.to_d
     end
 
-    def flow_order_authorized?
-      flow_data&.[]('authorization') ? true : false
+    def flow_io_balance_amount
+      flow_data&.dig('order', 'balance', 'amount')&.to_d
     end
 
-    def flow_order_captured?
-      flow_data['capture'] ? true : false
-    end
-
-    # completes order and sets all states to finalized and complete
-    # used when we have confirmed capture from Flow API or PayPal
-    def flow_finalize!
-      finalize! unless state == 'complete'
-      update_column :payment_state, 'paid' if payment_state != 'paid'
-      update_column :state, 'complete'     if state != 'complete'
+    def flow_io_payments
+      flow_data.dig('order', 'payments')
     end
 
     def flow_payment_method
@@ -228,17 +192,19 @@ module Spree # rubocop:disable Metrics/ModuleLength
       s_address = flow_ship_address
 
       if s_address&.changes&.any?
-        s_address.save
+        s_address.save!
         address_attributes[:ship_address_id] = s_address.id unless ship_address_id
       end
 
       b_address = flow_bill_address
       if b_address&.changes&.any?
-        b_address.save
+        b_address.save!
         address_attributes[:bill_address_id] = b_address.id unless bill_address_id
       end
 
       address_attributes
     end
+
+    Spree::Order.include(self) if Spree::Order.included_modules.exclude?(self)
   end
 end

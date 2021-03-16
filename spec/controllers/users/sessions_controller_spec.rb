@@ -1,7 +1,6 @@
 # frozen_string_literal: true
 
 require 'rails_helper'
-require 'shared_examples/refresh_flow_io_session'
 
 RSpec.describe Users::SessionsController, type: :controller do
   before { request.env['devise.mapping'] = Devise.mappings[:user] }
@@ -9,69 +8,85 @@ RSpec.describe Users::SessionsController, type: :controller do
   describe 'GET #checkout_url' do
     let(:current_zone) { create(:product_zone_with_flow_experience) }
     let(:order) do
-      create(:order, zone_id: current_zone.id, flow_data: { exp: current_zone.flow_io_experience,
-                                                            order: { id: Faker::Guid.guid },
-                                                            checkout_token: token,
-                                                            session_id: Faker::Guid.guid,
-                                                            session_expires_at: session_expiration })
+      create(:order_with_line_items, zone_id: current_zone.id, flow_data: { exp: current_zone.flow_io_experience,
+                                                                            order: { id: Faker::Guid.guid } })
     end
-    let(:session_expiration) { Time.zone.now.utc + 30.minutes }
-    let(:token) { Faker::Guid.guid }
+    let(:flow_session) { build(:flow_organization_session) }
+    let(:checkout_token) do
+      build(:flow_checkout_token, order: { number: order.number }, session: { id: flow_session.id })
+    end
 
     before do
       allow(controller).to receive(:current_order).and_return(order)
       allow_any_instance_of(FlowcommerceSpree::OrderSync).to receive(:sync_body!)
     end
 
-    context 'when the order`s flow.io session is not expired' do
-      context 'and the request session expiration is missing' do
-        it 'do not refresh flow.io session and checkout_token and returns http success and the flow.io checkout_url' do
-          expect_any_instance_of(Io::Flow::V0::Clients::Sessions).not_to receive(:post_organizations_by_organization)
-          expect_any_instance_of(Io::Flow::V0::Clients::CheckoutTokens)
-            .not_to receive(:post_checkout_and_tokens_by_organization)
+    context 'when flow-session-id header is present' do
+      before { request.headers['flow-session-id'] = flow_session.id }
 
-          RequestStore.store[:session]&.delete('_f60_expires_at')
+      context 'and the OrderSync returned a non-blank checkout_token' do
+        before do
+          allow_any_instance_of(Io::Flow::V0::Clients::CheckoutTokens)
+            .to receive(:post_checkout_and_tokens_by_organization).and_return(checkout_token)
+        end
+
+        it 'syncs the order, got a checkout_token and returns a successful response with checkout_url' do
+          expect_any_instance_of(FlowcommerceSpree::OrderSync).to receive(:sync_body!)
+          expect_any_instance_of(Io::Flow::V0::Clients::CheckoutTokens)
+            .to receive(:post_checkout_and_tokens_by_organization)
+
           get :checkout_url
 
           expect(response).to have_http_status(:success)
-          expect(Oj.load(response.body)).to eql('checkout_url' => "https://checkout.flow.io/tokens/#{token}")
+          expect(Oj.load(response.body))
+            .to eql('checkout_url' => "https://checkout.flow.io/tokens/#{checkout_token.id}")
         end
       end
 
-      context 'but the request session is expired' do
+      context 'and the OrderSync returned a blank checkout_token' do
         before do
-          RequestStore.store = { session: { '_f60_expires_at' => Time.zone.now.utc + 3.seconds } }
+          allow_any_instance_of(Io::Flow::V0::Clients::CheckoutTokens)
+            .to receive(:post_checkout_and_tokens_by_organization).and_return(nil)
         end
 
-        it_behaves_like 'refreshes flow.io session and checkout_token'
+        it 'returns an error' do
+          expect_any_instance_of(FlowcommerceSpree::OrderSync).to receive(:sync_body!)
+          expect_any_instance_of(Io::Flow::V0::Clients::CheckoutTokens)
+            .to receive(:post_checkout_and_tokens_by_organization)
+
+          get :checkout_url
+
+          expect(response).to have_http_status(:unprocessable_entity)
+          expect(Oj.load(response.body)).to eql('error' => 'checkout_token_missing')
+        end
+      end
+
+      context 'when current_order is a flow.io order, but has no line_items and, thus, returns a nil checkout_token' do
+        let(:order) { create(:order, zone_id: current_zone.id, flow_data: { exp: current_zone.flow_io_experience }) }
+
+        it 'does not request checkout_token, nor sync the order, and returns :unprocessable_entity and error' do
+          expect_any_instance_of(FlowcommerceSpree::OrderSync).not_to receive(:sync_body!)
+          expect_any_instance_of(Io::Flow::V0::Clients::CheckoutTokens)
+            .not_to receive(:post_checkout_and_tokens_by_organization)
+
+          get :checkout_url
+
+          expect(response).to have_http_status(:unprocessable_entity)
+          expect(Oj.load(response.body)).to eql('error' => 'checkout_token_missing')
+        end
       end
     end
 
-    context 'and the flow.io session is expired' do
-      let(:session_expiration) { Time.zone.now.utc + 3.seconds }
+    context 'when flow-session-id header is missing' do
+      it 'does not request checkout_token, nor sync the order, and returns :unprocessable_entity and error' do
+        expect_any_instance_of(FlowcommerceSpree::OrderSync).not_to receive(:sync_body!)
+        expect_any_instance_of(Io::Flow::V0::Clients::CheckoutTokens)
+          .not_to receive(:post_checkout_and_tokens_by_organization)
 
-      it_behaves_like 'refreshes flow.io session and checkout_token'
-    end
-
-    context "when current_order has flow order_id, but has no flow_data['checkout_token']" do
-      let(:order) do
-        create(:order, zone_id: current_zone.id,
-                       flow_data: { exp: current_zone.flow_io_experience, order: { id: Faker::Guid.guid } })
-      end
-
-      it_behaves_like 'refreshes flow.io session and checkout_token'
-    end
-
-    context 'when current_order is a flow.io order, but returns nil checkout_url' do
-      let(:order) { create(:order, zone_id: current_zone.id, flow_data: { exp: current_zone.flow_io_experience }) }
-
-      before { allow(order).to receive(:checkout_url).and_return(nil) }
-
-      it 'returns :unprocessable_entity and empty body' do
         get :checkout_url
 
         expect(response).to have_http_status(:unprocessable_entity)
-        expect(Oj.load(response.body)).to eql({})
+        expect(Oj.load(response.body)).to eql('error' => 'session_id_missing')
       end
     end
   end
@@ -155,7 +170,7 @@ RSpec.describe Users::SessionsController, type: :controller do
               expect(response).to have_http_status(:success)
               current_session_attrs = Oj.load(response.body)['current']
               expect(current_session_attrs['region']).to eql(zone_hash.merge!('request_iso_code' => nil))
-              expect(current_session_attrs['external_checkout']).to eql('true')
+              expect(current_session_attrs['external_checkout']).to eql(true)
             end
           end
 
@@ -168,7 +183,7 @@ RSpec.describe Users::SessionsController, type: :controller do
               expect(response).to have_http_status(:success)
               current_session_attrs = Oj.load(response.body)['current']
               expect(current_session_attrs['region']).to eql(zone_hash)
-              expect(current_session_attrs['external_checkout']).to eql('true')
+              expect(current_session_attrs['external_checkout']).to eql(true)
             end
           end
         end
@@ -185,7 +200,7 @@ RSpec.describe Users::SessionsController, type: :controller do
               expect(response).to have_http_status(:success)
               current_session_attrs = Oj.load(response.body)['current']
               expect(current_session_attrs['region']).to eql(zone_hash.merge!('request_iso_code' => nil))
-              expect(current_session_attrs['external_checkout']).to eql('false')
+              expect(current_session_attrs['external_checkout']).to eql(false)
             end
           end
 
@@ -198,7 +213,7 @@ RSpec.describe Users::SessionsController, type: :controller do
               expect(response).to have_http_status(:success)
               current_session_attrs = Oj.load(response.body)['current']
               expect(current_session_attrs['region']).to eql(zone_hash)
-              expect(current_session_attrs['external_checkout']).to eql('false')
+              expect(current_session_attrs['external_checkout']).to eql(false)
             end
           end
         end

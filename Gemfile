@@ -5,6 +5,7 @@ source 'https://rubygems.org'
 gemspec
 
 group :development, :test do
+  gem 'active_model_serializers', '0.10.2'
   gem 'activerecord-postgres-json', '>= 0.2.3'
   gem 'byebug', '11.0.1'
   gem 'countries'
