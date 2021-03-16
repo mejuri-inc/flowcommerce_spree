@@ -4,10 +4,10 @@ Deface::Override.new(
   insert_top: '.additional-info',
   text: '
     <% if FlowcommerceSpree::ORGANIZATION.present? && @order.flow_order.present? %>
-      <dt data-hook>Flow Order</dt>
-      <dd id="item_total">
-        <%= link_to "See order on Flow",
-                  "https://console.flow.io/#{FlowcommerceSpree::ORGANIZATION}/orders/#{@order.number}" %>
-      </dd>
+      <div style="text-align: center">
+        <%= link_to "See Flow Order",
+                    "https://console.flow.io/#{FlowcommerceSpree::ORGANIZATION}/orders/#{@order.number}",
+                    target: "_blank", class: "button" %>
+      </div>
     <% end %>'
 )
