@@ -5,12 +5,13 @@ module FlowcommerceSpree
     wrap_parameters false
     respond_to :json
 
-    # forward all incoming requests to Flow WebhookService object
+    # forward incoming requests to respective Flow Webhooks Service objects
     # /flow/event-target endpoint
-    def handle_flow_web_hook_event
+    def handle_flow_io_event
+      %i[id event_id organization discriminator].each_with_object(params) { |key, obj| obj.require(key) }
       result = check_organization
       if result.blank?
-        webhook_result = WebhookService.process(params)
+        webhook_result = "FlowcommerceSpree::Webhooks::#{params['discriminator'].classify}".constantize.process(params)
         result[:error] = webhook_result.full_messages.join("\n") if webhook_result.errors.any?
       end
     rescue StandardError => e

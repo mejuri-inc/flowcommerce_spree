@@ -9,7 +9,7 @@ RSpec.describe Users::SessionsController, type: :controller do
     let(:current_zone) { create(:product_zone_with_flow_experience) }
     let(:order) do
       create(:order_with_line_items, zone_id: current_zone.id, flow_data: { exp: current_zone.flow_io_experience,
-                                                                            order: { id: Faker::Guid.guid } })
+                                                                            order: { id: `Faker::Guid.guid` } })
     end
     let(:flow_session) { build(:flow_organization_session) }
     let(:checkout_token) do
