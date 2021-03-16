@@ -34,42 +34,6 @@ module Flow
       error_response(e)
     end
 
-    # capture authorised funds
-    def cc_capture
-      # GET /:organization/authorizations, order_number: abc
-      data = @order.flow_data['authorization']
-
-      raise ArgumentError, 'No Authorization data, please authorize first' unless data
-
-      capture_form = ::Io::Flow::V0::Models::CaptureForm.new(data)
-      response = FlowcommerceSpree.client.captures.post(FlowcommerceSpree::ORGANIZATION, capture_form)
-
-      return ActiveMerchant::Billing::Response.new false, 'error', response: response unless response.id
-
-      @order.update_column :flow_data, @order.flow_data.merge('capture': response.to_hash)
-      @order.flow_finalize!
-
-      ActiveMerchant::Billing::Response.new true, 'success', response: response
-    rescue StandardError => e
-      error_response(e)
-    end
-
-    def cc_refund
-      raise ArgumentError, 'capture info is not available' unless @order.flow_data['capture']
-
-      # we allways have capture ID, so we use it
-      refund_data = { capture_id: @order.flow_data['capture']['id'] }
-      refund_form = ::Io::Flow::V0::Models::RefundForm.new(refund_data)
-      response    = FlowcommerceSpree.client.refunds.post(FlowcommerceSpree::ORGANIZATION, refund_form)
-
-      return ActiveMerchant::Billing::Response.new false, 'error', response: response unless response.id
-
-      @order.update_column :flow_data, @order.flow_data.merge('refund': response.to_hash)
-      ActiveMerchant::Billing::Response.new true, 'success', response: response
-    rescue StandardError => e
-      error_response(e)
-    end
-
     private
 
     # if order is not in flow, we use local Spree settings

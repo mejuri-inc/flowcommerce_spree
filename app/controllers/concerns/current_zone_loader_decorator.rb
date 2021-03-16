@@ -20,12 +20,11 @@ CurrentZoneLoader.module_eval do
     session['region'] = { name: current_zone_name, available_currencies: @current_zone.available_currencies,
                           request_iso_code: request_iso_code }
 
-    RequestStore.store[:session] = session
     Rails.logger.debug("Using product zone: #{current_zone_name}")
     @current_zone
   end
 
-  def flow_zone # rubocop:disable Metrics/AbcSize
+  def flow_zone
     return unless Spree::Zones::Product.active
                                        .where("meta -> 'flow_data' ->> 'country' = ?",
                                               ISO3166::Country[request_iso_code]&.alpha3).exists?
@@ -36,13 +35,13 @@ CurrentZoneLoader.module_eval do
                    Spree::Config[:debug_request_ip_address] || request.ip
                    # Germany ip: 85.214.132.117, Sweden ip: 62.20.0.196, Moldova ip: 89.41.76.29
                  end
+
+    # This will issue a session creation request to flow.io. The response will contain the Flow Experience key and
+    # the session_id
     flow_io_session = FlowcommerceSpree::Session.create(ip: request_ip, visitor: visitor_id_for_flow_io)
-    # :create method will issue a request to flow.io. The experience, contained in the
-    # response, will be available in the session object - flow_io_session.experience
 
     if (zone = Spree::Zones::Product.active.find_by(name: flow_io_session.experience&.key&.titleize))
-      session['_f60_session'] = flow_io_session.id
-      session['_f60_expires_at'] = flow_io_session.expires_at.to_s
+      session['flow_session_id'] = flow_io_session.id
     end
 
     zone

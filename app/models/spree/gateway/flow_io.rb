@@ -5,6 +5,8 @@
 module Spree
   class Gateway
     class FlowIo < Gateway
+      REFUND_SUCCESS = 'succeeded'
+
       def provider_class
         self.class
       end
@@ -23,7 +25,7 @@ module Spree
       end
 
       def method_type
-        'gateway'
+        'flow_io_gateway'
       end
 
       def preferences
@@ -40,34 +42,29 @@ module Spree
         order.cc_authorization
       end
 
-      def capture(_amount, _payment_method, options = {})
-        order = load_order options
-        order.cc_capture
+      def refund(payment, amount, _options = {})
+        request_refund_store_result(payment.order, amount)
+      rescue StandardError => e
+        ActiveMerchant::Billing::Response.new(false, e.to_s, {}, {})
       end
 
-      def purchase(_amount, _payment_method, options = {})
-        order = load_order options
-        flow_auth = order.cc_authorization
-
-        if flow_auth.success?
-          order.cc_capture
-        else
-          flow_auth
-        end
+      def cancel(authorization)
+        original_payment = Spree::Payment.find_by(response_code: authorization)
+        request_refund_store_result(original_payment.order, original_payment.amount)
+      rescue StandardError => e
+        ActiveMerchant::Billing::Response.new(false, e.to_s, {}, {})
       end
 
-      def refund(_money, _authorization_key, options = {})
-        order = load_order options
-        order.cc_refund
-      end
-
-      def void(money, authorization_key, options = {})
-        # binding.pry
+      def void(authorization_id, _source, options = {})
+        amount = (options[:subtotal] + options[:shipping]) * 0.01
+        reversal_form = Io::Flow::V0::Models::ReversalForm.new(key: options[:order_id],
+                                                               authorization_id: authorization_id,
+                                                               amount: amount,
+                                                               currency: options[:currency])
+        FlowcommerceSpree.client.reversals.post(FlowcommerceSpree::ORGANIZATION, reversal_form)
       end
 
       def create_profile(payment)
-        # binding.pry
-
         # payment.order.state
         @credit_card = payment.source
 
@@ -77,12 +74,52 @@ module Spree
 
       private
 
+      def request_refund_store_result(order, amount)
+        refund_form = Io::Flow::V0::Models::RefundForm.new(order_number: order.number,
+                                                           amount: amount,
+                                                           currency: order.currency)
+        response = FlowcommerceSpree.client.refunds.post(FlowcommerceSpree::ORGANIZATION, refund_form)
+        response_status = response.status.value
+        if response_status == REFUND_SUCCESS
+          add_refund_to_order(response, order)
+          map_refund_to_payment(response, order)
+          ActiveMerchant::Billing::Response.new(true, REFUND_SUCCESS, {}, {})
+        else
+          msg = "Partial refund fail. Details: #{response_status}"
+          ActiveMerchant::Billing::Response.new(false, msg, {}, {})
+        end
+      end
+
+      def add_refund_to_order(response, order)
+        order.flow_data ||= {}
+        order.flow_data['refunds'] ||= []
+        order_refunds = order.flow_data['refunds']
+        order_refunds.delete_if { |r| r['id'] == response.id }
+        order_refunds << response.to_hash
+        order.update_column(:meta, order.meta.to_json)
+      end
+
+      def map_refund_to_payment(response, order)
+        original_payment = Spree::Payment.find_by(response_code: response.authorization.id)
+        payment = order.payments.create!(state: 'completed',
+                                         response_code: response.authorization.id,
+                                         payment_method_id: original_payment&.payment_method_id,
+                                         amount: - response.amount,
+                                         source_id: original_payment&.source_id,
+                                         source_type: original_payment&.source_type)
+
+        # For now this additional update is overwriting the generated identifier with flow.io payment identifier.
+        # TODO: Check and possibly refactor in Spree 3.0, where the `before_create :set_unique_identifier`
+        # has been removed.
+        payment.update_column(:identifier, response.id)
+      end
+
       # hard inject Flow as payment method unless defined
       def profile_ensure_payment_method_is_present!
         return if @credit_card.payment_method_id
 
-        flow_payment = Spree::PaymentMethod.where(active: true, type: 'Spree::Gateway::FlowIo').first
-        @credit_card.payment_method_id = flow_payment.id if flow_payment
+        flow_payment_method = Spree::PaymentMethod.find_by(active: true, type: 'Spree::Gateway::FlowIo')
+        @credit_card.payment_method_id = flow_payment_method.id if flow_payment_method
       end
 
       # create payment profile with Flow and tokenize Credit Card

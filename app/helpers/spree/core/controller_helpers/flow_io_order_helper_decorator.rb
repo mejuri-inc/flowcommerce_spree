@@ -17,22 +17,6 @@ module Spree
               @current_order.flow_io_experience_from_zone
               update_meta ||= true
             end
-            order_flow_session_id = @current_order.flow_data['session_id']
-            order_session_expired = @current_order.flow_data['session_expires_at']
-            flow_io_session_id = session['_f60_session']
-            flow_io_session_expires = session['_f60_expires_at']
-            if flow_io_session_id.present?
-              if order_flow_session_id != flow_io_session_id &&
-                 order_session_expired&.to_datetime.to_i < flow_io_session_expires&.to_datetime.to_i
-                @current_order.flow_data['session_id'] = flow_io_session_id
-                @current_order.flow_data['session_expires_at'] = flow_io_session_expires
-                @current_order.flow_data['checkout_token'] = nil
-                update_meta ||= true
-              end
-            elsif order_flow_session_id.present?
-              session['_f60_session'] = order_flow_session_id
-              session['_f60_expires_at'] = order_session_expired
-            end
           end
 
           if @current_order.new_record?
