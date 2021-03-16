@@ -4,7 +4,6 @@ Api::V2::OrderSerializer.class_eval do
   attribute :duty_included, if: proc { object.flow_io_attributes.present? }
   attribute :vat_included, if: proc { object.flow_io_attributes.present? }
 
-
   def duty_included
     flow_io_order_attributes&.[]('duty') == 'included'
   end
