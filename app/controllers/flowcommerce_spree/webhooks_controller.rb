@@ -4,6 +4,7 @@ module FlowcommerceSpree
   class WebhooksController < ActionController::Base
     wrap_parameters false
     respond_to :json
+    http_basic_authenticate_with name: FLOW_IO_WEBHOOK_USER, password: FLOW_IO_WEBHOOK_PASSWORD
 
     # forward incoming requests to respective Flow Webhooks Service objects
     # /flow/event-target endpoint

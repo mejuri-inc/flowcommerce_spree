@@ -20,8 +20,15 @@ All flowcommerce_spree code is located in the ./app and ./lib folders.
 
 - Run `bundle install`.
 
-- Define this additional ENV variables. You will find all of them, except FLOW_MOUNT_PATH in 
-  [Flow console](https://console.flow.io/org_account_name/organization/integrations):
+- Define these additional ENV variables. 
+  - You will find FLOW_TOKEN, FLOW_ORGANIZATION and FLOW_BASE_COUNTRY in [Flow 
+  console](https://console.flow.io/org_account_name/organization/integrations)
+  - To enable HTTP Basic authentication for securing the FlowcommerceSpree::WebhooksControler, prepend 
+    username:password@ to the hostname in your webhook URL. 
+    By doing so, the credentials needed for authentication will be sent in the HTTP header.
+    For example: https://username:password@www.mywebhookurl.com
+    On the main app's backend side, the `username` and `password` values should be defined in the 
+    FLOW_IO_WEBHOOK_USER and FLOW_IO_WEBHOOK_PASSWORD environment variables
 
     ```
     FLOW_TOKEN='SUPERsecretTOKEN' # API_KEY
@@ -29,7 +36,10 @@ All flowcommerce_spree code is located in the ./app and ./lib folders.
     FLOW_BASE_COUNTRY='usa'
     # The path to which the FlowcommerceSpree engine will be mounted (default, if this variable is missing, will be the 
     # '/flow' path)
-    FLOW_MOUNT_PATH='/flow' 
+    FLOW_MOUNT_PATH='/flow'
+    # The following variables should be set for securing the FlowcommerceSpree::WebhooksControler
+    FLOW_IO_WEBHOOK_USER
+    FLOW_IO_WEBHOOK_PASSWORD
     ```
 
 - To enable payments with the FlowCommerce engine, the payment method `flow.io` with `Spree::Gateway::FlowIo` should be 
@@ -86,7 +96,9 @@ being used, depending on the level of modification.
 
 ### Spree::Gateway::FlowIo
 
-Adapter for Spree, that allows using [Flow.io](https://www.flow.io) as payment gateway. Flow is PCI compliant payment processor.
+Adapter for Spree, that allows using [Flow.io](https://www.flow.io) as payment gateway. 
+Flow is PCI compliant payment processor.
+
 
 ## Gem Maintenance
 
