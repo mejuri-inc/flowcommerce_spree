@@ -103,13 +103,14 @@ module FlowcommerceSpree
       customer_ship_address = customer.ship_address
       address = customer_ship_address if customer_ship_address&.country&.iso3 == @order.zone.flow_io_experience_country
 
+      customer_profile = customer.user_profile
       unless address
-        user_profile_address = customer.user_profile&.address
+        user_profile_address = customer_profile&.address
         address = user_profile_address if user_profile_address&.country&.iso3 == @order.zone.flow_io_experience_country
       end
 
-      @body[:customer] = { name: { first: address&.firstname,
-                                   last: address&.lastname },
+      @body[:customer] = { name: { first: address&.firstname || customer_profile&.first_name,
+                                   last: address&.lastname || customer_profile&.last_name },
                            email: customer.email,
                            number: customer.flow_number,
                            phone: address&.phone }

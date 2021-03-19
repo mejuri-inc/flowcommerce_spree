@@ -48,7 +48,7 @@ RSpec.describe FlowcommerceSpree::OrderSync do
     context 'when the order has a flow experience defined' do
       let(:order) { create(:order_with_line_items, :with_flow_data, zone: zone) }
 
-      it 'initializes the ivars and public accessors and calls the `fetch_session_id` method' do
+      it 'initializes the ivars and public accessors and sets the client with the flow_session_id' do
         allow(FlowcommerceSpree).to receive(:client).and_return('client instance')
         expect(FlowcommerceSpree).to receive(:client).with(
           default_headers: { "Authorization": "Session #{flow_session_id}" },
@@ -85,34 +85,86 @@ RSpec.describe FlowcommerceSpree::OrderSync do
           let(:order) { create(:order_with_line_items, :with_flow_data, state: state, zone: zone) }
 
           if state == 'cart'
+            let(:line_item) { order.line_items.first }
+            let(:line_item_form) do
+              build(:flow_line_item_form, number: line_item.variant.sku,
+                                          price: { amount: line_item.variant.cost_price,
+                                                   currency: line_item.variant.cost_currency },
+                                          center: FlowcommerceSpree::OrderSync::FLOW_CENTER)
+            end
+
             before do
+              ENV['ENCRYPTION_KEY'] = Faker::Guid.guid
+
               allow(FlowcommerceSpree).to receive(:client).and_return(flowcommerce_client)
-              allow(flowcommerce_client).to receive_message_chain(:orders, :put_by_number).and_return(flow_order)
               allow(instance).to receive(:sync_body!).and_call_original
+              allow(instance).to receive(:try_to_add_customer).and_call_original
+              allow(Io::Flow::V0::Models::OrderPutForm).to receive(:new).and_return(order_put_form)
+              allow(flowcommerce_client).to receive_message_chain(:orders, :put_by_number).and_return(flow_order)
               allow(instance).to receive(:refresh_checkout_token).and_call_original
               allow(FlowcommerceSpree)
                 .to receive_message_chain(:client, :checkout_tokens, :post_checkout_and_tokens_by_organization)
                 .and_return(checkout_token)
-            end
 
-            it 'returns the checkout_token' do
               expect(instance).to receive(:sync_body!)
-              expect(flowcommerce_client).to receive_message_chain(:orders, :put_by_number)
+              expect(flowcommerce_client)
+                .to receive_message_chain(:orders, :put_by_number)
+                .with(FlowcommerceSpree::ORGANIZATION,
+                      order.number, order_put_form, expand: ['experience'], experience: order.flow_io_experience_key)
               expect(instance).to receive(:refresh_checkout_token)
               expect(FlowcommerceSpree)
                 .to receive_message_chain(:client, :checkout_tokens, :post_checkout_and_tokens_by_organization)
-                .with(FlowcommerceSpree::ORGANIZATION,
-                      discriminator: 'checkout_token_reference_form',
-                      order_number: order.number,
-                      session_id: flow_session_id,
-                      urls: { continue_shopping: root_url,
-                              confirmation: confirmation_url,
-                              invalid_checkout: root_url })
+                .with(FlowcommerceSpree::ORGANIZATION, discriminator: 'checkout_token_reference_form',
+                                                       order_number: order.number,
+                                                       session_id: flow_session_id,
+                                                       urls: { continue_shopping: root_url,
+                                                               confirmation: confirmation_url,
+                                                               invalid_checkout: root_url })
                 .and_return(checkout_token)
+            end
 
-              expect(instance.synchronize!).to eql(checkout_token.id)
-              expect(order.flow_io_attributes['flow_return_url']).to eql(confirmation_url)
-              expect(order.flow_io_attributes['checkout_continue_shopping_url']).to eql(root_url)
+            context 'and the order is a guest order, i.e. has no associated user' do
+              let(:order_put_form) { build(:flow_order_put_form, items: [line_item_form]) }
+
+              it 'syncs the order to flow.io without customer info and returns the checkout_token' do
+                expect(instance).to receive(:try_to_add_customer).and_return(nil)
+
+                expect(instance.synchronize!).to eql(checkout_token.id)
+                expect(order.flow_io_attributes['flow_return_url']).to eql(confirmation_url)
+                expect(order.flow_io_attributes['checkout_continue_shopping_url']).to eql(root_url)
+                expect(order.flow_data.dig('order', 'customer', 'email')).to be_falsey
+                expect(order.flow_data.dig('order', 'customer', 'name', 'first')).to be_falsey
+                expect(order.flow_data.dig('order', 'customer', 'name', 'last')).to be_falsey
+              end
+            end
+
+            context 'and the order is a user order, i.e. has an associated user' do
+              let(:user) { create(:user) }
+              let!(:user_profile) { create(:user_profile, user: user) }
+              let(:customer_form) do
+                build(:flow_order_customer_form, name: { first: user_profile.first_name, last: user_profile.last_name },
+                                                 number: user.flow_number, email: user.email)
+              end
+              let(:order) { create(:order_with_line_items, :with_flow_data, user: user, state: state, zone: zone) }
+              let(:order_put_form) { build(:flow_order_put_form, items: [line_item_form], customer: customer_form) }
+              let(:flow_order) do
+                build(:flow_order,
+                      customer: build(:flow_order_customer,
+                                      name: { first: user_profile.first_name, last: user_profile.last_name },
+                                      number: user.flow_number, email: user.email))
+              end
+
+              it 'syncs the order to flow.io without customer info and returns the checkout_token' do
+                expect(instance).to receive(:try_to_add_customer)
+
+                expect(instance.synchronize!).to eql(checkout_token.id)
+                expect(order.flow_io_attributes['flow_return_url']).to eql(confirmation_url)
+                expect(order.flow_io_attributes['checkout_continue_shopping_url']).to eql(root_url)
+                expect(order.flow_data.dig('order', 'customer', 'email')).to eql(user.email)
+                expect(order.flow_data.dig('order', 'customer', 'name', 'first')).to eql(user_profile.first_name)
+                expect(order.flow_data.dig('order', 'customer', 'name', 'last')).to eql(user_profile.last_name)
+                expect(order.flow_data.dig('order', 'customer', 'number')).to eql(user.flow_number)
+              end
             end
           else
             it 'returns nil' do
