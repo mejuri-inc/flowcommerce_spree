@@ -59,7 +59,7 @@ RSpec.describe FlowcommerceSpree::OrderUpdater do
         before do
           allow_any_instance_of(Io::Flow::V0::Clients::Orders)
             .to(receive(:get_by_number)
-            .and_return({ submitted_at: Time.current, customer: { email: 'test@mejuri.com' } }))
+            .and_return(submitted_at: Time.current, customer: { email: 'test@mejuri.com' }))
         end
 
         it 'updates order to state `payment` and calls several methods to update the order related records' do
@@ -134,7 +134,7 @@ RSpec.describe FlowcommerceSpree::OrderUpdater do
           allow(order).to(receive(:flow_io_payments).and_return([]))
           subject.new(order: order).map_payments_to_spree
 
-          expect(order.complete?).to(be_falsy)
+          expect(order.complete?).to(be_falsey)
         end
       end
     end

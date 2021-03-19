@@ -6,7 +6,10 @@ FactoryBot.define do
     number { Faker::Guid.guid }
     date { Time.current }
     type { 'card' }
-    total { { 'base' => { 'label' => 'US$108.02', 'amount' => 108.02, 'currency' => 'USD' }, 'label' => '91,98 €', 'amount' => 91.98, 'currency' => 'EUR' } }
+    total do
+      { 'base' => { 'label' => 'US$108.02', 'amount' => 108.02, 'currency' => 'USD' },
+        'label' => '91,98 €', 'amount' => 91.98, 'currency' => 'EUR' }
+    end
     address do
       { 'city' => 'Berlin',
         'name' => { 'last' => '2nzfkkdvo2', 'first' => '2nzfkkdvo2' },

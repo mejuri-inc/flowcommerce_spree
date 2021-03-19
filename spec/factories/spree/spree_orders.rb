@@ -2,7 +2,6 @@
 
 FactoryBot.define do
   factory :order, class: Spree::Order do
-
     sequence(:email) { |n| "person#{n}@example.com" }
 
     transient do
