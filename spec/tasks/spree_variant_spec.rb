@@ -20,7 +20,6 @@ describe 'rake products:turn_on_version_for_region', type: :task do
       allow(CSVUploader).to(receive(:download_url).and_return('https://s3.amazonaws.com/test/script/flow_hs_codes.csv'))
       allow_any_instance_of(URI::HTTPS).to(receive(:open))
 
-      # stubed_csv = CSV.new("#{title.join(',')}\n#{content.join(',')}", headers: true)
       allow(CSV).to(receive(:new).and_return(stubed_csv))
     end
 
