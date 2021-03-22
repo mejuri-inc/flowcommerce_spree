@@ -210,7 +210,7 @@ module Spree
       new_hs_code = meta_changes[1]&.[]('flow_data')&.[]('hs_code')
       return if old_hs_code == new_hs_code
 
-      VariantService.new.update_classification([self])
+      VariantService.new.update_classification([sku])
     end
 
     Spree::Variant.prepend(self) if Spree::Variant.included_modules.exclude?(self)

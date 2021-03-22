@@ -3,19 +3,20 @@
 module FlowcommerceSpree
   # A service object to import the data for product variants belonging to a flow.io Experience
   class ImportItemsHsCodes
-    def self.run(zone, client: FlowcommerceSpree.client, organization: ORGANIZATION)
-      new(zone, client: client, organization: organization).run
+    def self.run(client: FlowcommerceSpree.client, organization: ORGANIZATION)
+      new(client: client, organization: organization).run
     end
 
-    def run
+    def run # rubocop:disable Metrics/MethodLength, Metrics/AbcSize
       page_size  = 100
       offset     = 0
       items      = []
+      updated    = []
       total = 0
 
       while offset == 0 || items.length != 0
         # show current list size
-        @logger.info "\nGetting items: #{@experience_key.green}, rows #{offset} - #{offset + page_size}"
+        @logger.info "\nGetting items: rows #{offset} - #{offset + page_size}"
 
         begin
           items = @client.hs10.get(@organization, limit: page_size, offset: offset)
@@ -39,21 +40,22 @@ module FlowcommerceSpree
           variant.flow_data['hs_code'] = hs_code
           variant.update_column(:meta, variant.meta.to_json)
           log_str << "#{variant.sku}, "
+          updated << variant.sku
         end
         @logger.info log_str
       end
+
+      VariantService.new.update_classification(updated)
 
       @logger.info "\nData for #{total.to_s.green} products was imported."
     end
 
     private
 
-    def initialize(zone, client:, organization:)
+    def initialize(client:, organization:)
       @client = client
-      @experience_key = zone.flow_io_experience
       @logger = client.instance_variable_get(:@http_handler).logger
       @organization = organization
-      @zone = zone
     end
   end
 end
