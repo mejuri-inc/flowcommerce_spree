@@ -43,9 +43,6 @@ module FlowcommerceSpree
         @logger.info log_str
       end
 
-      # @logger.info "\nUpdating Fulfil: #{@experience_key.green}"
-      # VariantService.new.update_classification
-
       @logger.info "\nData for #{total.to_s.green} products was imported."
     end
 
