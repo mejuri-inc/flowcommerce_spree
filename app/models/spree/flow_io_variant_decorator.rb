@@ -9,6 +9,9 @@ module Spree
       base.serialize :meta, ActiveRecord::Coders::JSON.new(symbolize_keys: true)
 
       base.store_accessor :meta, :flow_data
+
+      # after every save we sync product we generate sh1 checksums to update only when change happend
+      base.after_save :sync_product_to_flow
     end
 
     def experiences
