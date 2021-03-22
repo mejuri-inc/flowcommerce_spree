@@ -19,5 +19,11 @@ module FlowcommerceSpree
       variant = Spree::Variant.find_by(sku: hs_code_data.item.number)
       expect(variant.flow_data['hs_code']).to(eq(hs_code_data.code[0..5]))
     end
+
+    it 'Calls VariantService#update_classification method' do
+      expect_any_instance_of(VariantService).to(receive(:update_classification)
+                                            .with([hs_code_data.item.number]))
+      FlowcommerceSpree::ImportItemsHsCodes.run
+    end
   end
 end

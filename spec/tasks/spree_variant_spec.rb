@@ -2,7 +2,6 @@
 
 require 'rails_helper'
 require 'csv'
-# require 'tasks/tasks_helper'
 
 describe 'rake products:turn_on_version_for_region', type: :task do
   let(:variant) { create(:base_variant, :with_flow_data) }
@@ -29,14 +28,9 @@ describe 'rake products:turn_on_version_for_region', type: :task do
       expect(variant.reload.flow_data['hs_code']).to(eq(hs_code))
     end
 
-    context 'when csv does not have hs_code from flow' do
-      let(:stubed_csv_content) { [variant.sku, '', variant.product.id, variant.product.name] }
-
-      it 'does not update variant`s flow hs_code' do
-        expect(variant.flow_data['hs_code']).to(be_blank)
-        run_codes_rake_task
-        expect(variant.reload.flow_data['hs_code']).to(be_blank)
-      end
+    it 'Calls VariantService#update_classification method' do
+      expect_any_instance_of(VariantService).to(receive(:update_classification).with([variant.sku]))
+      run_codes_rake_task
     end
   end
 end

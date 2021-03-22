@@ -11,8 +11,6 @@ namespace :spree_variant do
 
     csv.each do |row|
       hs_code = row['hs6']
-      next if hs_code.blank?
-
       sku = row['item_number']
       next not_found << sku unless (variant = Spree::Variant.find_by(sku: row['item_number']))
 

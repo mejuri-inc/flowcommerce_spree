@@ -9,11 +9,6 @@ module Spree
       base.serialize :meta, ActiveRecord::Coders::JSON.new(symbolize_keys: true)
 
       base.store_accessor :meta, :flow_data
-
-      # after every save we sync product we generate sh1 checksums to update only when change happend
-      base.after_save :sync_product_to_flow
-
-      base.after_save :sync_classification
     end
 
     def experiences
@@ -200,17 +195,6 @@ module Spree
       self.flow_data.merge!(item_hash)
 
       update_column(:meta, meta.to_json)
-    end
-
-    def sync_classification
-      return unless meta_changed?
-
-      meta_changes = changes['meta']
-      old_hs_code = meta_changes[0]&.[]('flow_data')&.[]('hs_code')
-      new_hs_code = meta_changes[1]&.[]('flow_data')&.[]('hs_code')
-      return if old_hs_code == new_hs_code
-
-      VariantService.new.update_classification([sku])
     end
 
     Spree::Variant.prepend(self) if Spree::Variant.included_modules.exclude?(self)
