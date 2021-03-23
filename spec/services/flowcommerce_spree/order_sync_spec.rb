@@ -198,8 +198,8 @@ RSpec.describe FlowcommerceSpree::OrderSync do
                   expect(instance).to receive(:add_customer_address).with(address)
                   expect(Io::Flow::V0::Models::OrderPutForm)
                     .to receive(:new)
-                          .with(items: [order_line_item], customer: customer_hash,
-                                destination: destination_hash, attributes: nil, selections: nil, delivered_duty: nil)
+                    .with(items: [order_line_item], customer: customer_hash,
+                          destination: destination_hash, attributes: nil, selections: nil, delivered_duty: nil)
 
                   expect(instance.synchronize!).to eql(checkout_token.id)
                   expect(order.flow_io_attributes['flow_return_url']).to eql(confirmation_url)
