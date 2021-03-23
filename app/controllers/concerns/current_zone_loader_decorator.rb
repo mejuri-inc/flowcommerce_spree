@@ -29,12 +29,7 @@ CurrentZoneLoader.module_eval do
                                        .where("meta -> 'flow_data' ->> 'country' = ?",
                                               ISO3166::Country[request_iso_code]&.alpha3).exists?
 
-    request_ip = if Rails.env.production?
-                   request.ip
-                 else
-                   Spree::Config[:debug_request_ip_address] || request.ip
-                   # Germany ip: 85.214.132.117, Sweden ip: 62.20.0.196, Moldova ip: 89.41.76.29
-                 end
+    request_ip = request.ip
 
     # This will issue a session creation request to flow.io. The response will contain the Flow Experience key and
     # the session_id
