@@ -162,6 +162,33 @@ RSpec.describe FlowcommerceSpree::OrderSync do
 
               before { allow(instance).to receive(:add_customer_address).and_call_original }
 
+              context 'user has no ship address, and no user_profile address' do
+                let(:user) { create(:user) }
+                let(:country) { create(:country, iso: 'DE') }
+                let!(:user_profile) { create(:user_profile, user: user) }
+                let(:customer_hash) do
+                  { name: { first: user_profile.first_name, last: user_profile.last_name },
+                    number: user.flow_number, email: user.email, phone: nil }
+                end
+
+                it 'syncs the order to flow.io with customer info, without address, and returns the checkout_token' do
+                  expect(instance).to receive(:try_to_add_customer)
+                  expect(instance).not_to receive(:add_customer_address)
+                  expect(Io::Flow::V0::Models::OrderPutForm)
+                    .to receive(:new)
+                          .with(items: [order_line_item], customer: customer_hash,
+                                attributes: nil, selections: nil, delivered_duty: nil)
+
+                  expect(instance.synchronize!).to eql(checkout_token.id)
+                  expect(order.flow_io_attributes['flow_return_url']).to eql(confirmation_url)
+                  expect(order.flow_io_attributes['checkout_continue_shopping_url']).to eql(root_url)
+                  expect(order.flow_data.dig('order', 'customer', 'email')).to eql(user.email)
+                  expect(order.flow_data.dig('order', 'customer', 'name', 'first')).to eql(user_profile.first_name)
+                  expect(order.flow_data.dig('order', 'customer', 'name', 'last')).to eql(user_profile.last_name)
+                  expect(order.flow_data.dig('order', 'customer', 'number')).to eql(user.flow_number)
+                end
+              end
+
               context 'user has no ship address, and user_profile.address.country = order`s flow experience country' do
                 let(:user) { create(:user) }
                 let(:country) { create(:country, iso: 'DE') }
