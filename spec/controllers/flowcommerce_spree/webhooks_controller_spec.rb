@@ -25,7 +25,7 @@ RSpec.describe FlowcommerceSpree::WebhooksController, type: :controller do
       before do
         @request.env['HTTP_AUTHORIZATION'] =
           ActionController::HttpAuthentication::Basic
-            .encode_credentials(FlowcommerceSpree::FLOW_IO_WEBHOOK_USER, FlowcommerceSpree::FLOW_IO_WEBHOOK_PASSWORD)
+          .encode_credentials(FlowcommerceSpree::FLOW_IO_WEBHOOK_USER, FlowcommerceSpree::FLOW_IO_WEBHOOK_PASSWORD)
       end
 
       context 'when a required parameter is missing' do

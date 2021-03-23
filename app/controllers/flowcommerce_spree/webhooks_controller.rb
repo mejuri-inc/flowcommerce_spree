@@ -10,30 +10,26 @@ module FlowcommerceSpree
     # /flow/event-target endpoint
     def handle_flow_io_event
       %i[id event_id organization discriminator].each_with_object(params) { |key, obj| obj.require(key) }
-      result = check_organization
-      if result.blank?
-        webhook_result = "FlowcommerceSpree::Webhooks::#{params['discriminator'].classify}".constantize.process(params)
-        result[:error] = webhook_result.full_messages.join("\n") if webhook_result.errors.any?
-      end
+      return unless organization_valid?
+
+      webhook_result = "FlowcommerceSpree::Webhooks::#{params['discriminator'].classify}".constantize.process(params)
+      @result = {}
+      @result[:error] = webhook_result.full_messages.join("\n") if webhook_result.errors.any?
     rescue StandardError => e
-      result = { error: e.class.to_s, message: e.message, backtrace: e.backtrace }
+      @result = { error: e.class.to_s, message: e.message, backtrace: e.backtrace }
     ensure
-      response_status = if result[:error]
-                          logger.info(result)
-                          :unprocessable_entity
-                        else
-                          :ok
-                        end
-      render json: result.except(:backtrace), status: response_status
+      logger.info(@result) if (error = @result[:error])
+      render json: @result.except(:backtrace), status: error ? :unprocessable_entity : :ok
     end
 
     private
 
-    def check_organization
+    def organization_valid?
       org = params[:organization]
-      return {} if org == FlowcommerceSpree::ORGANIZATION
+      return true if org == FlowcommerceSpree::ORGANIZATION
 
-      { error: 'InvalidParam', message: "Organization '#{org}' is invalid!" }
+      @result = { error: 'InvalidParam', message: "Organization '#{org}' is invalid!" }
+      false
     end
   end
 end
