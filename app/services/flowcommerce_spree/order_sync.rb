@@ -2,35 +2,21 @@
 
 module FlowcommerceSpree
   # represents flow.io order syncing service
-  # for easy integration we are currently passing:
-  # - flow experience
-  # - spree order
-  # - current customer, if present as  @order.user
-  #
-  # example:
-  #  flow_order = FlowcommerceSpree::OrderSync.new    # init flow-order object
-  #    order: Spree::Order.last,
-  #    experience: @flow_session.experience
-  #    customer: @order.user
-  #  flow_order.build_flow_request           # builds json body to be posted to flow.io api
-  #  flow_order.synchronize!                 # sends order to flow
   class OrderSync # rubocop:disable Metrics/ClassLength
     FLOW_CENTER = 'default'
 
     attr_reader :order, :response
 
-    delegate :url_helpers, to: 'Rails.application.routes'
-
+    # @param [Object] order
+    # @param [String] flow_session_id
     def initialize(order:, flow_session_id:)
       raise(ArgumentError, 'Experience not defined or not active') unless order&.zone&.flow_io_active_experience?
 
       @experience = order.flow_io_experience_key
       @flow_session_id = flow_session_id
       @order = order
-      @client = FlowcommerceSpree.client(
-        default_headers: { "Authorization": "Session #{flow_session_id}" },
-        authorization: nil
-      )
+      @client = FlowcommerceSpree.client(default_headers: { "Authorization": "Session #{flow_session_id}" },
+                                         authorization: nil)
     end
 
     # helper method to send complete order from Spree to flow.io
@@ -43,14 +29,6 @@ module FlowcommerceSpree
       @order.update_columns(total: @order.total, meta: @order.meta.to_json)
       refresh_checkout_token
       @checkout_token
-    end
-
-    def error
-      @response['messages'].join(', ')
-    end
-
-    def error_code
-      @response['code']
     end
 
     def error?
@@ -77,7 +55,7 @@ module FlowcommerceSpree
     end
 
     def refresh_checkout_token
-      root_url = url_helpers.root_url
+      root_url = Rails.application.routes.url_helpers.root_url
       order_number = @order.number
       confirmation_url = "#{root_url}flow/order-completed?order=#{order_number}&t=#{@order.guest_token}"
       @checkout_token = FlowcommerceSpree.client.checkout_tokens.post_checkout_and_tokens_by_organization(
