@@ -2,7 +2,7 @@
 
 module FlowcommerceSpree
   # represents flow.io order syncing service
-  class OrderSync # rubocop:disable Metrics/ClassLength
+  class OrderSync
     FLOW_CENTER = 'default'
 
     attr_reader :order, :response
@@ -28,7 +28,6 @@ module FlowcommerceSpree
 
       @order.update_columns(total: @order.total, meta: @order.meta.to_json)
       refresh_checkout_token
-      @checkout_token
     end
 
     def error?
@@ -58,18 +57,17 @@ module FlowcommerceSpree
       root_url = Rails.application.routes.url_helpers.root_url
       order_number = @order.number
       confirmation_url = "#{root_url}flow/order-completed?order=#{order_number}&t=#{@order.guest_token}"
-      @checkout_token = FlowcommerceSpree.client.checkout_tokens.post_checkout_and_tokens_by_organization(
-        FlowcommerceSpree::ORGANIZATION,
-        discriminator: 'checkout_token_reference_form',
-        order_number: order_number,
-        session_id: @flow_session_id,
-        urls: { continue_shopping: root_url,
-                confirmation: confirmation_url,
-                invalid_checkout: root_url }
-      )&.id
-
       @order.flow_io_attribute_add('flow_return_url', confirmation_url)
       @order.flow_io_attribute_add('checkout_continue_shopping_url', root_url)
+
+      FlowcommerceSpree.client.checkout_tokens.post_checkout_and_tokens_by_organization(
+        FlowcommerceSpree::ORGANIZATION, discriminator: 'checkout_token_reference_form',
+                                         order_number: order_number,
+                                         session_id: @flow_session_id,
+                                         urls: { continue_shopping: root_url,
+                                                 confirmation: confirmation_url,
+                                                 invalid_checkout: root_url }
+      )&.id
     end
 
     # if customer is defined, add customer info
@@ -98,14 +96,14 @@ module FlowcommerceSpree
 
     def add_customer_address(address)
       streets = []
-      streets.push address.address1 if address&.address1.present?
-      streets.push address.address2 if address&.address2.present?
+      streets.push address.address1 if address.address1.present?
+      streets.push address.address2 if address.address2.present?
 
       @body[:destination] = { streets: streets,
-                              city: address&.city,
-                              province: address&.state_name,
-                              postal: address&.zipcode,
-                              country: (address&.country&.iso3 || ''),
+                              city: address.city,
+                              province: address.state_name,
+                              postal: address.zipcode,
+                              country: (address.country&.iso3 || ''),
                               contact: @body[:customer] }
 
       @body[:destination].delete_if { |_k, v| v.nil? }
@@ -133,20 +131,18 @@ module FlowcommerceSpree
     # set cache for total order amount
     # written in flow_data field inside spree_orders table
     def write_response_in_cache
-      if !@response || error?
-        @order.flow_data.delete('order')
-      else
-        response_total = @response[:total]
-        response_total_label = response_total&.[](:label)
-        cache_total = @order.flow_data.dig('order', 'total', 'label')
+      return @order.flow_data.delete('order') if !@response || error?
 
-        # return if total is not changed, no products removed or added
-        return if @use_get && response_total_label == cache_total
+      response_total = @response[:total]
+      response_total_label = response_total&.[](:label)
+      cache_total = @order.flow_data.dig('order', 'total', 'label')
 
-        # update local order
-        @order.total = response_total&.[](:amount)
-        @order.flow_data.merge!('order' => @response)
-      end
+      # return if total is not changed, no products removed or added
+      return if @use_get && response_total_label == cache_total
+
+      # update local order
+      @order.total = response_total&.[](:amount)
+      @order.flow_data.merge!('order' => @response)
     end
   end
 end
