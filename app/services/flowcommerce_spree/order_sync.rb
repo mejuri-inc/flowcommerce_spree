@@ -24,7 +24,7 @@ module FlowcommerceSpree
       return unless @order.state == 'cart' && @order.line_items.size > 0
 
       sync_body!
-      write_response_in_cache
+      write_response_to_order
 
       @order.update_columns(total: @order.total, meta: @order.meta.to_json)
       refresh_checkout_token
@@ -128,20 +128,11 @@ module FlowcommerceSpree
                  currency: price_root['currency'] || variant.cost_currency } }
     end
 
-    # set cache for total order amount
-    # written in flow_data field inside spree_orders table
-    def write_response_in_cache
+    def write_response_to_order
       return @order.flow_data.delete('order') if !@response || error?
 
-      response_total = @response[:total]
-      response_total_label = response_total&.[](:label)
-      cache_total = @order.flow_data.dig('order', 'total', 'label')
-
-      # return if total is not changed, no products removed or added
-      return if @use_get && response_total_label == cache_total
-
       # update local order
-      @order.total = response_total&.[](:amount)
+      @order.total = @response[:total]&.[](:amount)
       @order.flow_data.merge!('order' => @response)
     end
   end
