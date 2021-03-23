@@ -8,22 +8,30 @@ namespace :spree_variant do
 
     not_found = []
     updated = []
+    with_errors = []
 
     csv.each do |row|
-      hs_code = row['hs6']
-      sku = row['item_number']
-      next not_found << sku unless (variant = Spree::Variant.find_by(sku: row['item_number']))
+      begin
+        hs_code = row['hs6']
+        sku = row['item_number']
+        next not_found << sku unless (variant = Spree::Variant.find_by(sku: row['item_number']))
 
-      variant.flow_data ||= {}
-      variant.flow_data['hs_code'] = hs_code
-      variant.update_column(:meta, variant.meta.to_json)
-      updated << sku
+        variant.flow_data ||= {}
+        variant.flow_data['hs_code'] = hs_code
+        variant.update_column(:meta, variant.meta.to_json)
+        updated << sku
+      rescue StandardError
+        with_errors << sku
+      end
     end
 
-    VariantService.new.update_classification(updated)
+    VariantService.new.update_flow_classification(updated)
 
     puts "\n#{Time.zone.now} | Not found in the DB #{not_found.size}."
     puts not_found.inspect
+
+    puts "\n#{Time.zone.now} | Unexpected errors while updating #{with_errors.size}."
+    puts with_errors.inspect
 
     puts "\n#{Time.zone.now} | Updated #{updated.size}."
     puts "Updated #{updated} variants."

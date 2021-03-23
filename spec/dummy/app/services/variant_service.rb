@@ -7,5 +7,5 @@ class VariantService
     @variant = variant
   end
 
-  def update_classification(variant_skus = []); end
+  def update_flow_classification(variant_skus = []); end
 end

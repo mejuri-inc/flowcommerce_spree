@@ -8,10 +8,11 @@ module FlowcommerceSpree
     end
 
     def run # rubocop:disable Metrics/MethodLength, Metrics/AbcSize
-      page_size  = 100
-      offset     = 0
-      items      = []
-      updated    = []
+      page_size   = 100
+      offset      = 0
+      items       = []
+      updated     = []
+      with_errors = []
       total = 0
 
       while offset == 0 || items.length != 0
@@ -30,22 +31,25 @@ module FlowcommerceSpree
 
         items.group_by { |hs_code| hs_code.item.number }.each do |item|
           total += 1
+          begin
+            variant_sku = item.first
+            next unless (variant = Spree::Variant.find_by(sku: variant_sku))
 
-          variant_sku = item.first
-          next unless (variant = Spree::Variant.find_by(sku: variant_sku))
-
-          hs_code_data_list = item.last
-          hs_code = hs_code_data_list&.first&.code&.[](0..5)
-          variant.flow_data ||= {}
-          variant.flow_data['hs_code'] = hs_code
-          variant.update_column(:meta, variant.meta.to_json)
-          log_str << "#{variant.sku}, "
-          updated << variant.sku
+            hs_code_data_list = item.last
+            hs_code = hs_code_data_list&.first&.code&.[](0..5)
+            variant.flow_data ||= {}
+            variant.flow_data['hs_code'] = hs_code
+            variant.update_column(:meta, variant.meta.to_json)
+            log_str << "#{variant.sku}, "
+            updated << variant.sku
+          rescue StandardError
+            with_errors = variant.sku
+          end
         end
         @logger.info log_str
       end
 
-      VariantService.new.update_classification(updated)
+      VariantService.new.update_flow_classification(updated)
 
       @logger.info "\nData for #{total.to_s.green} products was imported."
     end

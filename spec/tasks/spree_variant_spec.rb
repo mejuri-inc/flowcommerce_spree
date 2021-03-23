@@ -28,8 +28,8 @@ describe 'rake products:turn_on_version_for_region', type: :task do
       expect(variant.reload.flow_data['hs_code']).to(eq(hs_code))
     end
 
-    it 'Calls VariantService#update_classification method' do
-      expect_any_instance_of(VariantService).to(receive(:update_classification).with([variant.sku]))
+    it 'Calls VariantService#update_flow_classification method' do
+      expect_any_instance_of(VariantService).to(receive(:update_flow_classification).with([variant.sku]))
       run_codes_rake_task
     end
   end
