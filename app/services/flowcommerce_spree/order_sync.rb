@@ -114,20 +114,8 @@ module FlowcommerceSpree
     def sync_body!
       build_flow_request
 
-      @use_get = false
-
-      # use get if order is completed and closed
-      @use_get = true if @order.flow_data.dig('order', 'submitted_at').present? || @order.state == 'complete'
-
-      # do not use get if there is no local order cache
-      @use_get = false unless @order.flow_data['order']
-
-      if @use_get
-        @response ||= @client.orders.get_by_number(ORGANIZATION, @order.number).to_hash
-      else
-        @response = @client.orders.put_by_number(ORGANIZATION, @order.number,
-                                                 Io::Flow::V0::Models::OrderPutForm.new(@body), @opts).to_hash
-      end
+      @response = @client.orders.put_by_number(ORGANIZATION, @order.number,
+                                               Io::Flow::V0::Models::OrderPutForm.new(@body), @opts).to_hash
     end
 
     def add_item(line_item)
