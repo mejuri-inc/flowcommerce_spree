@@ -13,6 +13,8 @@ namespace :spree_variant do
     csv.each do |row|
       begin
         hs_code = row['hs6']
+        next unless hs_code.present?
+
         sku = row['item_number']
         next not_found << sku unless (variant = Spree::Variant.find_by(sku: row['item_number']))
 
