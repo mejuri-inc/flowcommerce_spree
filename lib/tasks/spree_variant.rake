@@ -39,6 +39,6 @@ namespace :spree_variant do
 
   desc 'Import Flow Hs Codes from Api'
   task import_flow_hs_code: :environment do
-    FlowcommerceSpree::ImportItemsHsCodes.run(with_items: true, client: client, refresher: refresher)
+    FlowcommerceSpree::ImportItemsHsCodes.run
   end
 end

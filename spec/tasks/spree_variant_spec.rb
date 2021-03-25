@@ -3,7 +3,7 @@
 require 'rails_helper'
 require 'csv'
 
-describe 'rake products:turn_on_version_for_region', type: :task do
+describe 'rake spree_variants', type: :task do
   let(:variant) { create(:base_variant, :with_flow_data) }
 
   describe 'import_flow_hs_code_from_csv' do
