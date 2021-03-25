@@ -58,6 +58,8 @@ module Spree
 
       return { error: 'Price is 0' } if price == 0
 
+      return unless country_of_origin
+
       additional_attrs = {}
       attr_name = nil
       export_required = false

@@ -11,7 +11,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema.define(version: 20201116193935) do
+ActiveRecord::Schema.define(version: 20210222174141) do
 
   # These are extensions that must be enabled in order to support this database
   enable_extension "plpgsql"
@@ -72,6 +72,44 @@ ActiveRecord::Schema.define(version: 20201116193935) do
   end
 
   add_index "addresses", ["user_profile_id"], name: "index_addresses_on_user_profile_id", using: :btree
+
+  create_table "affiliate_orders", force: true do |t|
+    t.integer  "affiliate_id"
+    t.integer  "spree_order_id"
+    t.string   "click_id",       null: false
+    t.string   "campaign_id",    null: false
+    t.string   "partner_id",     null: false
+    t.datetime "created_at",     null: false
+    t.datetime "updated_at",     null: false
+  end
+
+  add_index "affiliate_orders", ["affiliate_id"], name: "index_affiliate_orders_on_affiliate_id", using: :btree
+  add_index "affiliate_orders", ["spree_order_id", "affiliate_id"], name: "index_affiliate_orders_on_spree_order_id_and_affiliate_id", unique: true, using: :btree
+
+  create_table "affiliates", force: true do |t|
+    t.string   "unique_code",          null: false
+    t.string   "first_name",           null: false
+    t.string   "last_name",            null: false
+    t.datetime "deleted_at"
+    t.datetime "created_at",           null: false
+    t.datetime "updated_at",           null: false
+    t.integer  "affiliates_agency_id"
+  end
+
+  add_index "affiliates", ["affiliates_agency_id"], name: "index_affiliates_on_affiliates_agency_id", using: :btree
+  add_index "affiliates", ["deleted_at"], name: "index_affiliates_on_deleted_at", using: :btree
+  add_index "affiliates", ["unique_code"], name: "index_affiliates_on_unique_code", unique: true, using: :btree
+
+  create_table "affiliates_agencies", force: true do |t|
+    t.string   "name",               null: false
+    t.string   "slug",               null: false
+    t.integer  "spree_promotion_id"
+    t.datetime "created_at",         null: false
+    t.datetime "updated_at",         null: false
+  end
+
+  add_index "affiliates_agencies", ["slug"], name: "index_affiliates_agencies_on_slug", unique: true, using: :btree
+  add_index "affiliates_agencies", ["spree_promotion_id"], name: "index_affiliates_agencies_on_spree_promotion_id", using: :btree
 
   create_table "ambassador_links", force: true do |t|
     t.string   "uid"
@@ -1167,9 +1205,10 @@ ActiveRecord::Schema.define(version: 20201116193935) do
     t.string   "coupon_code"
     t.boolean  "subscribe"
     t.boolean  "fraudulent",                                                  default: false
-    t.boolean  "has_walkout"
     t.string   "guest_token"
+    t.boolean  "has_walkout"
     t.jsonb    "meta",                                                        default: "{}"
+    t.boolean  "has_walkout"
   end
 
   add_index "spree_orders", ["approver_id"], name: "index_spree_orders_on_approver_id", using: :btree
@@ -1203,7 +1242,7 @@ ActiveRecord::Schema.define(version: 20201116193935) do
     t.integer  "payment_id"
     t.datetime "created_at"
     t.datetime "updated_at"
-    t.jsonb    "meta",                        default: "{}"
+    t.jsonb    "meta",                                default: "{}"
   end
 
   add_index "spree_payment_capture_events", ["payment_id"], name: "index_spree_payment_capture_events_on_payment_id", using: :btree
@@ -1336,6 +1375,8 @@ ActiveRecord::Schema.define(version: 20201116193935) do
     t.integer  "material_group_id"
     t.integer  "material_category_id"
     t.jsonb    "meta",                 default: "{}"
+    t.string   "country_of_origin"
+    t.string   "hs_code"
   end
 
   add_index "spree_products", ["available_on"], name: "index_spree_products_on_available_on", using: :btree
@@ -1495,6 +1536,7 @@ ActiveRecord::Schema.define(version: 20201116193935) do
     t.boolean  "refunded",                                        default: false
     t.text     "inventory_reasons",                               default: "{}"
     t.text     "preferences"
+    t.string   "carrier"
   end
 
   add_index "spree_return_authorizations", ["number"], name: "index_spree_return_authorizations_on_number", using: :btree
