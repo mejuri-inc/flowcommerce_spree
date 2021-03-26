@@ -47,8 +47,6 @@ RSpec.describe FlowcommerceSpree::Webhooks::CaptureUpsertedV2 do
     end
 
     describe '#process' do
-      # let(:result) { instance.process }
-
       context 'when @data contains no `capture` key' do
         let(:instance) { subject.new(data.except('capture')) }
 
