@@ -37,6 +37,8 @@ namespace :spree_variant do
 
     puts "\n#{Time.zone.now} | Updated #{updated.size}."
     puts "Updated #{updated} variants."
+
+    puts '[Important] Review task output to see if all products where properly synchronized with Fulfil.'
   end
 
   desc 'Import Flow Hs Codes from Api'

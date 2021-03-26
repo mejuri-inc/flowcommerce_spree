@@ -32,5 +32,14 @@ describe 'rake spree_variants', type: :task do
       expect_any_instance_of(VariantService).to(receive(:update_flow_classification).with([variant.sku]))
       run_codes_rake_task
     end
+
+    context 'when no hs_code is present' do
+      let(:stubed_csv_content) { [variant.sku, '', variant.product.id, variant.product.name] }
+
+      it 'does not update variant' do
+        run_codes_rake_task
+        expect(variant.reload.flow_data['hs_code']).to(be_blank)
+      end
+    end
   end
 end
