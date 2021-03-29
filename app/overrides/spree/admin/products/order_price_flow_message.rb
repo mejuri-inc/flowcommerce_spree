@@ -4,6 +4,6 @@ Deface::Override.new(
   insert_top: '.no-border-top',
   text: "
   <div class='spree-admin-info' >
-    Some prices might not be shown in this list. You can find them <a href='#{"https://console.flow.io/#{ENV['FLOW_ORGANIZATION']}/price-books"}' target='_blank'>here</a>.
+    To check localized pricing, please click <a href='#{"https://console.flow.io/#{ENV['FLOW_ORGANIZATION']}/price-books"}' target='_blank'>here</a>.
   </div>"
 )
