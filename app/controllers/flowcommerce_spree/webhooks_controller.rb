@@ -9,7 +9,7 @@ module FlowcommerceSpree
     # forward incoming requests to respective Flow Webhooks Service objects
     # /flow/event-target endpoint
     def handle_flow_io_event
-      %i[id event_id organization discriminator].each_with_object(params) { |key, obj| obj.require(key) }
+      %i[event_id organization discriminator].each_with_object(params) { |key, obj| obj.require(key) }
       return unless organization_valid?
 
       webhook_result = "FlowcommerceSpree::Webhooks::#{params['discriminator'].classify}".constantize.process(params)
