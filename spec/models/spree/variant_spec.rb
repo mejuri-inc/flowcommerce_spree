@@ -137,4 +137,33 @@ RSpec.describe Spree::Variant, type: :model do
       end
     end
   end
+
+  describe '#sync_product_to_flow' do
+    let(:variant) { create(:base_variant, :with_flow_data) }
+
+    before(:each) do
+      allow_any_instance_of(Spree::Variant).to(receive(:sync_product_to_flow).and_call_original)
+      FlowcommerceSpree::API_KEY = 'test'
+    end
+
+    context 'does not synchronizes data' do
+      it 'when country_of_origin is not present' do
+        variant.product.update_column(:country_of_origin, nil)
+        expect_any_instance_of(Io::Flow::V0::Clients::Items).not_to(receive(:put_by_number))
+        variant.sync_product_to_flow
+      end
+
+      it 'when price is 0' do
+        allow(variant).to(receive(:price).and_return(0))
+        expect_any_instance_of(Io::Flow::V0::Clients::Items).not_to(receive(:put_by_number))
+        variant.sync_product_to_flow
+      end
+    end
+
+    it 'syncrhroinzes data when all data is present' do
+      variant.product.update_column(:country_of_origin, 'TH')
+      expect_any_instance_of(Io::Flow::V0::Clients::Items).to(receive(:put_by_number))
+      variant.sync_product_to_flow
+    end
+  end
 end

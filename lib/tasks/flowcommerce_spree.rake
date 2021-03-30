@@ -47,8 +47,11 @@ namespace :flowcommerce_spree do
 
     while current_page == 0 || !variants.empty?
       current_page += 1
-      variants = Spree::Variant.order('updated_at desc').page(current_page).per(100).all
 
+      products = Spree::Product.where.not(country_of_origin: nil)
+                               .order('updated_at desc')
+                               .page(current_page).per(50).includes(:variants_including_master)
+      variants = products.map(&:variants_including_master).flatten
       variants.each do |variant|
         total_sum += 1
         result = variant.sync_product_to_flow
