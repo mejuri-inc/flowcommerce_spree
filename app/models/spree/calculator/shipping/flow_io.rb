@@ -4,6 +4,9 @@ module Spree
   class Calculator
     module Shipping
       class FlowIo < ShippingCalculator
+        preference :lower_boundary, :decimal, default: 100
+        preference :charge_default, :decimal, default: 15
+
         def self.description
           'FlowIO Calculator'
         end
@@ -16,11 +19,11 @@ module Spree
         end
 
         def default_charge(_country)
-          0
+          preferred_charge_default
         end
 
         def threshold
-          0
+          preferred_lower_boundary
         end
 
         private
