@@ -4,7 +4,8 @@ require File.expand_path('boot', __dir__)
 
 require 'rails/all'
 
-Bundler.require(*Rails.groups)
+Bundler.require(:default, :development, :test)
+
 require 'flowcommerce_spree'
 
 module Dummy
