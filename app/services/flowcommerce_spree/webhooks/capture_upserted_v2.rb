@@ -3,16 +3,15 @@
 module FlowcommerceSpree
   module Webhooks
     class CaptureUpsertedV2
-      attr_accessor :errors
+      attr_reader :errors
       alias full_messages errors
 
-      def self.process(data, opts = {})
-        new(data, opts).process
+      def self.process(data)
+        new(data).process
       end
 
-      def initialize(data, opts = {})
+      def initialize(data)
         @data = data
-        @opts = opts
         @errors = []
       end
 
@@ -20,13 +19,12 @@ module FlowcommerceSpree
         errors << { message: 'Capture param missing' } && (return self) unless (capture = @data['capture']&.to_hash)
 
         order_number = capture.dig('authorization', 'order', 'number')
+        errors << { message: 'Order number param missing' } && (return self) unless order_number
+
         if (order = Spree::Order.find_by(number: order_number))
-          order.flow_data['captures'] ||= []
-          order_captures = order.flow_data['captures']
-          order_captures.delete_if { |c| c['id'] == capture['id'] }
-          order_captures << capture
-          order.update_column(:meta, order.meta.to_json)
-          map_payment_captures_to_spree(order) if order.flow_io_payments.present?
+          upsert_order_captures(order, capture)
+          payments = order.flow_io_payments
+          map_payment_captures_to_spree(order, payments) if payments.present?
           order
         else
           errors << { message: "Order #{order_number} not found" }
@@ -36,8 +34,16 @@ module FlowcommerceSpree
 
       private
 
-      def map_payment_captures_to_spree(order)
-        payments = order.flow_data&.dig('order', 'payments')
+      def upsert_order_captures(order, capture)
+        order.flow_data ||= {}
+        order.flow_data['captures'] ||= []
+        order_captures = order.flow_data['captures']
+        order_captures.delete_if { |c| c['id'] == capture['id'] }
+        order_captures << capture
+        order.update_column(:meta, order.meta.to_json)
+      end
+
+      def map_payment_captures_to_spree(order, payments)
         order.flow_data['captures']&.each do |c|
           next unless (payment = captured_payment(payments, c))
 

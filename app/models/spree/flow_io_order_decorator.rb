@@ -44,7 +44,7 @@ module Spree
 
     # shows localized total, if possible. if not, fall back to Spree default
     def flow_io_total_amount
-      flow_data&.dig('order', 'total', 'amount')&.to_d
+      flow_data&.dig('order', 'total', 'amount')&.to_d || 0
     end
 
     def flow_io_experience_key
@@ -88,13 +88,15 @@ module Spree
       flow_data&.[]('captures')&.each do |c|
         next if c['status'] != 'succeeded'
 
-        captures_sum += c['amount']
+        amount = c['amount']
+        amount = amount.to_d if amount.is_a?(String)
+        captures_sum += amount
       end
       captures_sum.to_d
     end
 
     def flow_io_balance_amount
-      flow_data&.dig('order', 'balance', 'amount')&.to_d
+      flow_data&.dig('order', 'balance', 'amount')&.to_d || 0
     end
 
     def flow_io_payments
