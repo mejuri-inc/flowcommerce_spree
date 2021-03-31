@@ -29,7 +29,7 @@ RSpec.describe FlowcommerceSpree::WebhooksController, type: :controller do
       end
 
       context 'when a required parameter is missing' do
-        %i[id event_id organization discriminator].each do |p|
+        %i[event_id organization discriminator].each do |p|
           context "when `#{p}` is missing" do
             it 'returns error' do
               required_params.delete(p)
