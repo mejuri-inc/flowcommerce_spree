@@ -24,7 +24,7 @@ FactoryBot.define do
     end
 
     trait :with_flow_data do
-      meta { { flow_data: { name: 'Germany', key: 'germany', country: 'DEU', currency: 'EUR' } } }
+      meta { { flow_data: { name: 'Germany', key: 'germany', country: 'DEU', currency: 'EUR', status: 'active' } } }
     end
   end
 

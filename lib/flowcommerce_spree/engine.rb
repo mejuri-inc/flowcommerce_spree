@@ -9,6 +9,8 @@ module FlowcommerceSpree
       FlowcommerceSpree::ORGANIZATION = ENV.fetch('FLOW_ORGANIZATION', 'flow.io')
       FlowcommerceSpree::BASE_COUNTRY = ENV.fetch('FLOW_BASE_COUNTRY', 'USA')
       FlowcommerceSpree::API_KEY = ENV.fetch('FLOW_TOKEN', 'test_key')
+      FlowcommerceSpree::FLOW_IO_WEBHOOK_USER = ENV.fetch('FLOW_IO_WEBHOOK_USER', 'test_user')
+      FlowcommerceSpree::FLOW_IO_WEBHOOK_PASSWORD = ENV.fetch('FLOW_IO_WEBHOOK_PASSWORD', 'test_password')
 
       FlowcommerceSpree::Config = FlowcommerceSpree::Settings.new
     end
@@ -38,6 +40,9 @@ module FlowcommerceSpree
 
     def self.activate
       Dir.glob(File.join(File.dirname(__FILE__), '../../app/**/*_decorator*.rb')).sort.each do |c|
+        Rails.configuration.cache_classes ? require(c) : load(c)
+      end
+      Dir.glob(File.join(File.dirname(__FILE__), '../app/overrides/*.rb')).sort.each do |c|
         Rails.configuration.cache_classes ? require(c) : load(c)
       end
     end

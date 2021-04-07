@@ -3,6 +3,37 @@
 require 'rails_helper'
 
 RSpec.describe Spree::Order, type: :model do
+  describe '#flow_order_with_payments?' do
+    context 'when order has flow_io data' do
+      let(:order) { create(:order, :with_flow_data) }
+
+      context 'when payment is present' do
+        let(:gateway) { create(:flow_io_gateway) }
+        let!(:payment) { create(:payment, order: order, payment_method_id: gateway.id, state: 'completed') }
+
+        it 'returns true if payment is associated to Flow' do
+          expect(order.flow_order_with_payments?).to(be_truthy)
+        end
+
+        context 'if payment is not associated to Flow' do
+          let(:gateway) { create(:flow_io_gateway, type: 'Spree::Gateway::Check') }
+
+          it 'returns false' do
+            expect(order.flow_order_with_payments?).to(be_falsy)
+          end
+        end
+      end
+    end
+
+    context 'when payment is not present' do
+      let(:order) { create(:order) }
+
+      it 'returns false' do
+        expect(order.flow_order_with_payments?).to(be_falsy)
+      end
+    end
+  end
+
   describe '#prepare_flow_addresses' do
     context 'when order flow_io data' do
       let(:order) { create(:order, :with_flow_data) }

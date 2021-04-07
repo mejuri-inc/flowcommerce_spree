@@ -17,6 +17,7 @@ require 'support/controller_requests.rb'
 require 'support/database_cleaner.rb'
 require 'support/flow.rb'
 require 'support/controller_requests.rb'
+require 'support/tasks.rb'
 
 # Add additional requires below this line. Rails is not loaded until this point!
 

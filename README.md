@@ -20,8 +20,15 @@ All flowcommerce_spree code is located in the ./app and ./lib folders.
 
 - Run `bundle install`.
 
-- Define this additional ENV variables. You will find all of them, except FLOW_MOUNT_PATH in 
-  [Flow console](https://console.flow.io/org_account_name/organization/integrations):
+- Define these additional ENV variables. 
+  - You will find FLOW_TOKEN, FLOW_ORGANIZATION and FLOW_BASE_COUNTRY in [Flow 
+  console](https://console.flow.io/org_account_name/organization/integrations)
+  - To enable HTTP Basic authentication for securing the FlowcommerceSpree::WebhooksController, prepend 
+    username:password@ to the hostname in your webhook URL. 
+    By doing so, the credentials needed for authentication will be sent in the HTTP header.
+    For example: https://username:password@www.mywebhookurl.com
+    On the main app's backend side, the `username` and `password` values should be defined in the 
+    FLOW_IO_WEBHOOK_USER and FLOW_IO_WEBHOOK_PASSWORD environment variables
 
     ```
     FLOW_TOKEN='SUPERsecretTOKEN' # API_KEY
@@ -29,7 +36,10 @@ All flowcommerce_spree code is located in the ./app and ./lib folders.
     FLOW_BASE_COUNTRY='usa'
     # The path to which the FlowcommerceSpree engine will be mounted (default, if this variable is missing, will be the 
     # '/flow' path)
-    FLOW_MOUNT_PATH='/flow' 
+    FLOW_MOUNT_PATH='/flow'
+    # The following variables should be set for securing the FlowcommerceSpree::WebhooksControler
+    FLOW_IO_WEBHOOK_USER
+    FLOW_IO_WEBHOOK_PASSWORD
     ```
 
 - To enable payments with the FlowCommerce engine, the payment method `flow.io` with `Spree::Gateway::FlowIo` should be 
@@ -86,7 +96,9 @@ being used, depending on the level of modification.
 
 ### Spree::Gateway::FlowIo
 
-Adapter for Spree, that allows using [Flow.io](https://www.flow.io) as payment gateway. Flow is PCI compliant payment processor.
+Adapter for Spree, that allows using [Flow.io](https://www.flow.io) as payment gateway. 
+Flow is PCI compliant payment processor.
+
 
 ## Gem Maintenance
 
@@ -129,11 +141,28 @@ by the following command:
 gem build flowcommerce_spree.gemspec
 ```
 
-Asuming the version was set to `0.0.1`, a `flowcommerce_spree-0.0.1.gem` will be generated at the root of the app 
-(repo).
+Assuming the version was set to `0.0.1`, 
+a `flowcommerce_spree-0.0.1.gem` binary file will be generated at the root of the app (repo).
+
+- The binary file shouldn't be added into the `git` tree, it will be pushed into the RubyGems and to the GitHub releases
 
 ### Pushing a new gem release to RubyGems
 
 ```
 gem push flowcommerce_spree-0.0.1.gem # don't forget to specify the correct version number
 ```
+
+### Crafting the new release on GitHub
+
+On the [Releases page](https://github.com/mejuri-inc/flowcommerce_spree/releases) push the `Draft a new release` button.
+
+The new release editing page opens, on which the following actions could be taken:
+
+- Choose the repo branch (default is `main`)
+- Insert a tag version (usually, the tag should correspond to the gem's new version, v0.0.1, for example)
+    - the tag will be created by GitHub on the last commit into the chosen branch
+- Fill the release Title and Description
+- Attach the binary file with the generated gem version
+- If the release is not yet ready for production, mark the `This is a pre-release` checkbox
+- Press either the `Publish release`, or the `Save draft button` if you want to publish it later
+    - After publishing the release, the the binary gem file will be available on GitHub and could be removed locally

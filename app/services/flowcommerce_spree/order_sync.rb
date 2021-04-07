@@ -2,57 +2,39 @@
 
 module FlowcommerceSpree
   # represents flow.io order syncing service
-  # for easy integration we are currently passing:
-  # - flow experience
-  # - spree order
-  # - current customer, if present as  @order.user
-  #
-  # example:
-  #  flow_order = FlowcommerceSpree::OrderSync.new    # init flow-order object
-  #    order: Spree::Order.last,
-  #    experience: @flow_session.experience
-  #    customer: @order.user
-  #  flow_order.build_flow_request           # builds json body to be posted to flow.io api
-  #  flow_order.synchronize!                 # sends order to flow
-  class OrderSync # rubocop:disable Metrics/ClassLength
+  class OrderSync
     FLOW_CENTER = 'default'
 
     attr_reader :order, :response
 
-    delegate :url_helpers, to: 'Rails.application.routes'
-
+    # @param [Object] order
+    # @param [String] flow_session_id
     def initialize(order:, flow_session_id:)
-      raise(ArgumentError, 'Experience not defined or not active') unless order.zone&.flow_io_active_experience?
+      raise(ArgumentError, 'Experience not defined or not active') unless order&.zone&.flow_io_active_experience?
 
       @experience = order.flow_io_experience_key
       @flow_session_id = flow_session_id
       @order = order
-      @client = FlowcommerceSpree.client(session_id: flow_session_id)
+      @client = FlowcommerceSpree.client(default_headers: { "Authorization": "Session #{flow_session_id}" },
+                                         authorization: nil)
     end
 
     # helper method to send complete order from Spree to flow.io
     def synchronize!
-      return unless @order.zone&.flow_io_active_experience? && @order.state == 'cart' && @order.line_items.size > 0
+      return unless @order.state == 'cart' && @order.line_items.size > 0
 
       sync_body!
-      write_response_in_cache
+      write_response_to_order
 
       @order.update_columns(total: @order.total, meta: @order.meta.to_json)
       refresh_checkout_token
-      @checkout_token
-    end
-
-    def error
-      @response['messages'].join(', ')
-    end
-
-    def error_code
-      @response['code']
     end
 
     def error?
       @response&.[]('code') && @response&.[]('messages') ? true : false
     end
+
+    private
 
     # builds object that can be sent to api.flow.io to sync order data
     def build_flow_request
@@ -71,24 +53,21 @@ module FlowcommerceSpree
       @body[:discount] = { amount: @order.adjustment_total, currency: @order.currency } if @order.adjustment_total != 0
     end
 
-    private
-
     def refresh_checkout_token
-      root_url = url_helpers.root_url
+      root_url = Rails.application.routes.url_helpers.root_url
       order_number = @order.number
       confirmation_url = "#{root_url}flow/order-completed?order=#{order_number}&t=#{@order.guest_token}"
-      @checkout_token = FlowcommerceSpree.client.checkout_tokens.post_checkout_and_tokens_by_organization(
-        FlowcommerceSpree::ORGANIZATION,
-        discriminator: 'checkout_token_reference_form',
-        order_number: order_number,
-        session_id: @flow_session_id,
-        urls: { continue_shopping: root_url,
-                confirmation: confirmation_url,
-                invalid_checkout: root_url }
-      )&.id
-
       @order.flow_io_attribute_add('flow_return_url', confirmation_url)
       @order.flow_io_attribute_add('checkout_continue_shopping_url', root_url)
+
+      FlowcommerceSpree.client.checkout_tokens.post_checkout_and_tokens_by_organization(
+        FlowcommerceSpree::ORGANIZATION, discriminator: 'checkout_token_reference_form',
+                                         order_number: order_number,
+                                         session_id: @flow_session_id,
+                                         urls: { continue_shopping: root_url,
+                                                 confirmation: confirmation_url,
+                                                 invalid_checkout: root_url }
+      )&.id
     end
 
     # if customer is defined, add customer info
@@ -100,13 +79,14 @@ module FlowcommerceSpree
       customer_ship_address = customer.ship_address
       address = customer_ship_address if customer_ship_address&.country&.iso3 == @order.zone.flow_io_experience_country
 
+      customer_profile = customer.user_profile
       unless address
-        user_profile_address = customer.user_profile&.address
+        user_profile_address = customer_profile&.address
         address = user_profile_address if user_profile_address&.country&.iso3 == @order.zone.flow_io_experience_country
       end
 
-      @body[:customer] = { name: { first: address&.firstname,
-                                   last: address&.lastname },
+      @body[:customer] = { name: { first: address&.firstname || customer_profile&.first_name,
+                                   last: address&.lastname || customer_profile&.last_name },
                            email: customer.email,
                            number: customer.flow_number,
                            phone: address&.phone }
@@ -116,14 +96,14 @@ module FlowcommerceSpree
 
     def add_customer_address(address)
       streets = []
-      streets.push address.address1 if address&.address1.present?
-      streets.push address.address2 if address&.address2.present?
+      streets.push address.address1 if address.address1.present?
+      streets.push address.address2 if address.address2.present?
 
       @body[:destination] = { streets: streets,
-                              city: address&.city,
-                              province: address&.state_name,
-                              postal: address&.zipcode,
-                              country: (address&.country&.iso3 || ''),
+                              city: address.city,
+                              province: address.state_name,
+                              postal: address.zipcode,
+                              country: (address.country&.iso3 || ''),
                               contact: @body[:customer] }
 
       @body[:destination].delete_if { |_k, v| v.nil? }
@@ -132,20 +112,8 @@ module FlowcommerceSpree
     def sync_body!
       build_flow_request
 
-      @use_get = false
-
-      # use get if order is completed and closed
-      @use_get = true if @order.flow_data.dig('order', 'submitted_at').present? || @order.state == 'complete'
-
-      # do not use get if there is no local order cache
-      @use_get = false unless @order.flow_data['order']
-
-      if @use_get
-        @response ||= @client.orders.get_by_number(ORGANIZATION, @order.number).to_hash
-      else
-        @response = @client.orders.put_by_number(ORGANIZATION, @order.number,
-                                                 Io::Flow::V0::Models::OrderPutForm.new(@body), @opts).to_hash
-      end
+      @response = @client.orders.put_by_number(ORGANIZATION, @order.number,
+                                               Io::Flow::V0::Models::OrderPutForm.new(@body), @opts).to_hash
     end
 
     def add_item(line_item)
@@ -160,23 +128,12 @@ module FlowcommerceSpree
                  currency: price_root['currency'] || variant.cost_currency } }
     end
 
-    # set cache for total order amount
-    # written in flow_data field inside spree_orders table
-    def write_response_in_cache
-      if !@response || error?
-        @order.flow_data.delete('order')
-      else
-        response_total = @response[:total]
-        response_total_label = response_total&.[](:label)
-        cache_total = @order.flow_data.dig('order', 'total', 'label')
+    def write_response_to_order
+      return @order.flow_data.delete('order') if !@response || error?
 
-        # return if total is not changed, no products removed or added
-        return if @use_get && response_total_label == cache_total
-
-        # update local order
-        @order.total = response_total&.[](:amount)
-        @order.flow_data.merge!('order' => @response)
-      end
+      # update local order
+      @order.total = @response[:total]&.[](:amount)
+      @order.flow_data.merge!('order' => @response)
     end
   end
 end

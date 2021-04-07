@@ -23,6 +23,12 @@ module Spree
       flow_data&.[]('order')
     end
 
+    def flow_order_with_payments?
+      payment = payments.completed.first
+
+      payment&.payment_method&.type == 'Spree::Gateway::FlowIo'
+    end
+
     # accepts line item, usually called from views
     def flow_line_item_price(line_item, total = false)
       result = if (order = flow_order)
@@ -42,56 +48,9 @@ module Spree
       result
     end
 
-    # prepares array of prices that can be easily renderd in templates
-    def flow_cart_breakdown
-      prices = []
-
-      price_model = Struct.new(:name, :label)
-
-      if flow_order
-        # duty, vat, ...
-        unless flow_order.prices
-          message = Flow::Error.format_order_message flow_order
-          raise Flow::Error, message
-        end
-
-        flow_order.prices.each do |price|
-          prices.push price_model.new(price['name'], price['label'])
-        end
-      else
-        price_elements =
-          %i[item_total adjustment_total included_tax_total additional_tax_total tax_total shipment_total promo_total]
-        price_elements.each do |el|
-          price = send(el)
-          if price > 0
-            label = FlowcommerceSpree::Api.format_default_price price
-            prices.push price_model.new(el.to_s.humanize.capitalize, label)
-          end
-        end
-
-        # discount is applied and we allways show it in default currency
-        if adjustment_total != 0
-          formated_discounted_price = FlowcommerceSpree::Api.format_default_price adjustment_total
-          prices.push price_model.new('Discount', formated_discounted_price)
-        end
-      end
-
-      # total
-      prices.push price_model.new(Spree.t(:total), flow_total)
-
-      prices
-    end
-
     # shows localized total, if possible. if not, fall back to Spree default
     def flow_io_total_amount
-      flow_data&.dig('order', 'total', 'amount')&.to_d
-    end
-
-    def flow_experience
-      model = Struct.new(:key)
-      model.new flow_order.experience.key
-    rescue StandardError => _e
-      model.new ENV.fetch('FLOW_BASE_COUNTRY')
+      flow_data&.dig('order', 'total', 'amount')&.to_d || 0
     end
 
     def flow_io_experience_key
@@ -135,25 +94,19 @@ module Spree
       flow_data&.[]('captures')&.each do |c|
         next if c['status'] != 'succeeded'
 
-        captures_sum += c['amount']
+        amount = c['amount']
+        amount = amount.to_d if amount.is_a?(String)
+        captures_sum += amount
       end
       captures_sum.to_d
     end
 
     def flow_io_balance_amount
-      flow_data&.dig('order', 'balance', 'amount')&.to_d
+      flow_data&.dig('order', 'balance', 'amount')&.to_d || 0
     end
 
     def flow_io_payments
       flow_data.dig('order', 'payments')
-    end
-
-    def flow_payment_method
-      if flow_data['payment_type'] == 'paypal'
-        'paypal'
-      else
-        'cc' # creait card is default
-      end
     end
 
     def flow_customer_email
