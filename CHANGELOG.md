@@ -1,5 +1,22 @@
 # Changelog
 
+## [v0.0.5](https://github.com/mejuri-inc/flowcommerce_spree/tree/v0.0.5) (2021-04-07)
+
+[Full Changelog](https://github.com/mejuri-inc/flowcommerce_spree/compare/v0.0.4...v0.0.5)
+
+**Merged pull requests:**
+
+- Flow Phase 4 release [\#38](https://github.com/mejuri-inc/flowcommerce_spree/pull/38) ([sebastiandl](https://github.com/sebastiandl))
+- \[DL-276\] Adding charge\_default and lower\_boundary to the shipping FlowIo calculator [\#37](https://github.com/mejuri-inc/flowcommerce_spree/pull/37) ([sebastiandl](https://github.com/sebastiandl))
+- \[DL-80\] CardAuthorizationUpsertedV2 specs [\#36](https://github.com/mejuri-inc/flowcommerce_spree/pull/36) ([texpert](https://github.com/texpert))
+- \[DL-255\] Small code improvement to avoid synchronization of products when country\_of\_origin is not present [\#35](https://github.com/mejuri-inc/flowcommerce_spree/pull/35) ([sebastiandl](https://github.com/sebastiandl))
+- \[DL-80\] Capture\_upserted\_v2 webhook event handler specs and polishing [\#34](https://github.com/mejuri-inc/flowcommerce_spree/pull/34) ([texpert](https://github.com/texpert))
+- \[NOTICKET\] Removing code related to leftovers of default\_request\_ip\_address Spree preference [\#33](https://github.com/mejuri-inc/flowcommerce_spree/pull/33) ([sebastiandl](https://github.com/sebastiandl))
+- \[DL-77\] Webhooks security [\#31](https://github.com/mejuri-inc/flowcommerce_spree/pull/31) ([texpert](https://github.com/texpert))
+- \[DL-72\] Adding some texts within Order's side bar and order's prices to link the user to Flow [\#29](https://github.com/mejuri-inc/flowcommerce_spree/pull/29) ([sebastiandl](https://github.com/sebastiandl))
+- \[TEC-4443\] Adding flow\_order? validation method that will help identifying if order is associated to flow. [\#28](https://github.com/mejuri-inc/flowcommerce_spree/pull/28) ([sebastiandl](https://github.com/sebastiandl))
+- \[TEC-4931\] Add test coverage to OrderSync, OrderUpdater, code cleanup [\#27](https://github.com/mejuri-inc/flowcommerce_spree/pull/27) ([texpert](https://github.com/texpert))
+
 ## [v0.0.4](https://github.com/mejuri-inc/flowcommerce_spree/tree/v0.0.4) (2021-03-16)
 
 [Full Changelog](https://github.com/mejuri-inc/flowcommerce_spree/compare/v0.0.3...v0.0.4)
@@ -35,7 +52,7 @@
 
 ## [v0.0.1](https://github.com/mejuri-inc/flowcommerce_spree/tree/v0.0.1) (2021-02-03)
 
-[Full Changelog](https://github.com/mejuri-inc/flowcommerce_spree/compare/b9071fa9cdf3afd5de85ff97de7141cdf5250419...v0.0.1)
+[Full Changelog](https://github.com/mejuri-inc/flowcommerce_spree/compare/8376622c8175de74c6b30ae88b42a35b34b64598...v0.0.1)
 
 **Merged pull requests:**
 
