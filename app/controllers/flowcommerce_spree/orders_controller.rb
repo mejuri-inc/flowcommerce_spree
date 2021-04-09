@@ -9,7 +9,9 @@ module FlowcommerceSpree
     # proxy enpoint between flow and thankyou page.
     # /flow/order_completed endpoint
     def order_completed
-      flow_updater = FlowcommerceSpree::OrderUpdater.new(order: current_order)
+      order = Spree::Order.find_by number: params[:order], guest_token: params[:t]
+
+      flow_updater = FlowcommerceSpree::OrderUpdater.new(order: order)
       flow_updater.complete_checkout
 
       redirect_to "/thankyou?order=#{params[:order]}&t=#{params[:t]}"

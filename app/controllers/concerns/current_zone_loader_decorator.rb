@@ -7,11 +7,13 @@ CurrentZoneLoader.module_eval do
     return @current_zone if defined?(@current_zone)
 
     @current_zone = if (session_region_name = session['region']&.[]('name'))
-                      Spree::Zones::Product.find_by(name: session_region_name)
-                    elsif request_iso_code.present?
-                      @current_zone = flow_zone
-                      @current_zone ||= Spree::Country.find_by(iso: request_iso_code)&.product_zones&.active&.first
+                      Spree::Zones::Product.find_by(name: session_region_name, status: 'active')
                     end
+
+    @current_zone ||= if request_iso_code.present?
+                        @current_zone = flow_zone
+                        @current_zone ||= Spree::Country.find_by(iso: request_iso_code)&.product_zones&.active&.first
+                      end
 
     @current_zone ||= Spree::Zones::Product.find_by(name: 'International') ||
                       Spree::Zones::Product.new(name: 'International', taxon_ids: [], currencies: %w[USD CAD])
