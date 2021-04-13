@@ -1,5 +1,13 @@
 # Changelog
 
+## [v0.0.6](https://github.com/mejuri-inc/flowcommerce_spree/tree/v0.0.6) (2021-04-13)
+
+[Full Changelog](https://github.com/mejuri-inc/flowcommerce_spree/compare/v0.0.5...v0.0.6)
+
+**Merged pull requests:**
+
+- \[DL-67\] Small change on current\_zone\_loader module to only load active zones for Flow [\#39](https://github.com/mejuri-inc/flowcommerce_spree/pull/39) ([sebastiandl](https://github.com/sebastiandl))
+
 ## [v0.0.5](https://github.com/mejuri-inc/flowcommerce_spree/tree/v0.0.5) (2021-04-07)
 
 [Full Changelog](https://github.com/mejuri-inc/flowcommerce_spree/compare/v0.0.4...v0.0.5)
