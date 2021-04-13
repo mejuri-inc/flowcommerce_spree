@@ -28,6 +28,10 @@ module Spree
         flow_data&.[]('key').present? && flow_data['status'] == 'active'
       end
 
+      def flow_io_active_or_archiving_experience?
+        flow_data&.[]('key').present? && %w[active archiving].include?(flow_data['status'])
+      end
+
       def update_on_flow; end
 
       def remove_on_flow_io
