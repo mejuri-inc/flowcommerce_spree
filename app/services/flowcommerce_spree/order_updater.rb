@@ -3,7 +3,9 @@
 module FlowcommerceSpree
   class OrderUpdater
     def initialize(order:)
-      raise(ArgumentError, 'Experience not defined or not active') unless order&.zone&.flow_io_active_or_archiving_experience?
+      unless order&.zone&.flow_io_active_or_archiving_experience?
+        raise(ArgumentError, 'Experience not defined or not active')
+      end
 
       @experience = order.flow_io_experience_key
       @order = order
