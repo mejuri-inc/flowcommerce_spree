@@ -31,16 +31,9 @@ CurrentZoneLoader.module_eval do
                                        .where("meta -> 'flow_data' ->> 'country' = ?",
                                               ISO3166::Country[request_iso_code]&.alpha3).exists?
 
-    request_ip = if Rails.env.production?
-                   request.ip
-                 else
-                   Spree::Config[:debug_request_ip_address] || request.ip
-                   # Germany ip: 85.214.132.117, Sweden ip: 62.20.0.196, Moldova ip: 89.41.76.29
-                 end
-
     # This will issue a session creation request to flow.io. The response will contain the Flow Experience key and
     # the session_id
-    flow_io_session = FlowcommerceSpree::Session.create(ip: request_ip, visitor: visitor_id_for_flow_io)
+    flow_io_session = FlowcommerceSpree::Session.create(country: request_iso_code, visitor: visitor_id_for_flow_io)
 
     if (zone = Spree::Zones::Product.active.find_by(name: flow_io_session.experience&.key&.titleize))
       session['flow_session_id'] = flow_io_session.id

@@ -5,16 +5,14 @@ module FlowcommerceSpree
   class Session
     attr_accessor :session, :localized, :visitor
 
-    def self.create(ip:, visitor:, experience: nil)
-      instance = new(ip: ip, visitor: visitor, experience: experience)
+    def self.create(country:, visitor:, experience: nil)
+      instance = new(country: country, visitor: visitor, experience: experience)
       instance.create
       instance
     end
 
-    def initialize(ip:, visitor:, experience: nil)
-      ip = '127.0.0.1' if ip == '::1'
-
-      @ip      = ip
+    def initialize(country:, visitor:, experience: nil)
+      @country = country
       @visitor = visitor
       @experience = experience
     end
@@ -22,7 +20,7 @@ module FlowcommerceSpree
     # create session without or with experience (the latter is useful for creating a new session with the order's
     # experience on refreshing the checkout_token)
     def create
-      data = { ip: @ip,
+      data = { country: @country,
                visit: { id: @visitor,
                         expires_at: (Time.now + 30.minutes).iso8601 } }
       data[:experience] = @experience if @experience
