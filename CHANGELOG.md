@@ -1,5 +1,14 @@
 # Changelog
 
+## [v0.0.7](https://github.com/mejuri-inc/flowcommerce_spree/tree/v0.0.7) (2021-04-16)
+
+[Full Changelog](https://github.com/mejuri-inc/flowcommerce_spree/compare/v0.0.6...v0.0.7)
+
+**Merged pull requests:**
+
+- Flow Phase 4 release - small fix [\#42](https://github.com/mejuri-inc/flowcommerce_spree/pull/42) ([sebastiandl](https://github.com/sebastiandl))
+- \[DL-321\] Changing Session creation strategy to use country ISO code instead of request IP [\#41](https://github.com/mejuri-inc/flowcommerce_spree/pull/41) ([sebastiandl](https://github.com/sebastiandl))
+
 ## [v0.0.6](https://github.com/mejuri-inc/flowcommerce_spree/tree/v0.0.6) (2021-04-13)
 
 [Full Changelog](https://github.com/mejuri-inc/flowcommerce_spree/compare/v0.0.5...v0.0.6)
@@ -60,7 +69,7 @@
 
 ## [v0.0.1](https://github.com/mejuri-inc/flowcommerce_spree/tree/v0.0.1) (2021-02-03)
 
-[Full Changelog](https://github.com/mejuri-inc/flowcommerce_spree/compare/8376622c8175de74c6b30ae88b42a35b34b64598...v0.0.1)
+[Full Changelog](https://github.com/mejuri-inc/flowcommerce_spree/compare/b9071fa9cdf3afd5de85ff97de7141cdf5250419...v0.0.1)
 
 **Merged pull requests:**
 
