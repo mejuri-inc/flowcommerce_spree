@@ -39,13 +39,20 @@ RSpec.describe Spree::Calculator::FlowIo, type: :model do
 
           context 'when flow returns successfull allocation information' do
             let(:stubed_response) { flow_example_allocation(order.number, line_item.variant.sku, stubed_amount) }
-
-            it 'returns amount from flow_io for line_item or shipment' do
+            before(:each) do
               allow_any_instance_of(Io::Flow::V0::Clients::Orders).to(receive(:get_allocations_by_number)
                                                                       .and_return(stubed_response))
+            end
+
+            it 'returns amount from flow_io for line_item or shipment' do
               [line_item, shipment].each do |item|
                 expect(subject.compute(item)).to(eq(stubed_amount))
               end
+            end
+
+            it 'stores allocations data within flow_order data' do
+              expect(subject.compute(line_item)).to(eq(stubed_amount))
+              expect(order.reload.flow_order['allocations']).to(match(stubed_response.as_json))
             end
           end
 
