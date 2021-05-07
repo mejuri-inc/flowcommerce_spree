@@ -50,15 +50,16 @@ module Spree
     end
 
     # upload product variant to Flow's Product Catalog
-    def sync_product_to_flow
+    def sync_product_to_flow(force_sync = false)
       # initial Spree seed will fail, so skip unless we have Flow data field
       return unless respond_to?(:flow_data)
 
       return if FlowcommerceSpree::API_KEY.blank? || FlowcommerceSpree::API_KEY == 'test_key'
 
-      return { error: 'Price is 0' } if price == 0
-
-      return unless country_of_origin
+      unless force_sync
+        return { error: 'Price is 0' } if price == 0
+        return { error: 'Country of Origin is empty.' } unless country_of_origin
+      end
 
       additional_attrs = {}
       attr_name = nil
