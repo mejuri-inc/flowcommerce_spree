@@ -11,8 +11,8 @@ module Spree
         order = item.order
 
         if can_calculate_tax?(order)
-          flow_response = get_flow_tax_data(order)
-          tax_for_item(item, flow_response)
+          get_flow_tax_data(order)
+          tax_for_item(item)
         else
           prev_tax_amount(item)
         end
@@ -22,9 +22,9 @@ module Spree
 
       def get_tax_rate(taxable)
         order = taxable.class.to_s == 'Spree::Order' ? taxable : taxable.order
-        flow_response = get_flow_tax_data(order)
-        response = tax_data_for_item(taxable.adjustable, flow_response)
-        response.nil? ? 0 : response&.rate&.to_f
+        get_flow_tax_data(order) if order.flow_allocations.empty?
+        response = order.flow_tax_for_item(taxable.adjustable, 'vat_item_price', rate.included_in_price)
+        response.nil? ? 0 : response['rate']&.to_f
       end
 
       private
@@ -56,24 +56,15 @@ module Spree
         flow_io_tax_response
       end
 
-      def tax_data_for_item(item, tax_key, flow_response)
-        item_details = flow_response.details&.find do |el|
-          item.is_a?(Spree::LineItem) ? el.number == item.variant.sku : el.key.value == 'shipping'
-        end
-        price_components = rate.included_in_price ? item_details.included : item_details.not_included
-
-        price_components&.find { |el| el.key.value == tax_key }
-      end
-
-      def tax_for_item(item, flow_response)
+      def tax_for_item(item)
+        order = item.order
         prev_tax_amount = prev_tax_amount(item)
-        return prev_tax_amount if flow_response.nil?
+        tax_data = order.flow_tax_for_item(item, 'vat_item_price', rate.included_in_price)
+        return prev_tax_amount if tax_data.blank?
 
-        tax_data = tax_data_for_item(item, 'vat_item_price', flow_response)
-        subsidy_data = tax_data_for_item(item, 'vat_subsidy', flow_response)
-        amount = tax_data&.total&.amount
-        amount -= subsidy_data&.total&.amount if subsidy_data.present?
-
+        subsidy_data = order.flow_tax_for_item(item, 'vat_subsidy', rate.included_in_price)
+        amount = tax_data.dig('total', 'amount')
+        amount += subsidy_data.dig('total', 'amount') if subsidy_data.present?
         amount.present? && amount > 0 ? amount : prev_tax_amount
       end
     end
