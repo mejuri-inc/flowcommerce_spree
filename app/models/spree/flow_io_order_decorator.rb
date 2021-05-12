@@ -170,6 +170,8 @@ module Spree
       item_details = flow_allocations['details']&.find do |el|
         item.is_a?(Spree::LineItem) ? el['number'] == item.variant.sku : el['key'] == 'shipping'
       end
+      return {} if item_details.blank?
+
       price_components = included_in_price ? item_details['included'] : item_details['not_included']
       price_components&.find { |el| el['key'] == tax_key }
     end

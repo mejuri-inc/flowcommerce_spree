@@ -46,7 +46,8 @@ module Spree
 
       def get_flow_tax_data(order)
         flow_io_tax_response = Rails.cache.fetch(order.flow_tax_cache_key, time_to_idle: 5.minutes) do
-          response = FlowcommerceSpree.client.orders.get_allocations_by_number(FlowcommerceSpree::ORGANIZATION, order.number)
+          response = FlowcommerceSpree.client.orders
+                                      .get_allocations_by_number(FlowcommerceSpree::ORGANIZATION, order.number)
           return nil unless response.present?
 
           order.flow_order['allocations'] = response.to_hash
