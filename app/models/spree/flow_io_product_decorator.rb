@@ -7,6 +7,7 @@ module Spree
       base.serialize :meta, ActiveRecord::Coders::JSON.new(symbolize_keys: true)
 
       base.store_accessor :meta, :flow_data, :zone_ids
+      base.after_save :sync_variants_with_flow
     end
 
     def price_in_zone(currency, product_zone)
@@ -84,6 +85,20 @@ module Spree
 
       prices[currency] = { min: rmin, max: rmax }
       prices
+    end
+
+    def adjust_zone(zone)
+      self.zone_ids ||= []
+      zone_id_string = zone.id.to_s
+      return if zone_ids.include?(zone_id_string)
+
+      self.zone_ids << zone_id_string
+      self.zone_ids = zone_ids
+      update_columns(meta: meta.to_json)
+    end
+
+    def sync_variants_with_flow
+      variants.each(&:sync_product_to_flow)
     end
 
     Spree::Product.prepend(self) if Spree::Product.included_modules.exclude?(self)
