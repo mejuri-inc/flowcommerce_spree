@@ -11,7 +11,7 @@ module Spree
       base.store_accessor :meta, :flow_data
 
       # after every save we sync product we generate sh1 checksums to update only when change happend
-      base.after_save :sync_product_to_flow
+      base.after_commit :sync_product_to_flow
     end
 
     def experiences
@@ -84,7 +84,7 @@ module Spree
       flow_item_sh1 = Digest::SHA1.hexdigest(flow_item.to_json)
 
       # skip if sync not needed
-      return nil if flow_data&.[](:last_sync_sh1) == flow_item_sh1
+      return { error: 'Synchronization not needed' } if flow_data&.[](:last_sync_sh1) == flow_item_sh1
 
       response = FlowcommerceSpree.client.items.put_by_number(FlowcommerceSpree::ORGANIZATION, sku, flow_item)
       self.flow_data ||= {}
