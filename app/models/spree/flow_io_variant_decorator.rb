@@ -11,7 +11,7 @@ module Spree
       base.store_accessor :meta, :flow_data
 
       # after every save we sync product we generate sh1 checksums to update only when change happend
-      base.after_commit :sync_product_to_flow
+      base.after_save :sync_product_to_flow
     end
 
     def experiences
