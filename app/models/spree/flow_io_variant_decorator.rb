@@ -93,8 +93,6 @@ module Spree
       # after successful put, write cache
       update_column(:meta, meta.to_json)
 
-      FlowcommerceSpree::ImportItem.run(self)
-
       response
     rescue Net::OpenTimeout => e
       { error: e.message }

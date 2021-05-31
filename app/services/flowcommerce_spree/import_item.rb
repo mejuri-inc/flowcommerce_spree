@@ -27,8 +27,9 @@ module FlowcommerceSpree
     end
 
     def import_data(zone)
+      experience_key = zone.flow_io_experience
       item = begin
-               @client.experiences.get_items_by_number(@organization, @variant.sku, experience: zone.flow_io_experience)
+               @client.experiences.get_items_by_number(@organization, @variant.sku, experience: experience_key)
              rescue Io::Flow::V0::HttpClient::PreconditionException => e
                @logger.info "flow.io API error: #{e.message}"
              end
@@ -41,7 +42,7 @@ module FlowcommerceSpree
 
       @variant.flow_import_item(item_hash, experience_key: @experience_key)
 
-      @logger.info "[#{@variant.sku} - #{@experience_key}] Variant experience imported successfully."
+      @logger.info "[#{@variant.sku} - #{experience_key}] Variant experience imported successfully."
     end
   end
 end

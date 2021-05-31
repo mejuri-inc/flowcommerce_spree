@@ -98,7 +98,7 @@ module Spree
     end
 
     def sync_variants_with_flow
-      variants.each(&:sync_product_to_flow)
+      variants_including_master.each(&:sync_product_to_flow)
     end
 
     Spree::Product.prepend(self) if Spree::Product.included_modules.exclude?(self)
