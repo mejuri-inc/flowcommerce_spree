@@ -93,7 +93,7 @@ module Spree
       # after successful put, write cache
       update_column(:meta, meta.to_json)
 
-      ImportItemWorker.perform_async(self)
+      FlowcommerceSpree::ImportItemWorker.perform_async(sku)
 
       response
     rescue Net::OpenTimeout => e
