@@ -14,10 +14,12 @@ group :development, :test do
   gem 'rubocop-performance', '1.5.2', require: false
   gem 'rubocop-rails', '2.5.2', require: false
   gem 'rubocop-rspec', '1.38.1', require: false
+  gem 'sidekiq', '~> 4.0', '>= 4.0.2'
 end
 
 group :test do
   gem 'database_cleaner'
   gem 'rspec-mocks', git: 'https://github.com/mejuri-inc/rspec-mocks'
+  gem 'rspec-sidekiq'
   gem 'simplecov', require: false
 end
