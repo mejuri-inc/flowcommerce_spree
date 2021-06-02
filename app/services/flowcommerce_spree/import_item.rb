@@ -30,7 +30,7 @@ module FlowcommerceSpree
       experience_key = zone.flow_io_experience
       item = begin
                @client.experiences.get_items_by_number(@organization, @variant.sku, experience: experience_key)
-             rescue Io::Flow::V0::HttpClient::PreconditionException => e
+             rescue Io::Flow::V0::HttpClient::PreconditionException, Io::Flow::V0::HttpClient::ServerError => e
                @logger.info "flow.io API error: #{e.message}"
              end
       return unless item
