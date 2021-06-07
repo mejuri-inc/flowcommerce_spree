@@ -7,7 +7,7 @@ module FlowcommerceSpree
       new(zone, client: client, organization: organization).run
     end
 
-    def run # rubocop:disable Metrics/AbcSize, Metrics/MethodLength
+    def run
       page_size  = 100
       offset     = 0
       items      = []
@@ -38,7 +38,7 @@ module FlowcommerceSpree
           if status_in_experience != 'included'
             log_str << "[#{status_in_experience.red}]:"
           else # If at least a variant is included in experience, include the product too
-            variant.product&.adjust_zone(zone)
+            adjust_product_zone(variant)
           end
 
           variant.flow_import_item(item_hash, experience_key: @experience_key)
@@ -59,6 +59,18 @@ module FlowcommerceSpree
       @logger = client.instance_variable_get(:@http_handler).logger
       @organization = organization
       @zone = zone
+    end
+
+    def adjust_product_zone(variant)
+      return unless (product = variant.product)
+
+      zone_ids = product.zone_ids || []
+      zone_id_string = @zone.id.to_s
+      return if zone_ids.include?(zone_id_string)
+
+      zone_ids << zone_id_string
+      product.zone_ids = zone_ids
+      product.update_columns(meta: product.meta.to_json)
     end
   end
 end

@@ -36,9 +36,6 @@ module FlowcommerceSpree
       return unless item
 
       item_hash = item.to_hash
-      status_in_experience = item_hash.dig(:local, :status)
-
-      @variant.product&.adjust_zone(zone) unless status_in_experience == 'included'
 
       @variant.flow_import_item(item_hash, experience_key: @experience_key)
 

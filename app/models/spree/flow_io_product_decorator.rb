@@ -87,16 +87,6 @@ module Spree
       prices
     end
 
-    def adjust_zone(zone)
-      self.zone_ids ||= []
-      zone_id_string = zone.id.to_s
-      return if zone_ids.include?(zone_id_string)
-
-      self.zone_ids << zone_id_string
-      self.zone_ids = zone_ids
-      update_columns(meta: meta.to_json)
-    end
-
     def sync_variants_with_flow
       variants_including_master.each(&:sync_product_to_flow)
     end
