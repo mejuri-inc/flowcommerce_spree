@@ -39,7 +39,7 @@ module FlowcommerceSpree
 
       @variant.flow_import_item(item_hash, experience_key: @experience_key)
 
-      @logger.info "[#{@variant.sku} - #{experience_key}] Variant experience imported successfully."
+      @logger.info "[#{@variant.sku}][#{experience_key}] Variant experience imported successfully."
     end
   end
 end
