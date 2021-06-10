@@ -10,7 +10,7 @@ RSpec.describe FlowcommerceSpree::ImportItem do
     allow(FlowcommerceSpree::ImportItem).to(receive(:run).and_call_original)
   end
 
-  context 'when there are no  active experiences' do
+  context 'when there are no active experiences' do
     before(:each) do
       allow_any_instance_of(Io::Flow::V0::Clients::Experiences).to(receive(:get).and_return([]))
     end
@@ -40,12 +40,11 @@ RSpec.describe FlowcommerceSpree::ImportItem do
     end
 
     context 'when there is an Spree::Zone' do
-      before(:each) { create(:germany_zone) }
+      before(:each) { create(:germany_zone, :with_flow_data) }
 
       it 'stores variant information from Flow' do
-        expect(variant).to(receive(:flow_import_item).and_call_original).once
+        expect(variant).to(receive(:flow_import_item)).once
         subject.run(variant)
-        expect(variant.reload.flow_data).to(be_present)
       end
     end
   end
