@@ -93,4 +93,36 @@ RSpec.describe Spree::Order, type: :model do
       end
     end
   end
+
+  describe '#flow_tax_for_item' do
+    let(:order) { create(:order_with_line_items) }
+    let(:line_item) { order.line_items.first }
+    let(:stubed_allocations_details) { build(:flow_allocation_line_detail, number: line_item.sku) }
+    let(:stubed_order_details) { build(:flow_allocation_order_detail) }
+    let(:stubed_allocations_response) do
+      build(:flow_allocation, details: [stubed_allocations_details, stubed_order_details])
+    end
+    let(:stubed_price) { stubed_allocations_details.included.first.price.amount }
+
+    context 'when no flow_allocations is present' do
+      it 'returns blank response' do
+        allow(order).to(receive(:flow_allocations).and_return(nil))
+        expect(order.__send__(:flow_tax_for_item, line_item, 'vat_item_price')).to(be_blank)
+      end
+    end
+
+    context 'when flow_allocations is present' do
+      before(:each) do
+        allow(order).to(receive(:flow_allocations).and_return(stubed_allocations_response.as_json))
+      end
+
+      it 'returns tax information for selected item' do
+        expect(order.__send__(:flow_tax_for_item, line_item, 'vat_item_price')).to(be_present)
+      end
+
+      it 'returns blank response when no key is present' do
+        expect(order.__send__(:flow_tax_for_item, line_item, 'vat_subsidy')).to(be_blank)
+      end
+    end
+  end
 end

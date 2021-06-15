@@ -158,6 +158,24 @@ module Spree
       address_attributes
     end
 
+    def flow_allocations
+      return @flow_allocations if @flow_allocations
+
+      @flow_allocations = flow_order&.[]('allocations')
+    end
+
+    def flow_tax_for_item(item, tax_key, included_in_price = true)
+      return {} if flow_allocations.blank?
+
+      item_details = flow_allocations['details']&.find do |el|
+        item.is_a?(Spree::LineItem) ? el['number'] == item.variant.sku : el['key'] == 'shipping'
+      end
+      return {} if item_details.blank?
+
+      price_components = included_in_price ? item_details['included'] : item_details['not_included']
+      price_components&.find { |el| el['key'] == tax_key }
+    end
+
     Spree::Order.include(self) if Spree::Order.included_modules.exclude?(self)
   end
 end

@@ -49,17 +49,23 @@ module Spree
       product.update_columns(meta: product.meta.to_json)
     end
 
+    def sync_flow_info?
+      if FlowcommerceSpree::API_KEY.blank? || FlowcommerceSpree::API_KEY == 'test_key'
+        return { error: 'Api Keys not configured' }
+      end
+      return { error: 'Price is 0' } if price == 0
+      return { error: 'Country of Origin is empty.' } unless country_of_origin
+    end
+
     # upload product variant to Flow's Product Catalog
     def sync_product_to_flow
-      # initial Spree seed will fail, so skip unless we have Flow data field
-      return unless respond_to?(:flow_data)
+      error = sync_flow_info?
+      return error if error.present?
 
-      return if FlowcommerceSpree::API_KEY.blank? || FlowcommerceSpree::API_KEY == 'test_key'
+      update_flow_data
+    end
 
-      return { error: 'Price is 0' } if price == 0
-
-      return unless country_of_origin
-
+    def update_flow_data
       additional_attrs = {}
       attr_name = nil
       export_required = false
