@@ -84,7 +84,7 @@ module Spree
       flow_item_sh1 = Digest::SHA1.hexdigest(flow_item.to_json)
 
       # skip if sync not needed
-      return nil if flow_data&.[](:last_sync_sh1) == flow_item_sh1
+      return { error: 'Synchronization not needed' } if flow_data&.[](:last_sync_sh1) == flow_item_sh1
 
       response = FlowcommerceSpree.client.items.put_by_number(FlowcommerceSpree::ORGANIZATION, sku, flow_item)
       self.flow_data ||= {}
@@ -92,6 +92,8 @@ module Spree
 
       # after successful put, write cache
       update_column(:meta, meta.to_json)
+
+      FlowcommerceSpree::ImportItemWorker.perform_async(sku)
 
       response
     rescue Net::OpenTimeout => e
