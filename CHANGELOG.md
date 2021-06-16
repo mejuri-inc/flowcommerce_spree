@@ -1,8 +1,18 @@
 # Changelog
 
-## [v0.0.7](https://github.com/mejuri-inc/flowcommerce_spree/tree/v0.0.7) (2021-04-16)
+## [v0.0.8](https://github.com/mejuri-inc/flowcommerce_spree/tree/v0.0.8) (2021-06-16)
 
-[Full Changelog](https://github.com/mejuri-inc/flowcommerce_spree/compare/v0.0.6...v0.0.7)
+[Full Changelog](https://github.com/mejuri-inc/flowcommerce_spree/compare/0.0.7...v0.0.8)
+
+**Merged pull requests:**
+
+- Preparing v0.0.8 release changes [\#46](https://github.com/mejuri-inc/flowcommerce_spree/pull/46) ([sebastiandl](https://github.com/sebastiandl))
+- \[DL-324\] Small code change to trigger Variant synchronization [\#45](https://github.com/mejuri-inc/flowcommerce_spree/pull/45) ([sebastiandl](https://github.com/sebastiandl))
+- \[DL-351\] Small change on FlowIo calculator to store allocations within order's flow data. [\#43](https://github.com/mejuri-inc/flowcommerce_spree/pull/43) ([sebastiandl](https://github.com/sebastiandl))
+
+## [0.0.7](https://github.com/mejuri-inc/flowcommerce_spree/tree/0.0.7) (2021-04-16)
+
+[Full Changelog](https://github.com/mejuri-inc/flowcommerce_spree/compare/v0.0.6...0.0.7)
 
 **Merged pull requests:**
 
