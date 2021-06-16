@@ -157,13 +157,23 @@ RSpec.describe Spree::Variant, type: :model do
         allow(variant).to(receive(:price).and_return(0))
         expect_any_instance_of(Io::Flow::V0::Clients::Items).not_to(receive(:put_by_number))
         variant.sync_product_to_flow
+        expect(FlowcommerceSpree::ImportItemWorker).not_to have_enqueued_sidekiq_job(variant.sku)
       end
     end
 
-    it 'syncrhroinzes data when all data is present' do
-      variant.product.update_column(:country_of_origin, 'TH')
-      expect_any_instance_of(Io::Flow::V0::Clients::Items).to(receive(:put_by_number))
-      variant.sync_product_to_flow
+    context 'when country_of_origin is present' do
+      before(:each) { variant.product.update_column(:country_of_origin, 'TH') }
+
+      it 'syncrhroinzes data when all data is present' do
+        expect_any_instance_of(Io::Flow::V0::Clients::Items).to(receive(:put_by_number))
+        variant.sync_product_to_flow
+      end
+
+      it 'schedules job to retrieve data from Flow' do
+        expect_any_instance_of(Io::Flow::V0::Clients::Items).to(receive(:put_by_number))
+        variant.sync_product_to_flow
+        expect(FlowcommerceSpree::ImportItemWorker).to have_enqueued_sidekiq_job(variant.sku)
+      end
     end
   end
 end
