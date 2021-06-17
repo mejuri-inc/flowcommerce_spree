@@ -21,7 +21,7 @@ module Spree
       end
 
       def payment_profiles_supported?
-        true
+        false
       end
 
       def method_type
@@ -43,14 +43,18 @@ module Spree
       end
 
       def refund(payment, amount, _options = {})
-        request_refund_store_result(payment.order, amount)
+        response = request_refund_store_result(payment.order, amount)
+        map_refund_to_payment(response, payment.order) if response.success?
+        response
       rescue StandardError => e
         ActiveMerchant::Billing::Response.new(false, e.to_s, {}, {})
       end
 
       def cancel(authorization)
         original_payment = Spree::Payment.find_by(response_code: authorization)
-        request_refund_store_result(original_payment.order, original_payment.amount)
+        response = request_refund_store_result(original_payment.order, original_payment.amount)
+        map_refund_to_payment(response, original_payment.order) if response.success?
+        response
       rescue StandardError => e
         ActiveMerchant::Billing::Response.new(false, e.to_s, {}, {})
       end
@@ -72,6 +76,12 @@ module Spree
         create_flow_cc_profile!
       end
 
+      def credit(payment, credit_amount)
+        request_refund_store_result(payment.order, credit_amount)
+      rescue StandardError => e
+        ActiveMerchant::Billing::Response.new(false, e.to_s, {}, {})
+      end
+
       private
 
       def request_refund_store_result(order, amount)
@@ -82,8 +92,10 @@ module Spree
         response_status = response.status.value
         if response_status == REFUND_SUCCESS
           add_refund_to_order(response, order)
-          map_refund_to_payment(response, order)
-          ActiveMerchant::Billing::Response.new(true, REFUND_SUCCESS, {}, {})
+          ActiveMerchant::Billing::Response.new(true,
+                                                REFUND_SUCCESS,
+                                                response.to_hash,
+                                                authorization: response.authorization.id)
         else
           msg = "Partial refund fail. Details: #{response_status}"
           ActiveMerchant::Billing::Response.new(false, msg, {}, {})
@@ -100,18 +112,18 @@ module Spree
       end
 
       def map_refund_to_payment(response, order)
-        original_payment = Spree::Payment.find_by(response_code: response.authorization.id)
+        original_payment = Spree::Payment.find_by(response_code: response.authorization)
         payment = order.payments.create!(state: 'completed',
-                                         response_code: response.authorization.id,
+                                         response_code: response.authorization,
                                          payment_method_id: original_payment&.payment_method_id,
-                                         amount: - response.amount,
+                                         amount: - response.params['amount'].to_f,
                                          source_id: original_payment&.source_id,
                                          source_type: original_payment&.source_type)
 
         # For now this additional update is overwriting the generated identifier with flow.io payment identifier.
         # TODO: Check and possibly refactor in Spree 3.0, where the `before_create :set_unique_identifier`
         # has been removed.
-        payment.update_column(:identifier, response.id)
+        payment.update_column(:identifier, response.params['id'])
       end
 
       # hard inject Flow as payment method unless defined
