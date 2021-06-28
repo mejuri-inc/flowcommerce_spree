@@ -117,8 +117,7 @@ module Spree
                                          response_code: response.authorization,
                                          payment_method_id: original_payment&.payment_method_id,
                                          amount: - response.params['amount'].to_f,
-                                         source_id: original_payment&.source_id,
-                                         source_type: original_payment&.source_type)
+                                         source: original_payment)
 
         # For now this additional update is overwriting the generated identifier with flow.io payment identifier.
         # TODO: Check and possibly refactor in Spree 3.0, where the `before_create :set_unique_identifier`
