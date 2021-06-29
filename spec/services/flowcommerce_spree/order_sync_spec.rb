@@ -88,7 +88,7 @@ RSpec.describe FlowcommerceSpree::OrderSync do
             let(:line_item) { order.line_items.first }
             let(:order_line_item) do
               { number: line_item.variant.sku,
-                price: { amount: line_item.variant.cost_price,
+                price: { amount: line_item.variant.price,
                          currency: line_item.variant.cost_currency },
                 center: FlowcommerceSpree::OrderSync::FLOW_CENTER,
                 quantity: order.line_items.size }
