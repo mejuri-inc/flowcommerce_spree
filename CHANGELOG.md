@@ -1,8 +1,18 @@
 # Changelog
 
-## [v0.0.8](https://github.com/mejuri-inc/flowcommerce_spree/tree/v0.0.8) (2021-06-16)
+## [v0.0.9](https://github.com/mejuri-inc/flowcommerce_spree/tree/v0.0.9) (2021-06-30)
 
-[Full Changelog](https://github.com/mejuri-inc/flowcommerce_spree/compare/0.0.7...v0.0.8)
+[Full Changelog](https://github.com/mejuri-inc/flowcommerce_spree/compare/v.0.0.8...v0.0.9)
+
+**Merged pull requests:**
+
+- Preparing the new v0.0.9 release [\#49](https://github.com/mejuri-inc/flowcommerce_spree/pull/49) ([sebastiandl](https://github.com/sebastiandl))
+- \[DL-517\] Updating OrderSync\#add\_item method to send variant price instead of cost\_price [\#48](https://github.com/mejuri-inc/flowcommerce_spree/pull/48) ([sebastiandl](https://github.com/sebastiandl))
+- \[DL-499\] Adding new credit method to FlowIo Gateway. [\#47](https://github.com/mejuri-inc/flowcommerce_spree/pull/47) ([sebastiandl](https://github.com/sebastiandl))
+
+## [v.0.0.8](https://github.com/mejuri-inc/flowcommerce_spree/tree/v.0.0.8) (2021-06-16)
+
+[Full Changelog](https://github.com/mejuri-inc/flowcommerce_spree/compare/0.0.7...v.0.0.8)
 
 **Merged pull requests:**
 
