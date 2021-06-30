@@ -124,7 +124,7 @@ module FlowcommerceSpree
       { center: FLOW_CENTER,
         number: variant.sku,
         quantity: line_item.quantity,
-        price: { amount: price_root['amount'] || variant.cost_price,
+        price: { amount: price_root['amount'] || variant.price,
                  currency: price_root['currency'] || variant.cost_currency } }
     end
 
