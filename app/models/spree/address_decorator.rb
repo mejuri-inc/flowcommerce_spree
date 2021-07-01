@@ -1,8 +1,6 @@
-# frozen_string_literal: true
-
 module Spree
-  Address.class_eval do
-    def prepare_from_flow_attributes(address_data)
+   Address.class_eval do
+      def prepare_from_flow_attributes(address_data)
       self.attributes = {
         first_name: address_data['first'],
         last_name: address_data['last'],
