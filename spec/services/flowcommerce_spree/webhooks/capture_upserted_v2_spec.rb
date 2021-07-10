@@ -157,7 +157,10 @@ RSpec.describe FlowcommerceSpree::Webhooks::CaptureUpsertedV2 do
                       let(:payment_amount) { capture.amount }
                       let!(:payment) do
                         create(:payment,
-                              order: order, payment_method_id: gateway.id, amount: payment_amount, response_code: order_auth.id)
+                               order: order,
+                               payment_method_id: gateway.id,
+                               amount: payment_amount,
+                               response_code: order_auth.id)
                       end
 
                       context 'and no Spree::PaymentCaptureEvent exists for this payment' do
@@ -254,7 +257,7 @@ RSpec.describe FlowcommerceSpree::Webhooks::CaptureUpsertedV2 do
       context 'when order has no payments assocaited' do
         it 'delays order capture' do
           instance.process
-          expect(FlowcommerceSpree::UpdatePaymentCapture).to have_enqueued_sidekiq_job(order.number, anything)
+          expect(FlowcommerceSpree::UpdatePaymentCaptureWorker).to have_enqueued_sidekiq_job(order.number, anything)
         end
       end
     end

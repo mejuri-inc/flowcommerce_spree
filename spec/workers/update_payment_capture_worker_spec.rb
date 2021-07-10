@@ -2,7 +2,7 @@
 
 require 'rails_helper'
 
-RSpec.describe FlowcommerceSpree::UpdatePaymentCapture, type: :worker do
+RSpec.describe FlowcommerceSpree::UpdatePaymentCaptureWorker, type: :worker do
   let(:gateway) { create(:flow_io_gateway) }
   let(:order) { create(:order) }
   subject(:job) { described_class.new }

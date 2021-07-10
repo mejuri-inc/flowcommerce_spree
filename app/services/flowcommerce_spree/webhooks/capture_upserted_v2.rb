@@ -25,7 +25,7 @@ module FlowcommerceSpree
           if order.payments.any?
             store_payment_capture(order, capture)
           else
-            FlowcommerceSpree::UpdatePaymentCapture.perform_in(1.minute, order.number, capture)
+            FlowcommerceSpree::UpdatePaymentCaptureWorker.perform_in(1.minute, order.number, capture)
             order
           end
         else
