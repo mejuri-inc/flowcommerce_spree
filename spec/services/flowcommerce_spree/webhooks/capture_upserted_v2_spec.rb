@@ -121,93 +121,108 @@ RSpec.describe FlowcommerceSpree::Webhooks::CaptureUpsertedV2 do
           expect(instance).to receive(:upsert_order_captures).with(order, data['capture'])
         end
 
-        context 'and the order contains no flow_io payments' do
-          it 'returns the Spree::Order with upserted captures, not mapping captures to Spree' do
-            expect(instance).not_to receive(:map_payment_captures_to_spree)
+        context 'when order has a payment assocaited' do
+          let!(:payment) { create(:payment, order: order, payment_method_id: gateway.id) }
 
-            result = instance.process
+          context 'and the order contains no flow_io payments' do
+            it 'returns the Spree::Order with upserted captures, not mapping captures to Spree' do
+              expect(instance).not_to receive(:map_payment_captures_to_spree)
 
-            expect_order_with_capture(result, 'succeeded')
+              result = instance.process
+
+              expect_order_with_capture(result, 'succeeded')
+            end
           end
-        end
 
-        context 'and the order contains flow_io payments' do
-          let(:flow_payment) { build(:flow_order_payment, reference: order_auth.id) }
-          let(:zone) { create(:germany_zone, :with_flow_data) }
+          context 'and the order contains flow_io payments' do
+            let(:flow_payment) { build(:flow_order_payment, reference: order_auth.id) }
+            let(:zone) { create(:germany_zone, :with_flow_data) }
+            let(:payment_amount) { capture.amount }
 
-          [Time.now.utc, nil].each do |timestamp|
-            context "and the order is #{timestamp ? 'completed' : 'not_completed'}" do
-              let(:order) { create(:order, zone: zone, completed_at: timestamp) }
-              let(:finalize) { timestamp ? false : true }
+            [Time.now.utc, nil].each do |timestamp|
+              context "and the order is #{timestamp ? 'completed' : 'not_completed'}" do
+                let(:order) { create(:order, zone: zone, completed_at: timestamp) }
+                let(:finalize) { timestamp ? false : true }
 
-              before do
-                order.flow_data['order']['payments'] = [flow_payment]
-                order.update_column(:meta, order.meta.to_json)
+                before do
+                  order.flow_data['order']['payments'] = [flow_payment]
+                  order.update_column(:meta, order.meta.to_json)
 
-                expect(instance).to receive(:map_payment_captures_to_spree)
-              end
+                  expect(instance).to receive(:map_payment_captures_to_spree)
+                end
 
-              context 'and received capture is successful' do
-                context 'and capture authorization matches flow_io payment authorization' do
-                  context 'and a Spree::Payment with received capture authorization exists' do
-                    let(:payment_amount) { capture.amount }
-                    let!(:payment) do
-                      create(:payment,
-                             payment_method_id: gateway.id, amount: payment_amount, response_code: order_auth.id)
-                    end
+                context 'and received capture is successful' do
+                  context 'and capture authorization matches flow_io payment authorization' do
+                    context 'and a Spree::Payment with received capture authorization exists' do
+                      let(:payment_amount) { capture.amount }
+                      let!(:payment) do
+                        create(:payment,
+                               order: order,
+                               payment_method_id: gateway.id,
+                               amount: payment_amount,
+                               response_code: order_auth.id)
+                      end
 
-                    context 'and no Spree::PaymentCaptureEvent exists for this payment' do
-                      before { Spree::PaymentCaptureEvent.destroy_all }
+                      context 'and no Spree::PaymentCaptureEvent exists for this payment' do
+                        before { Spree::PaymentCaptureEvent.destroy_all }
 
-                      context 'and payment state is not complete' do
-                        context 'and payment amount is not bigger than capture amount' do
-                          it 'creates PaymentCaptureEvent, completes payment, returns order with upserted captures' do
-                            expect(instance).to receive(:captured_payment)
-                            expect_any_instance_of(Spree::Payment).to receive(:complete)
-                            expect_order_finalize(order_finalize: finalize)
+                        context 'and payment state is not complete' do
+                          context 'and payment amount is not bigger than capture amount' do
+                            it 'creates PaymentCaptureEvent, completes payment, returns order with upserted captures' do
+                              expect(instance).to receive(:captured_payment)
+                              expect_any_instance_of(Spree::Payment).to receive(:complete)
+                              expect_order_finalize(order_finalize: finalize)
 
-                            result = nil
-                            expect { result = instance.process }
-                              .to change { Spree::PaymentCaptureEvent.count }.from(0).to(1)
+                              result = nil
+                              expect { result = instance.process }
+                                .to change { Spree::PaymentCaptureEvent.count }.from(0).to(1)
 
-                            created_capture_event = Spree::PaymentCaptureEvent.first
+                              created_capture_event = Spree::PaymentCaptureEvent.first
 
-                            expect(created_capture_event.amount).to eql(capture.amount)
-                            expect(created_capture_event.flow_data['id']).to eql(capture.id)
-                            expect(payment.reload.state).to eql('completed')
-                            expect_order_with_capture(result, 'succeeded')
+                              expect(created_capture_event.amount).to eql(capture.amount)
+                              expect(created_capture_event.flow_data['id']).to eql(capture.id)
+                              expect(payment.reload.state).to eql('completed')
+                              expect_order_with_capture(result, 'succeeded')
+                            end
+                          end
+
+                          context 'and payment amount is bigger than capture amount' do
+                            let(:payment_amount) { capture.amount + 1 }
+
+                            it 'creates a PaymentCaptureEvent, and returns order with upserted captures' do
+                              expect(instance).to receive(:captured_payment)
+                              expect_any_instance_of(Spree::Payment).not_to receive(:complete)
+                              expect(FlowcommerceSpree::OrderUpdater).not_to receive(:new)
+                              expect_any_instance_of(FlowcommerceSpree::OrderUpdater).not_to receive(:finalize_order)
+
+                              result = nil
+                              expect { result = instance.process }
+                                .to change { Spree::PaymentCaptureEvent.count }.from(0).to(1)
+
+                              created_capture_event = Spree::PaymentCaptureEvent.first
+
+                              expect(created_capture_event.amount).to eql(capture.amount)
+                              expect(created_capture_event.flow_data['id']).to eql(capture.id)
+                              expect(payment.reload.state).to eql('checkout')
+                              expect_order_with_capture(result, 'succeeded')
+                            end
                           end
                         end
+                      end
 
-                        context 'and payment amount is bigger than capture amount' do
-                          let(:payment_amount) { capture.amount + 1 }
+                      context 'and a Spree::PaymentCaptureEvent for this payment already exists' do
+                        let!(:capture_event) do
+                          create(:payment_capture_event, payment_id: payment.id, flow_data: { id: capture.id })
+                        end
 
-                          it 'creates a PaymentCaptureEvent, and returns order with upserted captures' do
-                            expect(instance).to receive(:captured_payment)
-                            expect_any_instance_of(Spree::Payment).not_to receive(:complete)
-                            expect(FlowcommerceSpree::OrderUpdater).not_to receive(:new)
-                            expect_any_instance_of(FlowcommerceSpree::OrderUpdater).not_to receive(:finalize_order)
-
-                            result = nil
-                            expect { result = instance.process }
-                              .to change { Spree::PaymentCaptureEvent.count }.from(0).to(1)
-
-                            created_capture_event = Spree::PaymentCaptureEvent.first
-
-                            expect(created_capture_event.amount).to eql(capture.amount)
-                            expect(created_capture_event.flow_data['id']).to eql(capture.id)
-                            expect(payment.reload.state).to eql('checkout')
-                            expect_order_with_capture(result, 'succeeded')
-                          end
+                        it 'returns the Spree::Order with upserted captures, not creating a Spree::PaymentCaptureEvent' do
+                          result = expect_no_new_capture_events(order_finalize: finalize)
+                          expect_order_with_capture(result, 'succeeded')
                         end
                       end
                     end
 
-                    context 'and a Spree::PaymentCaptureEvent for this payment already exists' do
-                      let!(:capture_event) do
-                        create(:payment_capture_event, payment_id: payment.id, flow_data: { id: capture.id })
-                      end
-
+                    context 'and no Spree::Payment with received capture authorization exists' do
                       it 'returns the Spree::Order with upserted captures, not creating a Spree::PaymentCaptureEvent' do
                         result = expect_no_new_capture_events(order_finalize: finalize)
                         expect_order_with_capture(result, 'succeeded')
@@ -215,7 +230,9 @@ RSpec.describe FlowcommerceSpree::Webhooks::CaptureUpsertedV2 do
                     end
                   end
 
-                  context 'and no Spree::Payment with received capture authorization exists' do
+                  context 'and capture authorization does not match flow_io payment authorization' do
+                    let(:flow_payment) { build(:flow_order_payment, reference: 'wrong auth') }
+
                     it 'returns the Spree::Order with upserted captures, not creating a Spree::PaymentCaptureEvent' do
                       result = expect_no_new_capture_events(order_finalize: finalize)
                       expect_order_with_capture(result, 'succeeded')
@@ -223,26 +240,24 @@ RSpec.describe FlowcommerceSpree::Webhooks::CaptureUpsertedV2 do
                   end
                 end
 
-                context 'and capture authorization does not match flow_io payment authorization' do
-                  let(:flow_payment) { build(:flow_order_payment, reference: 'wrong auth') }
+                context 'and received capture is not successful' do
+                  let(:data) { { 'capture' => Oj.load(failed_capture.to_json) } }
 
-                  it 'returns the Spree::Order with upserted captures, not creating a Spree::PaymentCaptureEvent' do
+                  it 'returns the Spree::Order with upserted captures' do
                     result = expect_no_new_capture_events(order_finalize: finalize)
-                    expect_order_with_capture(result, 'succeeded')
+                    expect_order_with_capture(result, 'failed')
                   end
-                end
-              end
-
-              context 'and received capture is not successful' do
-                let(:data) { { 'capture' => Oj.load(failed_capture.to_json) } }
-
-                it 'returns the Spree::Order with upserted captures' do
-                  result = expect_no_new_capture_events(order_finalize: finalize)
-                  expect_order_with_capture(result, 'failed')
                 end
               end
             end
           end
+        end
+      end
+
+      context 'when order has no payments assocaited' do
+        it 'delays order capture' do
+          instance.process
+          expect(FlowcommerceSpree::UpdatePaymentCaptureWorker).to have_enqueued_sidekiq_job(order.number, anything)
         end
       end
     end
