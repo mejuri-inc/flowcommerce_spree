@@ -10,6 +10,17 @@ CurrentZoneLoader.module_eval do
                       Spree::Zones::Product.find_by(name: session_region_name, status: 'active')
                     end
 
+    fetch_current_zone unless @current_zone
+
+    current_zone_name = @current_zone.name
+    session['region'] = { name: current_zone_name, available_currencies: @current_zone.available_currencies,
+                          request_iso_code: request_iso_code }
+    Rails.logger.debug("Using product zone: #{current_zone_name}")
+
+    @current_zone
+  end
+
+  def fetch_current_zone
     @current_zone ||= if request_iso_code.present?
                         @current_zone = flow_zone
                         @current_zone ||= Spree::Country.find_by(iso: request_iso_code)&.product_zones&.active&.first
@@ -18,11 +29,6 @@ CurrentZoneLoader.module_eval do
     @current_zone ||= Spree::Zones::Product.find_by(name: 'International') ||
                       Spree::Zones::Product.new(name: 'International', taxon_ids: [], currencies: %w[USD CAD])
 
-    current_zone_name = @current_zone.name
-    session['region'] = { name: current_zone_name, available_currencies: @current_zone.available_currencies,
-                          request_iso_code: request_iso_code }
-
-    Rails.logger.debug("Using product zone: #{current_zone_name}")
     @current_zone
   end
 
