@@ -40,15 +40,15 @@ module Spree
             price = v.price_in(currency)
             next if price.nil? || price.amount.nil?
 
-            min = calculate_new_min price,min
-            max = calculate_new_max price,max
+            min = calculate_new_min(price, min)
+            max = calculate_new_max(price, max)
           end
         else
           min = max = master.price_in(currency)
         end
 
-        rmin = round_with_precision min,0
-        rmax = round_with_precision max,0
+        rmin = round_with_precision(min, 0)
+        rmax = round_with_precision(max, 0)
 
         prices[currency] = { min: rmin, max: rmax }
       end
@@ -56,15 +56,15 @@ module Spree
       add_flow_price_range(prices, product_zone)
     end
 
-    def calculate_new_min price,min
-      (min.nil? || min.amount > price.amount) ? price : min
+    def calculate_new_min(price, min)
+      min.nil? || min.amount > price.amount ? price : min
     end
 
-    def calculate_new_max price,max
-      (max.nil? || max.amount < price.amount) ? price : max
+    def calculate_new_max(price, max)
+      max.nil? || max.amount < price.amount ? price : max
     end
 
-    def round_with_precision number,precision
+    def round_with_precision(number, precision)
       number&.amount&.to_s(:rounded, precision: precision) || 0
     end
 
@@ -82,8 +82,8 @@ module Spree
           price = v.flow_local_price(flow_experience_key)
           next if price.amount.nil? || price.currency != currency
 
-          min = calculate_new_min price,min
-          max = calculate_new_max price,max
+          min = calculate_new_min(price, min)
+          max = calculate_new_max(price, max)
         end
       end
 
@@ -92,8 +92,8 @@ module Spree
         max ||= master_price
       end
 
-      rmin = round_with_precision min,0
-      rmax = round_with_precision max,0
+      rmin = round_with_precision(min, 0)
+      rmax = round_with_precision(max, 0)
 
       prices[currency] = { min: rmin, max: rmax }
       prices
