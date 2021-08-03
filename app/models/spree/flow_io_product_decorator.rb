@@ -40,8 +40,8 @@ module Spree
             price = v.price_in(currency)
             next if price.nil? || price.amount.nil?
 
-            min = [price, min].compact.min
-            max = [price, max].compact.max
+            min = [price, min].compact.min { |a, b| a.amount <=> b.amount }
+            max = [price, max].compact.max { |a, b| a.amount <=> b.amount }
           end
         else
           min = max = master.price_in(currency)
@@ -74,8 +74,8 @@ module Spree
           price = v.flow_local_price(flow_experience_key)
           next if price.amount.nil? || price.currency != currency
 
-          min = [price, min].compact.min
-          max = [price, max].compact.max
+          min = [price, min].compact.min { |a, b| a.amount <=> b.amount }
+          max = [price, max].compact.max { |a, b| a.amount <=> b.amount }
         end
       end
 

@@ -135,7 +135,7 @@ RSpec.describe Spree::Product, type: :model do
         end
 
         it 'returns amount for each currency received in currencies parameter' do
-          price_ranges = product.reload.price_range(spree_zone, ['USD', 'AUD'])
+          price_ranges = product.reload.price_range(spree_zone, %w[USD AUD])
           price_range_hash = { max: product.price.round.to_s, min: product.price.round.to_s }
           expect(price_ranges['USD']).to eq(price_range_hash)
           expect(price_ranges['CAD']).to be_nil
