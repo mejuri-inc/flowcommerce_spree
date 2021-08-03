@@ -40,8 +40,8 @@ module Spree
             price = v.price_in(currency)
             next if price.nil? || price.amount.nil?
 
-            min = calculate_new_min(price, min)
-            max = calculate_new_max(price, max)
+            min = [price, min].compact.min
+            max = [price, max].compact.max
           end
         else
           min = max = master.price_in(currency)
@@ -54,14 +54,6 @@ module Spree
       end
 
       add_flow_price_range(prices, product_zone)
-    end
-
-    def calculate_new_min(price, min)
-      min.nil? || min.amount > price.amount ? price : min
-    end
-
-    def calculate_new_max(price, max)
-      max.nil? || max.amount < price.amount ? price : max
     end
 
     def round_with_precision(number, precision)
@@ -82,8 +74,8 @@ module Spree
           price = v.flow_local_price(flow_experience_key)
           next if price.amount.nil? || price.currency != currency
 
-          min = calculate_new_min(price, min)
-          max = calculate_new_max(price, max)
+          min = [price, min].compact.min
+          max = [price, max].compact.max
         end
       end
 
