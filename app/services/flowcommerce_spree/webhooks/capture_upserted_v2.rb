@@ -22,14 +22,23 @@ module FlowcommerceSpree
         errors << { message: 'Order number param missing' } && (return self) unless order_number
 
         if (order = Spree::Order.find_by(number: order_number))
-          upsert_order_captures(order, capture)
-          payments = order.flow_io_payments
-          map_payment_captures_to_spree(order, payments) if payments.present?
-          order
+          if order.payments.any?
+            store_payment_capture(order, capture)
+          else
+            FlowcommerceSpree::UpdatePaymentCaptureWorker.perform_in(1.minute, order.number, capture)
+            order
+          end
         else
           errors << { message: "Order #{order_number} not found" }
           self
         end
+      end
+
+      def store_payment_capture(order, capture)
+        upsert_order_captures(order, capture)
+        payments = order.flow_io_payments
+        map_payment_captures_to_spree(order, payments) if payments.present?
+        order
       end
 
       private
