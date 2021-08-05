@@ -1,8 +1,18 @@
 # Changelog
 
-## [v0.0.10](https://github.com/mejuri-inc/flowcommerce_spree/tree/v0.0.10) (2021-08-04)
+## [v0.0.11](https://github.com/mejuri-inc/flowcommerce_spree/tree/v0.0.11) (2021-08-05)
 
-[Full Changelog](https://github.com/mejuri-inc/flowcommerce_spree/compare/v.0.0.9...v0.0.10)
+[Full Changelog](https://github.com/mejuri-inc/flowcommerce_spree/compare/v.0.0.10...v0.0.11)
+
+**Merged pull requests:**
+
+- Preparing the new v0.0.11 release  [\#55](https://github.com/mejuri-inc/flowcommerce_spree/pull/55) ([sebastiandl](https://github.com/sebastiandl))
+- \[AD-619\] Add currencies as argument to price\_range method [\#53](https://github.com/mejuri-inc/flowcommerce_spree/pull/53) ([mkamien1993](https://github.com/mkamien1993))
+- Preparing v0.0.8 release changes [\#46](https://github.com/mejuri-inc/flowcommerce_spree/pull/46) ([sebastiandl](https://github.com/sebastiandl))
+
+## [v.0.0.10](https://github.com/mejuri-inc/flowcommerce_spree/tree/v.0.0.10) (2021-08-04)
+
+[Full Changelog](https://github.com/mejuri-inc/flowcommerce_spree/compare/v.0.0.9...v.0.0.10)
 
 **Merged pull requests:**
 
@@ -25,7 +35,6 @@
 
 **Merged pull requests:**
 
-- Preparing v0.0.8 release changes [\#46](https://github.com/mejuri-inc/flowcommerce_spree/pull/46) ([sebastiandl](https://github.com/sebastiandl))
 - \[DL-324\] Small code change to trigger Variant synchronization [\#45](https://github.com/mejuri-inc/flowcommerce_spree/pull/45) ([sebastiandl](https://github.com/sebastiandl))
 - \[DL-351\] Small change on FlowIo calculator to store allocations within order's flow data. [\#43](https://github.com/mejuri-inc/flowcommerce_spree/pull/43) ([sebastiandl](https://github.com/sebastiandl))
 
@@ -62,7 +71,6 @@
 - \[DL-72\] Adding some texts within Order's side bar and order's prices to link the user to Flow [\#29](https://github.com/mejuri-inc/flowcommerce_spree/pull/29) ([sebastiandl](https://github.com/sebastiandl))
 - \[TEC-4443\] Adding flow\_order? validation method that will help identifying if order is associated to flow. [\#28](https://github.com/mejuri-inc/flowcommerce_spree/pull/28) ([sebastiandl](https://github.com/sebastiandl))
 - \[TEC-4931\] Add test coverage to OrderSync, OrderUpdater, code cleanup [\#27](https://github.com/mejuri-inc/flowcommerce_spree/pull/27) ([texpert](https://github.com/texpert))
-- \[TEC-3477\] Localized order details for Spree Admin, payments mapping,  OrderUpdater service, refunds [\#20](https://github.com/mejuri-inc/flowcommerce_spree/pull/20) ([texpert](https://github.com/texpert))
 
 ## [v0.0.4](https://github.com/mejuri-inc/flowcommerce_spree/tree/v0.0.4) (2021-03-16)
 
@@ -76,6 +84,7 @@
 
 - Flow Phase 3 release [\#30](https://github.com/mejuri-inc/flowcommerce_spree/pull/30) ([texpert](https://github.com/texpert))
 - \[TEC-4525\] Create refund method for flow.io gateway [\#25](https://github.com/mejuri-inc/flowcommerce_spree/pull/25) ([texpert](https://github.com/texpert))
+- \[TEC-3477\] Localized order details for Spree Admin, payments mapping,  OrderUpdater service, refunds [\#20](https://github.com/mejuri-inc/flowcommerce_spree/pull/20) ([texpert](https://github.com/texpert))
 - \[NO-TICKET\] defauling FLOW\_TOKEN environment variable to avoid errors [\#19](https://github.com/mejuri-inc/flowcommerce_spree/pull/19) ([sebastiandl](https://github.com/sebastiandl))
 - \[TEC-3823\] flow endpoint for purchase validations [\#5](https://github.com/mejuri-inc/flowcommerce_spree/pull/5) ([texpert](https://github.com/texpert))
 
