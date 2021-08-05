@@ -28,9 +28,9 @@ module Spree
       flow_data["#{flow_exp.key}.excluded"].to_i != 1
     end
 
-    def price_range(product_zone)
+    def price_range(product_zone, currencies = [])
       prices = {}
-      master_prices.each do |p|
+      master_prices_with_currencies(currencies).each do |p|
         currency = p.currency
         min = nil
         max = nil
@@ -40,20 +40,24 @@ module Spree
             price = v.price_in(currency)
             next if price.nil? || price.amount.nil?
 
-            min = price if min.nil? || min.amount > price.amount
-            max = price if max.nil? || max.amount < price.amount
+            min = [price, min].compact.min { |a, b| a.amount <=> b.amount }
+            max = [price, max].compact.max { |a, b| a.amount <=> b.amount }
           end
         else
           min = max = master.price_in(currency)
         end
 
-        rmin = min&.amount&.to_s(:rounded, precision: 0) || 0
-        rmax = max&.amount&.to_s(:rounded, precision: 0) || 0
+        rmin = round_with_precision(min, 0)
+        rmax = round_with_precision(max, 0)
 
         prices[currency] = { min: rmin, max: rmax }
       end
 
       add_flow_price_range(prices, product_zone)
+    end
+
+    def round_with_precision(number, precision)
+      number&.amount&.to_s(:rounded, precision: precision) || 0
     end
 
     def add_flow_price_range(prices, product_zone)
@@ -70,8 +74,8 @@ module Spree
           price = v.flow_local_price(flow_experience_key)
           next if price.amount.nil? || price.currency != currency
 
-          min = price if min.nil? || min.amount > price.amount
-          max = price if max.nil? || max.amount < price.amount
+          min = [price, min].compact.min { |a, b| a.amount <=> b.amount }
+          max = [price, max].compact.max { |a, b| a.amount <=> b.amount }
         end
       end
 
@@ -80,8 +84,8 @@ module Spree
         max ||= master_price
       end
 
-      rmin = min&.amount&.to_s(:rounded, precision: 0) || 0
-      rmax = max&.amount&.to_s(:rounded, precision: 0) || 0
+      rmin = round_with_precision(min, 0)
+      rmax = round_with_precision(max, 0)
 
       prices[currency] = { min: rmin, max: rmax }
       prices
