@@ -1,14 +1,22 @@
 # Changelog
 
-## [v0.0.11](https://github.com/mejuri-inc/flowcommerce_spree/tree/v0.0.11) (2021-08-05)
+## [v0.0.12](https://github.com/mejuri-inc/flowcommerce_spree/tree/v0.0.12) (2021-08-13)
 
-[Full Changelog](https://github.com/mejuri-inc/flowcommerce_spree/compare/v.0.0.10...v0.0.11)
+[Full Changelog](https://github.com/mejuri-inc/flowcommerce_spree/compare/v.0.0.11...v0.0.12)
+
+**Merged pull requests:**
+
+- Preparing the new v0.0.12 release [\#57](https://github.com/mejuri-inc/flowcommerce_spree/pull/57) ([sebastiandl](https://github.com/sebastiandl))
+- \[DL-588\] - Changed URL for flow checkout [\#56](https://github.com/mejuri-inc/flowcommerce_spree/pull/56) ([abalpablo](https://github.com/abalpablo))
+
+## [v.0.0.11](https://github.com/mejuri-inc/flowcommerce_spree/tree/v.0.0.11) (2021-08-05)
+
+[Full Changelog](https://github.com/mejuri-inc/flowcommerce_spree/compare/v.0.0.10...v.0.0.11)
 
 **Merged pull requests:**
 
 - Preparing the new v0.0.11 release  [\#55](https://github.com/mejuri-inc/flowcommerce_spree/pull/55) ([sebastiandl](https://github.com/sebastiandl))
 - \[AD-619\] Add currencies as argument to price\_range method [\#53](https://github.com/mejuri-inc/flowcommerce_spree/pull/53) ([mkamien1993](https://github.com/mkamien1993))
-- Preparing v0.0.8 release changes [\#46](https://github.com/mejuri-inc/flowcommerce_spree/pull/46) ([sebastiandl](https://github.com/sebastiandl))
 
 ## [v.0.0.10](https://github.com/mejuri-inc/flowcommerce_spree/tree/v.0.0.10) (2021-08-04)
 
@@ -35,6 +43,7 @@
 
 **Merged pull requests:**
 
+- Preparing v0.0.8 release changes [\#46](https://github.com/mejuri-inc/flowcommerce_spree/pull/46) ([sebastiandl](https://github.com/sebastiandl))
 - \[DL-324\] Small code change to trigger Variant synchronization [\#45](https://github.com/mejuri-inc/flowcommerce_spree/pull/45) ([sebastiandl](https://github.com/sebastiandl))
 - \[DL-351\] Small change on FlowIo calculator to store allocations within order's flow data. [\#43](https://github.com/mejuri-inc/flowcommerce_spree/pull/43) ([sebastiandl](https://github.com/sebastiandl))
 
@@ -46,6 +55,7 @@
 
 - Flow Phase 4 release - small fix [\#42](https://github.com/mejuri-inc/flowcommerce_spree/pull/42) ([sebastiandl](https://github.com/sebastiandl))
 - \[DL-321\] Changing Session creation strategy to use country ISO code instead of request IP [\#41](https://github.com/mejuri-inc/flowcommerce_spree/pull/41) ([sebastiandl](https://github.com/sebastiandl))
+- Flow Phase 4 release [\#38](https://github.com/mejuri-inc/flowcommerce_spree/pull/38) ([sebastiandl](https://github.com/sebastiandl))
 
 ## [v0.0.6](https://github.com/mejuri-inc/flowcommerce_spree/tree/v0.0.6) (2021-04-13)
 
@@ -61,7 +71,6 @@
 
 **Merged pull requests:**
 
-- Flow Phase 4 release [\#38](https://github.com/mejuri-inc/flowcommerce_spree/pull/38) ([sebastiandl](https://github.com/sebastiandl))
 - \[DL-276\] Adding charge\_default and lower\_boundary to the shipping FlowIo calculator [\#37](https://github.com/mejuri-inc/flowcommerce_spree/pull/37) ([sebastiandl](https://github.com/sebastiandl))
 - \[DL-80\] CardAuthorizationUpsertedV2 specs [\#36](https://github.com/mejuri-inc/flowcommerce_spree/pull/36) ([texpert](https://github.com/texpert))
 - \[DL-255\] Small code improvement to avoid synchronization of products when country\_of\_origin is not present [\#35](https://github.com/mejuri-inc/flowcommerce_spree/pull/35) ([sebastiandl](https://github.com/sebastiandl))
