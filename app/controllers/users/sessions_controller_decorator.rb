@@ -11,7 +11,7 @@ module Users
         FlowcommerceSpree::OrderSync.new(order: current_order, flow_session_id: flow_session_id).synchronize!
       return render json: { error: :checkout_token_missing }, status: 422 if checkout_token.blank?
 
-      render json: { checkout_url: "https://checkout.flow.io/tokens/#{checkout_token}" }, status: 200
+      render json: { checkout_url: "https://checkout.mejuri.com/tokens/#{checkout_token}" }, status: 200
     end
 
     private
