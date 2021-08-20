@@ -70,7 +70,7 @@ FactoryBot.define do
 
         trait :with_currencies do
           after(:create) do |zone|
-            zone.currencies = ["USD"]
+            zone.currencies = ['USD']
           end
         end
       end
