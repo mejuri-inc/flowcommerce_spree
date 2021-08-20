@@ -173,8 +173,11 @@ module Spree
     end
 
     def add_prices_to_countries(prices, countries, zone_countries)
-      zone_countries.empty? ? countries[REST_OF_WORLD] = prices
-        : add_prices_for_each_country(zone_countries, prices, countries)
+      if zone_countries.empty?
+        countries[REST_OF_WORLD] = prices
+      else
+        add_prices_for_each_country(zone_countries, prices, countries)
+      end
     end
 
     def add_prices_for_each_country(zone_countries, prices, countries)
