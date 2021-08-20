@@ -148,7 +148,7 @@ RSpec.describe Spree::Variant, type: :model do
           all_prices = variant.all_prices([spree_zone])
 
           flow_price = variant.flow_local_price('germany')
-          expect(all_prices["DEU"]).to(include(amount: flow_price.amount.round.to_s, currency: flow_price.currency))
+          expect(all_prices['DEU']).to(include(amount: flow_price.amount.round.to_s, currency: flow_price.currency))
         end
       end
     end

@@ -67,6 +67,12 @@ FactoryBot.define do
 
       factory :product_zone_with_country, class: Spree::Zones::Product do
         description { "Description for Product Zone #{name}" }
+
+        trait :with_currencies do
+          after(:create) do |zone|
+            zone.currencies = ["USD"]
+          end
+        end
       end
 
       factory :product_zone_with_flow_experience, class: Spree::Zones::Product do

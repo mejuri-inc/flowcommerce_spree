@@ -5,6 +5,9 @@
 # hold all important Flow sync data for specific experiences.
 module Spree
   module FlowIoVariantDecorator
+
+    REST_OF_WORLD = 'ROW'
+
     def self.prepended(base)
       base.serialize :meta, ActiveRecord::Coders::JSON.new(symbolize_keys: true)
 
@@ -171,7 +174,7 @@ module Spree
     end
 
     def add_prices_to_countries(prices, countries, zone_countries)
-      zone_countries.empty? ? countries["ROW"] = prices : add_prices_for_each_country(zone_countries, prices, countries)
+      zone_countries.empty? ? countries[REST_OF_WORLD] = prices : add_prices_for_each_country(zone_countries, prices, countries)
     end
 
     def add_prices_for_each_country(zone_countries, prices, countries)
