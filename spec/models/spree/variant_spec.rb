@@ -138,6 +138,34 @@ RSpec.describe Spree::Variant, type: :model do
     end
   end
 
+  describe '#all_prices' do
+    describe 'when variant has flow_data' do
+      let(:variant) { create(:base_variant, :with_flow_data) }
+
+      context 'when zone has flow_io experience' do
+        it 'includes flow_io price' do
+          spree_zone = create(:germany_zone, :with_flow_data)
+          all_prices = variant.all_prices([spree_zone])
+
+          flow_price = variant.flow_local_price('germany')
+          expect(all_prices["DEU"]).to(include(amount: flow_price.amount.round.to_s, currency: flow_price.currency))
+        end
+      end
+    end
+
+    context 'when variant does not have flow_data' do
+      let(:variant) { create(:base_variant) }
+
+      it 'returns all_prices' do
+        zone = create(:product_zone_with_country, :with_currencies)
+        all_prices = variant.all_prices([zone])
+
+        country_iso = zone.countries.first.iso
+        expect(all_prices[country_iso]).to(eq([{ amount: variant.price.round.to_s, currency: 'USD' }]))
+      end
+    end
+  end
+
   describe '#sync_product_to_flow' do
     let(:variant) { create(:base_variant, :with_flow_data) }
 

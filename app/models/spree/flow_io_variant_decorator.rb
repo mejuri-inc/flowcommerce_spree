@@ -126,14 +126,58 @@ module Spree
     end
 
     def all_prices_in_zone(product_zone)
-      all_prices = prices.map { |price| { currency: price.currency, amount: (price.amount&.round || 0).to_s } }
+      all_prices = prices.map { |price| parse_price(price) }
 
-      flow_experience_key = product_zone&.flow_data&.[]('key')
+      flow_experience_key = product_zone&.flow_io_experience
       return all_prices if flow_experience_key.blank?
 
       flow_price = flow_local_price(flow_experience_key)
-      all_prices << { currency: flow_price.currency, amount: (flow_price.amount&.round || 0).to_s }
+      all_prices << parse_price(flow_price)
       all_prices
+    end
+
+    def all_prices(zones)
+      countries = {}
+
+      zones.each do |zone|
+        all_prices = []
+
+        add_prices_for_available_currencies(zone, all_prices)
+        add_prices_to_countries(all_prices, countries, zone.countries) unless all_prices.empty?
+
+        flow_experience_key = zone&.flow_io_experience
+        next if flow_experience_key.blank?
+
+        add_flow_prices(flow_experience_key, countries, zone.flow_io_experience_country)
+      end
+
+      countries
+    end
+
+    def add_prices_for_available_currencies(zone, all_prices)
+      zone.available_currencies.each do |currency|
+        price = prices.find_by(currency: currency)
+        all_prices << parse_price(price) unless price.nil?
+      end
+    end
+
+    def add_flow_prices(flow_experience_key, countries, country_iso)
+      flow_price = flow_local_price(flow_experience_key)
+      countries[country_iso] = parse_price(flow_price)
+    end
+
+    def parse_price(price)
+      { currency: price.currency, amount: (price.amount&.round || 0).to_s }
+    end
+
+    def add_prices_to_countries(prices, countries, zone_countries)
+      zone_countries.empty? ? countries["ROW"] = prices : add_prices_for_each_country(zone_countries, prices, countries)
+    end
+
+    def add_prices_for_each_country(zone_countries, prices, countries)
+      zone_countries.each do |country|
+        countries[country.iso] = prices
+      end
     end
 
     # creates object for flow api
