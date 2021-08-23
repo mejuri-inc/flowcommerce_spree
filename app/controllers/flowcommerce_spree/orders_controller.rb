@@ -14,7 +14,11 @@ module FlowcommerceSpree
       flow_updater = FlowcommerceSpree::OrderUpdater.new(order: order)
       flow_updater.complete_checkout
 
-      redirect_to "/thankyou?order=#{params[:order]}&t=#{params[:t]}"
+      redirection_path = "/thankyou?order=#{params[:order]}&t=#{params[:t]}"
+      locale = order.locale_path
+      redirection_path = "/#{locale}#{redirection_path}" if locale
+
+      redirect_to redirection_path
     end
   end
 end
