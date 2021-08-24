@@ -142,10 +142,8 @@ module Spree
       countries = {}
 
       zones.each do |zone|
-        all_prices = []
-
-        add_prices_for_available_currencies(zone, all_prices)
-        add_prices_to_countries(all_prices, countries, zone.countries) unless all_prices.empty?
+        prices = create_prices_for_available_currencies(zone)
+        add_prices_to_countries(prices, countries, zone.countries) unless prices.empty?
 
         flow_experience_key = zone&.flow_io_experience
         next if flow_experience_key.blank?
@@ -154,36 +152,6 @@ module Spree
       end
 
       countries
-    end
-
-    def add_prices_for_available_currencies(zone, all_prices)
-      zone.available_currencies.each do |currency|
-        price = prices.find_by(currency: currency)
-        all_prices << parse_price(price) unless price.nil?
-      end
-    end
-
-    def add_flow_prices(flow_experience_key, countries, country_iso)
-      flow_price = flow_local_price(flow_experience_key)
-      countries[country_iso] = parse_price(flow_price)
-    end
-
-    def parse_price(price)
-      { currency: price.currency, amount: (price.amount&.round || 0).to_s }
-    end
-
-    def add_prices_to_countries(prices, countries, zone_countries)
-      if zone_countries.empty?
-        countries[REST_OF_WORLD] = prices
-      else
-        add_prices_for_each_country(zone_countries, prices, countries)
-      end
-    end
-
-    def add_prices_for_each_country(zone_countries, prices, countries)
-      zone_countries.each do |country|
-        countries[country.iso] = prices
-      end
     end
 
     # creates object for flow api
@@ -261,5 +229,41 @@ module Spree
     end
 
     Spree::Variant.prepend(self) if Spree::Variant.included_modules.exclude?(self)
+
+    private
+
+    def create_prices_for_available_currencies(zone)
+      all_prices = []
+
+      zone.available_currencies.each do |currency|
+        price = prices.find_by(currency: currency)
+        all_prices << parse_price(price) unless price.nil?
+      end
+
+      all_prices
+    end
+
+    def add_prices_to_countries(prices, countries, zone_countries)
+      if zone_countries.empty?
+        countries[REST_OF_WORLD] = prices
+      else
+        add_prices_for_each_country(zone_countries, prices, countries)
+      end
+    end
+
+    def add_prices_for_each_country(zone_countries, prices, countries)
+      zone_countries.each do |country|
+        countries[country.iso] = prices
+      end
+    end
+
+    def add_flow_prices(flow_experience_key, countries, country_iso)
+      flow_price = flow_local_price(flow_experience_key)
+      countries[country_iso] = parse_price(flow_price)
+    end
+
+    def parse_price(price)
+      { currency: price.currency, amount: (price.amount&.round || 0).to_s }
+    end
   end
 end
