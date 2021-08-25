@@ -156,7 +156,12 @@ RSpec.describe Users::SessionsController, type: :controller do
 
     context 'zone attributes' do
       context 'current_zone exists' do
-        let(:zone_hash) { { 'name' => current_zone.name, 'available_currencies' => current_zone.available_currencies } }
+        let(:zone_hash) { { name: current_zone.name, available_currencies: current_zone.available_currencies } }
+        let(:zone_response) do
+          {
+            'name' => current_zone.name, 'available_currencies' => current_zone.available_currencies
+          }
+        end
 
         context 'and has flow experience external checkout' do
           let(:current_zone) { create(:product_zone_with_flow_experience) }
@@ -169,7 +174,7 @@ RSpec.describe Users::SessionsController, type: :controller do
 
               expect(response).to have_http_status(:success)
               current_session_attrs = Oj.load(response.body)['current']
-              expect(current_session_attrs['region']).to eql(zone_hash.merge!('request_iso_code' => nil))
+              expect(current_session_attrs['region']).to eql(zone_response)
               expect(current_session_attrs['external_checkout']).to eql(true)
             end
           end
@@ -199,7 +204,7 @@ RSpec.describe Users::SessionsController, type: :controller do
 
               expect(response).to have_http_status(:success)
               current_session_attrs = Oj.load(response.body)['current']
-              expect(current_session_attrs['region']).to eql(zone_hash.merge!('request_iso_code' => nil))
+              expect(current_session_attrs['region']).to eql(zone_response)
               expect(current_session_attrs['external_checkout']).to eql(false)
             end
           end
@@ -212,7 +217,7 @@ RSpec.describe Users::SessionsController, type: :controller do
 
               expect(response).to have_http_status(:success)
               current_session_attrs = Oj.load(response.body)['current']
-              expect(current_session_attrs['region']).to eql(zone_hash)
+              expect(current_session_attrs['region']).to eql(zone_response)
               expect(current_session_attrs['external_checkout']).to eql(false)
             end
           end
