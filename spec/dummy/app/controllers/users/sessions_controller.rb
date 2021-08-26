@@ -53,7 +53,7 @@ module Users
     end
 
     def zone_attrs
-      session['region'] || { 'name' => current_zone.name, 'available_currencies' => current_zone.available_currencies }
+      session['region'] || { name: current_zone.name, available_currencies: current_zone.available_currencies }
     end
   end
 end
