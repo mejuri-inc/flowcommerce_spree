@@ -1,8 +1,16 @@
 # Changelog
 
-## [v0.0.12](https://github.com/mejuri-inc/flowcommerce_spree/tree/v0.0.12) (2021-08-13)
+## [v0.0.13](https://github.com/mejuri-inc/flowcommerce_spree/tree/v0.0.13) (2021-08-26)
 
-[Full Changelog](https://github.com/mejuri-inc/flowcommerce_spree/compare/v.0.0.11...v0.0.12)
+[Full Changelog](https://github.com/mejuri-inc/flowcommerce_spree/compare/v.0.0.12...v0.0.13)
+
+**Merged pull requests:**
+
+- Preparing the new v0.0.13 release  [\#62](https://github.com/mejuri-inc/flowcommerce_spree/pull/62) ([sebastiandl](https://github.com/sebastiandl))
+
+## [v.0.0.12](https://github.com/mejuri-inc/flowcommerce_spree/tree/v.0.0.12) (2021-08-13)
+
+[Full Changelog](https://github.com/mejuri-inc/flowcommerce_spree/compare/v.0.0.11...v.0.0.12)
 
 **Merged pull requests:**
 
@@ -55,7 +63,6 @@
 
 - Flow Phase 4 release - small fix [\#42](https://github.com/mejuri-inc/flowcommerce_spree/pull/42) ([sebastiandl](https://github.com/sebastiandl))
 - \[DL-321\] Changing Session creation strategy to use country ISO code instead of request IP [\#41](https://github.com/mejuri-inc/flowcommerce_spree/pull/41) ([sebastiandl](https://github.com/sebastiandl))
-- Flow Phase 4 release [\#38](https://github.com/mejuri-inc/flowcommerce_spree/pull/38) ([sebastiandl](https://github.com/sebastiandl))
 
 ## [v0.0.6](https://github.com/mejuri-inc/flowcommerce_spree/tree/v0.0.6) (2021-04-13)
 
@@ -71,6 +78,7 @@
 
 **Merged pull requests:**
 
+- Flow Phase 4 release [\#38](https://github.com/mejuri-inc/flowcommerce_spree/pull/38) ([sebastiandl](https://github.com/sebastiandl))
 - \[DL-276\] Adding charge\_default and lower\_boundary to the shipping FlowIo calculator [\#37](https://github.com/mejuri-inc/flowcommerce_spree/pull/37) ([sebastiandl](https://github.com/sebastiandl))
 - \[DL-80\] CardAuthorizationUpsertedV2 specs [\#36](https://github.com/mejuri-inc/flowcommerce_spree/pull/36) ([texpert](https://github.com/texpert))
 - \[DL-255\] Small code improvement to avoid synchronization of products when country\_of\_origin is not present [\#35](https://github.com/mejuri-inc/flowcommerce_spree/pull/35) ([sebastiandl](https://github.com/sebastiandl))
