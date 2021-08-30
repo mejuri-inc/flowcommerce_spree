@@ -116,6 +116,22 @@ module FlowcommerceSpree
                                                Io::Flow::V0::Models::OrderPutForm.new(@body), @opts).to_hash
     end
 
+    def get_discounts(line_item)
+      line_item.adjustments.promotion.eligible.map do |adjustment|
+        {
+          "offer": {
+            "discriminator": 'discount_offer_fixed',
+            "money": {
+              'amount': adjustment.amount,
+              'currency': line_item.currency
+            }
+          },
+          "target": 'item',
+          "label": adjustment.label
+        }
+      end
+    end
+
     def add_item(line_item)
       variant    = line_item.variant
       price_root = variant.flow_data&.dig('exp', @experience, 'prices')&.[](0) || {}
@@ -125,7 +141,11 @@ module FlowcommerceSpree
         number: variant.sku,
         quantity: line_item.quantity,
         price: { amount: price_root['amount'] || variant.price,
-                 currency: price_root['currency'] || variant.cost_currency } }
+                 currency: price_root['currency'] || variant.cost_currency },
+        discounts: {
+          discounts: get_discounts(line_item)
+        }
+      }
     end
 
     def write_response_to_order
