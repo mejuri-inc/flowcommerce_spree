@@ -23,7 +23,7 @@ RSpec.describe FlowcommerceSpree::RefundStatusWorker, type: :worker do
     let(:capture) { build(:flow_capture, status: 'pending') }
     let(:refund) do
       build(:flow_refund, captures: [{ capture: capture.to_hash, amount: capture.amount }],
-            currency: order.currency, amount: amount, authorization: payment_auth)
+                                        currency: order.currency, amount: amount, authorization: payment_auth)
     end
 
     it 'raises exception' do
