@@ -4,12 +4,12 @@ module FlowcommerceSpree
   class RefundStatusWorker < FlowIoWorker
     sidekiq_options retry: 3, queue: :flow_io
 
-    def perform(order, refund_key)
-      response = FlowcommerceSpree.client.refunds.request_refund_status(refund_key)
-      pending_captures = response.captures.find_all { |cap| cap.capture.status.value != 'succeeded' }
-      return if pending_captures.blank?
+    def perform(order_number, refund_key)
+      response = FlowcommerceSpree.client.refunds.get_by_key(FlowcommerceSpree::ORGANIZATION, refund_key)
+      response_status = response.status.value
+      return if response_status == 'succeeded'
 
-      raise "Refund with capture pending for order: #{order.id}, refund status: #{response.status}"
+      raise "Refund with capture pending for order: #{order_number}, refund status: #{response_status}"
     end
   end
 end

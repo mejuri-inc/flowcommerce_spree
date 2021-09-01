@@ -14,21 +14,22 @@ RSpec.describe FlowcommerceSpree::RefundStatusWorker, type: :worker do
     let(:refund) { build(:flow_refund, currency: order.currency, amount: amount, authorization: payment_auth) }
 
     it 'doesnt raise exception ' do
-      allow(FlowcommerceSpree).to receive_message_chain(:client, :refunds, :request_refund_status).and_return(refund)
+      allow(FlowcommerceSpree).to receive_message_chain(:client, :refunds, :get_by_key).and_return(refund)
 
       expect { job.perform(order, refund.key) }.not_to raise_error
     end
   end
+
   context 'when state is not completed' do
     let(:capture) { build(:flow_capture, status: 'pending') }
     let(:refund) do
       build(:flow_refund, captures: [{ capture: capture.to_hash, amount: capture.amount }],
-                          currency: order.currency, amount: amount, authorization: payment_auth)
+                          currency: order.currency, amount: amount, authorization: payment_auth, status: 'pending')
     end
 
     it 'raises exception' do
       refund.captures.first.capture.status.instance_values['value'] = 'pending'
-      allow(FlowcommerceSpree).to receive_message_chain(:client, :refunds, :request_refund_status).and_return(refund)
+      allow(FlowcommerceSpree).to receive_message_chain(:client, :refunds, :get_by_key).and_return(refund)
       expect { job.perform(order, refund.key) }.to raise_error
     end
   end
