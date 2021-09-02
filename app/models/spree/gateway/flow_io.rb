@@ -107,8 +107,7 @@ module Spree
       def schedule_status_check(response, order)
         return if response.status.value != REFUND_PENDING
 
-        Rails.logger.warn("[!] #{self.class} refund request without succeeded status.
-        Order: #{order.id}, refund capture status: #{response.captures.first.capture.status.value}")
+        Rails.logger.warn("[!] #{self.class} for #{order.number} - refund request without succeeded status.")
         FlowcommerceSpree::RefundStatusWorker.perform_async(order.number, response.key)
       end
 
