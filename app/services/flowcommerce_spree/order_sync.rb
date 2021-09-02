@@ -54,19 +54,20 @@ module FlowcommerceSpree
     end
 
     def refresh_checkout_token
-      root_url = Rails.application.routes.url_helpers.root_url
       order_number = @order.number
+      root_url = Rails.application.routes.url_helpers.root_url
+      root_url_with_locale = "#{root_url}#{@order.try(:locale_path)}"
       confirmation_url = "#{root_url}flow/order-completed?order=#{order_number}&t=#{@order.guest_token}"
       @order.flow_io_attribute_add('flow_return_url', confirmation_url)
-      @order.flow_io_attribute_add('checkout_continue_shopping_url', root_url)
+      @order.flow_io_attribute_add('checkout_continue_shopping_url', root_url_with_locale)
 
       FlowcommerceSpree.client.checkout_tokens.post_checkout_and_tokens_by_organization(
         FlowcommerceSpree::ORGANIZATION, discriminator: 'checkout_token_reference_form',
                                          order_number: order_number,
                                          session_id: @flow_session_id,
-                                         urls: { continue_shopping: root_url,
+                                         urls: { continue_shopping: root_url_with_locale,
                                                  confirmation: confirmation_url,
-                                                 invalid_checkout: root_url }
+                                                 invalid_checkout: root_url_with_locale }
       )&.id
     end
 
