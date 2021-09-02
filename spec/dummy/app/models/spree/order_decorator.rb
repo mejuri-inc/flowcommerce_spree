@@ -18,6 +18,8 @@ module Spree
       # rubocop:enable Naming/MemoizedInstanceVariableName
     end
 
+    def locale_path; end
+
     def shipment
       shipments.first
     end

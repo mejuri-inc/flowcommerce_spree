@@ -24,6 +24,17 @@ RSpec.describe FlowcommerceSpree::OrdersController, type: :controller do
         expect(subject).to(redirect_to("/thankyou?order=#{order.number}&t=#{order.guest_token}"))
       end
 
+      context 'when order has locale' do
+        let(:locale_path) { 'de/de' }
+        before do
+          allow_any_instance_of(Spree::Order).to(receive(:locale_path).and_return(locale_path))
+        end
+
+        it 'redirects to thank you page with locale' do
+          expect(subject).to(redirect_to("/#{locale_path}/thankyou?order=#{order.number}&t=#{order.guest_token}"))
+        end
+      end
+
       context 'when order params are not present' do
         let(:params) { {} }
 

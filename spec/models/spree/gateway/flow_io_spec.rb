@@ -107,6 +107,25 @@ RSpec.describe Spree::Gateway::FlowIo do
       it_behaves_like 'successful refund'
     end
 
+    context 'when credit has succeeded but status pending' do
+      let(:refund) do
+        build(:flow_refund, currency: order.currency, amount: amount, authorization: payment_auth, status: 'pending')
+      end
+
+      before do
+        allow(FlowcommerceSpree).to receive_message_chain(:client, :refunds, :post).and_return(refund)
+        allow(gateway).to receive(:add_refund_to_order).and_call_original
+        expect(gateway).to receive(:add_refund_to_order).with(refund, order)
+        @result = gateway.credit(payment, amount)
+      end
+
+      it_behaves_like 'successful refund'
+
+      it 'schedules job to check' do
+        expect(FlowcommerceSpree::RefundStatusWorker).to have_enqueued_sidekiq_job(order.number, refund.key)
+      end
+    end
+
     context 'when credit has failed' do
       before do
         allow(FlowcommerceSpree)

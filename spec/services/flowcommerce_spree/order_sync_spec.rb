@@ -114,127 +114,154 @@ RSpec.describe FlowcommerceSpree::OrderSync do
                 .with(FlowcommerceSpree::ORGANIZATION,
                       order.number, order_put_form, expand: ['experience'], experience: order.flow_io_experience_key)
               expect(instance).to receive(:refresh_checkout_token)
-              expect(FlowcommerceSpree)
-                .to receive_message_chain(:client, :checkout_tokens, :post_checkout_and_tokens_by_organization)
-                .with(FlowcommerceSpree::ORGANIZATION, discriminator: 'checkout_token_reference_form',
-                                                       order_number: order.number,
-                                                       session_id: flow_session_id,
-                                                       urls: { continue_shopping: root_url,
-                                                               confirmation: confirmation_url,
-                                                               invalid_checkout: root_url })
-                .and_return(checkout_token)
             end
 
-            context 'and the order is a guest order, i.e. has no associated user' do
+            context 'has locale set' do
               let(:order_put_form) { build(:flow_order_put_form, items: [line_item_form]) }
+              let(:locale_path) { 'de/de' }
 
-              it 'syncs the order to flow.io without customer info and returns the checkout_token' do
-                expect(instance).to receive(:try_to_add_customer).and_return(nil)
+              before do
+                allow_any_instance_of(Spree::Order).to(receive(:locale_path).and_return(locale_path))
+                expect(FlowcommerceSpree)
+                  .to receive_message_chain(:client, :checkout_tokens, :post_checkout_and_tokens_by_organization)
+                  .with(FlowcommerceSpree::ORGANIZATION, discriminator: 'checkout_token_reference_form',
+                                                         order_number: order.number,
+                                                         session_id: flow_session_id,
+                                                         urls: { continue_shopping: root_url + locale_path,
+                                                                 confirmation: confirmation_url,
+                                                                 invalid_checkout: root_url + locale_path })
+                  .and_return(checkout_token)
+              end
 
-                expect(instance.synchronize!).to eql(checkout_token.id)
-                expect(order.flow_io_attributes['flow_return_url']).to eql(confirmation_url)
-                expect(order.flow_io_attributes['checkout_continue_shopping_url']).to eql(root_url)
-                expect(order.flow_data.dig('order', 'customer', 'email')).to be_falsey
-                expect(order.flow_data.dig('order', 'customer', 'name', 'first')).to be_falsey
-                expect(order.flow_data.dig('order', 'customer', 'name', 'last')).to be_falsey
+              it 'fills in locale in url paths' do
+                instance.synchronize!
               end
             end
 
-            context 'and the order is a user order, i.e. has an associated user' do
-              let(:user_profile) { create(:user_profile, user: user) }
-              let(:customer_form) { build(:flow_order_customer_form, customer_hash) }
-              let(:customer_hash) do
-                { name: { first: address&.firstname || user_profile&.first_name,
-                          last: address&.lastname || user_profile&.last_name },
-                  number: user.flow_number, email: user.email, phone: address.phone }
+            context 'has no locale set' do
+              before do
+                expect(FlowcommerceSpree)
+                  .to receive_message_chain(:client, :checkout_tokens, :post_checkout_and_tokens_by_organization)
+                  .with(FlowcommerceSpree::ORGANIZATION, discriminator: 'checkout_token_reference_form',
+                                                         order_number: order.number,
+                                                         session_id: flow_session_id,
+                                                         urls: { continue_shopping: root_url,
+                                                                 confirmation: confirmation_url,
+                                                                 invalid_checkout: root_url })
+                  .and_return(checkout_token)
               end
-              let(:destination_hash) do
-                { streets: [address.address1, address.address2].reject(&:nil?),
-                  city: address&.city,
-                  province: address&.state_name,
-                  postal: address&.zipcode,
-                  country: (address&.country&.iso3 || ''),
-                  contact: customer_hash }.delete_if { |_k, v| v.nil? }
+
+              context 'and the order is a guest order, i.e. has no associated user' do
+                let(:order_put_form) { build(:flow_order_put_form, items: [line_item_form]) }
+
+                it 'syncs the order to flow.io without customer info and returns the checkout_token' do
+                  expect(instance).to receive(:try_to_add_customer).and_return(nil)
+
+                  expect(instance.synchronize!).to eql(checkout_token.id)
+                  expect(order.flow_io_attributes['flow_return_url']).to eql(confirmation_url)
+                  expect(order.flow_io_attributes['checkout_continue_shopping_url']).to eql(root_url)
+                  expect(order.flow_data.dig('order', 'customer', 'email')).to be_falsey
+                  expect(order.flow_data.dig('order', 'customer', 'name', 'first')).to be_falsey
+                  expect(order.flow_data.dig('order', 'customer', 'name', 'last')).to be_falsey
+                end
               end
-              let(:flow_order) { build(:flow_order, customer: build(:flow_order_customer, customer_hash)) }
-              let(:order) { create(:order_with_line_items, :with_flow_data, user: user, state: state, zone: zone) }
-              let(:order_put_form) { build(:flow_order_put_form, items: [line_item_form], customer: customer_form) }
 
-              before { allow(instance).to receive(:add_customer_address).and_call_original }
-
-              context 'user has no ship address, and no user_profile address' do
-                let(:user) { create(:user) }
-                let(:country) { create(:country, iso: 'DE') }
-                let!(:user_profile) { create(:user_profile, user: user) }
+              context 'and the order is a user order, i.e. has an associated user' do
+                let(:user_profile) { create(:user_profile, user: user) }
+                let(:customer_form) { build(:flow_order_customer_form, customer_hash) }
                 let(:customer_hash) do
-                  { name: { first: user_profile.first_name, last: user_profile.last_name },
-                    number: user.flow_number, email: user.email, phone: nil }
+                  { name: { first: address&.firstname || user_profile&.first_name,
+                            last: address&.lastname || user_profile&.last_name },
+                    number: user.flow_number, email: user.email, phone: address.phone }
+                end
+                let(:destination_hash) do
+                  { streets: [address.address1, address.address2].reject(&:nil?),
+                    city: address&.city,
+                    province: address&.state_name,
+                    postal: address&.zipcode,
+                    country: (address&.country&.iso3 || ''),
+                    contact: customer_hash }.delete_if { |_k, v| v.nil? }
+                end
+                let(:flow_order) { build(:flow_order, customer: build(:flow_order_customer, customer_hash)) }
+                let(:order) { create(:order_with_line_items, :with_flow_data, user: user, state: state, zone: zone) }
+                let(:order_put_form) { build(:flow_order_put_form, items: [line_item_form], customer: customer_form) }
+
+                before { allow(instance).to receive(:add_customer_address).and_call_original }
+
+                context 'user has no ship address, and no user_profile address' do
+                  let(:user) { create(:user) }
+                  let(:country) { create(:country, iso: 'DE') }
+                  let!(:user_profile) { create(:user_profile, user: user) }
+                  let(:customer_hash) do
+                    { name: { first: user_profile.first_name, last: user_profile.last_name },
+                      number: user.flow_number, email: user.email, phone: nil }
+                  end
+
+                  it 'syncs the order to flow.io with customer info, without address, and returns the checkout_token' do
+                    expect(instance).to receive(:try_to_add_customer)
+                    expect(instance).not_to receive(:add_customer_address)
+                    expect(Io::Flow::V0::Models::OrderPutForm)
+                      .to receive(:new)
+                      .with(items: [order_line_item], customer: customer_hash,
+                            attributes: nil, selections: nil, delivered_duty: nil)
+
+                    expect(instance.synchronize!).to eql(checkout_token.id)
+                    expect(order.flow_io_attributes['flow_return_url']).to eql(confirmation_url)
+                    expect(order.flow_io_attributes['checkout_continue_shopping_url']).to eql(root_url)
+                    expect(order.flow_data.dig('order', 'customer', 'email')).to eql(user.email)
+                    expect(order.flow_data.dig('order', 'customer', 'name', 'first')).to eql(user_profile.first_name)
+                    expect(order.flow_data.dig('order', 'customer', 'name', 'last')).to eql(user_profile.last_name)
+                    expect(order.flow_data.dig('order', 'customer', 'number')).to eql(user.flow_number)
+                  end
                 end
 
-                it 'syncs the order to flow.io with customer info, without address, and returns the checkout_token' do
-                  expect(instance).to receive(:try_to_add_customer)
-                  expect(instance).not_to receive(:add_customer_address)
-                  expect(Io::Flow::V0::Models::OrderPutForm)
-                    .to receive(:new)
-                    .with(items: [order_line_item], customer: customer_hash,
-                          attributes: nil, selections: nil, delivered_duty: nil)
+                context 'user has no ship address, and user_profile.address.country = order`s flow experience country' do
+                  let(:user) { create(:user) }
+                  let(:country) { create(:country, iso: 'DE') }
+                  let(:address) { create(:profile_address, country_id: country.id) }
+                  let!(:user_profile) { create(:user_profile, user: user, address: address) }
 
-                  expect(instance.synchronize!).to eql(checkout_token.id)
-                  expect(order.flow_io_attributes['flow_return_url']).to eql(confirmation_url)
-                  expect(order.flow_io_attributes['checkout_continue_shopping_url']).to eql(root_url)
-                  expect(order.flow_data.dig('order', 'customer', 'email')).to eql(user.email)
-                  expect(order.flow_data.dig('order', 'customer', 'name', 'first')).to eql(user_profile.first_name)
-                  expect(order.flow_data.dig('order', 'customer', 'name', 'last')).to eql(user_profile.last_name)
-                  expect(order.flow_data.dig('order', 'customer', 'number')).to eql(user.flow_number)
+                  it 'syncs the order to flow.io with customer info, profile address, and returns the checkout_token' do
+                    expect(instance).to receive(:try_to_add_customer)
+                    expect(instance).to receive(:add_customer_address).with(address)
+                    expect(Io::Flow::V0::Models::OrderPutForm)
+                      .to receive(:new)
+                      .with(items: [order_line_item], customer: customer_hash,
+                            destination: destination_hash, attributes: nil, selections: nil, delivered_duty: nil)
+
+                    expect(instance.synchronize!).to eql(checkout_token.id)
+                    expect(order.flow_io_attributes['flow_return_url']).to eql(confirmation_url)
+                    expect(order.flow_io_attributes['checkout_continue_shopping_url']).to eql(root_url)
+                    expect(order.flow_data.dig('order', 'customer', 'email')).to eql(user.email)
+                    expect(order.flow_data.dig('order', 'customer', 'name', 'first')).to eql(address.firstname)
+                    expect(order.flow_data.dig('order', 'customer', 'name', 'last')).to eql(address.lastname)
+                    expect(order.flow_data.dig('order', 'customer', 'number')).to eql(user.flow_number)
+                  end
                 end
-              end
 
-              context 'user has no ship address, and user_profile.address.country = order`s flow experience country' do
-                let(:user) { create(:user) }
-                let(:country) { create(:country, iso: 'DE') }
-                let(:address) { create(:profile_address, country_id: country.id) }
-                let!(:user_profile) { create(:user_profile, user: user, address: address) }
+                context 'user has a ship address equal to order`s flow experience country' do
+                  let(:user) { create(:user, ship_address_id: address.id) }
+                  let(:country) { create(:country, iso: 'DE') }
+                  let(:profile_address) { create(:profile_address, country_id: country.id) }
+                  let(:address) { create(:ship_address, country_id: country.id) }
+                  let!(:user_profile) { create(:user_profile, user: user, address: profile_address) }
 
-                it 'syncs the order to flow.io with customer info, profile address, and returns the checkout_token' do
-                  expect(instance).to receive(:try_to_add_customer)
-                  expect(instance).to receive(:add_customer_address).with(address)
-                  expect(Io::Flow::V0::Models::OrderPutForm)
-                    .to receive(:new)
-                    .with(items: [order_line_item], customer: customer_hash,
-                          destination: destination_hash, attributes: nil, selections: nil, delivered_duty: nil)
+                  it 'syncs the order to flow.io with customer info and ship_address, and returns the checkout_token' do
+                    expect(instance).to receive(:try_to_add_customer)
+                    expect(instance).to receive(:add_customer_address).with(address)
+                    expect(Io::Flow::V0::Models::OrderPutForm)
+                      .to receive(:new)
+                      .with(items: [order_line_item], customer: customer_hash,
+                            destination: destination_hash, attributes: nil, selections: nil, delivered_duty: nil)
 
-                  expect(instance.synchronize!).to eql(checkout_token.id)
-                  expect(order.flow_io_attributes['flow_return_url']).to eql(confirmation_url)
-                  expect(order.flow_io_attributes['checkout_continue_shopping_url']).to eql(root_url)
-                  expect(order.flow_data.dig('order', 'customer', 'email')).to eql(user.email)
-                  expect(order.flow_data.dig('order', 'customer', 'name', 'first')).to eql(address.firstname)
-                  expect(order.flow_data.dig('order', 'customer', 'name', 'last')).to eql(address.lastname)
-                  expect(order.flow_data.dig('order', 'customer', 'number')).to eql(user.flow_number)
-                end
-              end
-
-              context 'user has a ship address equal to order`s flow experience country' do
-                let(:user) { create(:user, ship_address_id: address.id) }
-                let(:country) { create(:country, iso: 'DE') }
-                let(:profile_address) { create(:profile_address, country_id: country.id) }
-                let(:address) { create(:ship_address, country_id: country.id) }
-                let!(:user_profile) { create(:user_profile, user: user, address: profile_address) }
-
-                it 'syncs the order to flow.io with customer info and ship_address, and returns the checkout_token' do
-                  expect(instance).to receive(:try_to_add_customer)
-                  expect(instance).to receive(:add_customer_address).with(address)
-                  expect(Io::Flow::V0::Models::OrderPutForm)
-                    .to receive(:new)
-                    .with(items: [order_line_item], customer: customer_hash,
-                          destination: destination_hash, attributes: nil, selections: nil, delivered_duty: nil)
-
-                  expect(instance.synchronize!).to eql(checkout_token.id)
-                  expect(order.flow_io_attributes['flow_return_url']).to eql(confirmation_url)
-                  expect(order.flow_io_attributes['checkout_continue_shopping_url']).to eql(root_url)
-                  expect(order.flow_data.dig('order', 'customer', 'email')).to eql(user.email)
-                  expect(order.flow_data.dig('order', 'customer', 'name', 'first')).to eql(address.firstname)
-                  expect(order.flow_data.dig('order', 'customer', 'name', 'last')).to eql(address.lastname)
-                  expect(order.flow_data.dig('order', 'customer', 'number')).to eql(user.flow_number)
+                    expect(instance.synchronize!).to eql(checkout_token.id)
+                    expect(order.flow_io_attributes['flow_return_url']).to eql(confirmation_url)
+                    expect(order.flow_io_attributes['checkout_continue_shopping_url']).to eql(root_url)
+                    expect(order.flow_data.dig('order', 'customer', 'email')).to eql(user.email)
+                    expect(order.flow_data.dig('order', 'customer', 'name', 'first')).to eql(address.firstname)
+                    expect(order.flow_data.dig('order', 'customer', 'name', 'last')).to eql(address.lastname)
+                    expect(order.flow_data.dig('order', 'customer', 'number')).to eql(user.flow_number)
+                  end
                 end
               end
             end
