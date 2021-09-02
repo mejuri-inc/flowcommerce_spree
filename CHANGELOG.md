@@ -1,8 +1,18 @@
 # Changelog
 
-## [v0.0.13](https://github.com/mejuri-inc/flowcommerce_spree/tree/v0.0.13) (2021-08-26)
+## [v0.0.14](https://github.com/mejuri-inc/flowcommerce_spree/tree/v0.0.14) (2021-09-02)
 
-[Full Changelog](https://github.com/mejuri-inc/flowcommerce_spree/compare/v.0.0.12...v0.0.13)
+[Full Changelog](https://github.com/mejuri-inc/flowcommerce_spree/compare/v.0.0.13...v0.0.14)
+
+**Merged pull requests:**
+
+- Preparing the new v0.0.14 release [\#63](https://github.com/mejuri-inc/flowcommerce_spree/pull/63) ([sebastiandl](https://github.com/sebastiandl))
+- \[DL-618\] - Fix flow refunds with klarna [\#61](https://github.com/mejuri-inc/flowcommerce_spree/pull/61) ([abalpablo](https://github.com/abalpablo))
+- \[DL-614\] Adding support to include country\_locale within the redirection routes when synchronizing order with Flow [\#60](https://github.com/mejuri-inc/flowcommerce_spree/pull/60) ([sebastiandl](https://github.com/sebastiandl))
+
+## [v.0.0.13](https://github.com/mejuri-inc/flowcommerce_spree/tree/v.0.0.13) (2021-08-26)
+
+[Full Changelog](https://github.com/mejuri-inc/flowcommerce_spree/compare/v.0.0.12...v.0.0.13)
 
 **Merged pull requests:**
 
