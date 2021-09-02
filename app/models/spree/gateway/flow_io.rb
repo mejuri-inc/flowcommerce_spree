@@ -5,7 +5,9 @@
 module Spree
   class Gateway
     class FlowIo < Gateway
+      REFUND_VALID_STATES = %w[succeeded pending].freeze
       REFUND_SUCCESS = 'succeeded'
+      REFUND_PENDING = 'pending'
 
       def provider_class
         self.class
@@ -90,16 +92,23 @@ module Spree
                                                            currency: order.currency)
         response = FlowcommerceSpree.client.refunds.post(FlowcommerceSpree::ORGANIZATION, refund_form)
         response_status = response.status.value
-        if response_status == REFUND_SUCCESS
+        if REFUND_VALID_STATES.include? response_status
           add_refund_to_order(response, order)
+          schedule_status_check(response, order)
           ActiveMerchant::Billing::Response.new(true,
                                                 REFUND_SUCCESS,
                                                 response.to_hash,
                                                 authorization: response.authorization.id)
         else
-          msg = "Partial refund fail. Details: #{response_status}"
-          ActiveMerchant::Billing::Response.new(false, msg, {}, {})
+          ActiveMerchant::Billing::Response.new(false, "Partial refund fail. Details: #{response_status}", {}, {})
         end
+      end
+
+      def schedule_status_check(response, order)
+        return if response.status.value != REFUND_PENDING
+
+        Rails.logger.warn("[!] #{self.class} for #{order.number} - refund request without succeeded status.")
+        FlowcommerceSpree::RefundStatusWorker.perform_async(order.number, response.key)
       end
 
       def add_refund_to_order(response, order)
