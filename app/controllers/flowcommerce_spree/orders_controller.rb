@@ -5,6 +5,8 @@ module FlowcommerceSpree
     wrap_parameters false
 
     skip_before_action :setup_tracking, only: :order_completed
+    skip_before_action :prepare_order
+    skip_before_action :before_render
 
     # proxy enpoint between flow and thankyou page.
     # /flow/order_completed endpoint
