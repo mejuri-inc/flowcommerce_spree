@@ -1,8 +1,17 @@
 # Changelog
 
-## [v0.0.14](https://github.com/mejuri-inc/flowcommerce_spree/tree/v0.0.14) (2021-09-02)
+## [v0.0.15](https://github.com/mejuri-inc/flowcommerce_spree/tree/v0.0.15) (2021-09-03)
 
-[Full Changelog](https://github.com/mejuri-inc/flowcommerce_spree/compare/v.0.0.13...v0.0.14)
+[Full Changelog](https://github.com/mejuri-inc/flowcommerce_spree/compare/v.0.0.14...v0.0.15)
+
+**Merged pull requests:**
+
+- Preparing the new v0.0.15 release  [\#65](https://github.com/mejuri-inc/flowcommerce_spree/pull/65) ([sebastiandl](https://github.com/sebastiandl))
+- \[DL-614\] Avoid prepare\_order and before\_render within order\_completed endpoint. [\#64](https://github.com/mejuri-inc/flowcommerce_spree/pull/64) ([sebastiandl](https://github.com/sebastiandl))
+
+## [v.0.0.14](https://github.com/mejuri-inc/flowcommerce_spree/tree/v.0.0.14) (2021-09-02)
+
+[Full Changelog](https://github.com/mejuri-inc/flowcommerce_spree/compare/v.0.0.13...v.0.0.14)
 
 **Merged pull requests:**
 
