@@ -126,7 +126,26 @@ module FlowcommerceSpree
         number: variant.sku,
         quantity: line_item.quantity,
         price: { amount: price_root['amount'] || variant.price,
-                 currency: price_root['currency'] || variant.cost_currency } }
+                 currency: price_root['currency'] || variant.cost_currency },
+        discounts: {
+          discounts: add_discounts(line_item)
+        } 
+      }
+    end
+
+    def add_discounts(line_item)
+      line_item.adjustments.promotion.eligible.map do |adjustment|
+        {
+          offer: {
+            target: 'item',
+            label: adjustment.label
+            money: {
+              amount: adjustment.amount,
+              currency: line_item.currency
+            }
+          }
+        }
+      end
     end
 
     def write_response_to_order
