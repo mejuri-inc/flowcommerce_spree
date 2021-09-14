@@ -138,7 +138,7 @@ module FlowcommerceSpree
         {
           offer: {
             target: 'item',
-            label: adjustment.label
+            label: adjustment.label,
             money: {
               amount: adjustment.amount,
               currency: line_item.currency
