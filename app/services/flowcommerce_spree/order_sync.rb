@@ -137,6 +137,7 @@ module FlowcommerceSpree
       line_item.adjustments.promotion.eligible.map do |adjustment|
         {
           offer: {
+            discriminator: adjustment.label
             target: 'item',
             label: adjustment.label,
             money: {
