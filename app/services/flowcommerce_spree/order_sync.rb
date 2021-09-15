@@ -139,15 +139,15 @@ module FlowcommerceSpree
         puts adjustment.amount
         puts line_item.currency
         {
-          offer: {
-            discriminator: adjustment.label,
-            money: {
-              amount: adjustment.amount,
-              currency: line_item.currency
+          'offer': {
+            'discriminator': adjustment.label,
+            'money': {
+              'amount': adjustment.amount,
+              'currency': line_item.currency
             }
           },
-          target: 'item',
-          label: adjustment.label,
+          'target': 'item',
+          'label': adjustment.label,
         }
       end
     end
