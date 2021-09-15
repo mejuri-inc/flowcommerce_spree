@@ -122,7 +122,7 @@ module FlowcommerceSpree
       price_root = variant.flow_data&.dig('exp', @experience, 'prices')&.[](0) || {}
       discount_data = map_discounts(line_item)
       # create flow order line item
-      rest ={ center: FLOW_CENTER,
+      res ={ center: FLOW_CENTER,
         number: variant.sku,
         quantity: line_item.quantity,
         price: { amount: price_root['amount'] || variant.price,
@@ -138,19 +138,19 @@ module FlowcommerceSpree
 
     def map_discounts(line_item)
       line_item.adjustments.promotion.eligible.map do |adjustment|
-        Rails.logger.debug( adjustment.label)
-        Rails.logger.debug(  adjustment.amount)
-          Rails.logger.debug(  line_item.currency)
+        Rails.logger.debug(adjustment.label)
+        Rails.logger.debug(adjustment.amount.to_f)
+        Rails.logger.debug(line_item.currency)
         {
-          'offer': {
-            'discriminator': adjustment.label,
-            'money': {
-              'amount': adjustment.amount,
-              'currency': line_item.currency
+          offer: {
+            discriminator: 'discount_offer_fixed',
+            money: {
+              amount: adjustment.amount.to_f,
+              currency: line_item.currency
             }
           },
-          'target': 'item',
-          'label': adjustment.label,
+          target: 'item',
+          label: adjustment.label,
         }
       end
     end
