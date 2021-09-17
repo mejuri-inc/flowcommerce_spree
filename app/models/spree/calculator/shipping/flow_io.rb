@@ -28,7 +28,7 @@ module Spree
         end
 
         def default_sample_charge
-            preferred_sample_product_cost
+          preferred_sample_product_cost
         end
 
         private
