@@ -61,13 +61,17 @@ module Spree
         ActiveMerchant::Billing::Response.new(false, e.to_s, {}, {})
       end
 
-      def void(authorization_id, _source, options = {})
+      def void(authorization_id, options = {})
         amount = (options[:subtotal] + options[:shipping]) * 0.01
-        reversal_form = Io::Flow::V0::Models::ReversalForm.new(key: options[:order_id],
-                                                               authorization_id: authorization_id,
-                                                               amount: amount,
-                                                               currency: options[:currency])
-        FlowcommerceSpree.client.reversals.post(FlowcommerceSpree::ORGANIZATION, reversal_form)
+        order = Spree::Order.find_by(number: options[:order_id].split('-').first)
+        refund_form = Io::Flow::V0::Models::RefundForm.new(order_number: order.number,
+                                                           amount: amount,
+                                                           currency: options[:currency],
+                                                           authorization_id: authorization_id)
+        response = FlowcommerceSpree.client.refunds.post(FlowcommerceSpree::ORGANIZATION, refund_form)
+        validate_flow_refund_response(response, order)
+
+        ActiveMerchant::Billing::Response.new(true, 'flow-payment-void', {}, {})
       end
 
       def create_profile(payment)
@@ -91,6 +95,11 @@ module Spree
                                                            amount: amount,
                                                            currency: order.currency)
         response = FlowcommerceSpree.client.refunds.post(FlowcommerceSpree::ORGANIZATION, refund_form)
+        result = validate_flow_refund_response(response, order)
+        result
+      end
+
+      def validate_flow_refund_response(response, order)
         response_status = response.status.value
         if REFUND_VALID_STATES.include? response_status
           add_refund_to_order(response, order)
