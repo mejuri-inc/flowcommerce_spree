@@ -166,3 +166,4 @@ The new release editing page opens, on which the following actions could be take
 - If the release is not yet ready for production, mark the `This is a pre-release` checkbox
 - Press either the `Publish release`, or the `Save draft button` if you want to publish it later
     - After publishing the release, the the binary gem file will be available on GitHub and could be removed locally
+

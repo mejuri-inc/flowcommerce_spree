@@ -15,7 +15,7 @@ Gem::Specification.new do |s|
   s.summary     = 'Integration of Spree with Flow API'
   s.description = 'Integration of popular Rails/Spree store framework with e-commerce Flow API'
   s.license     = 'MIT'
-  s.required_ruby_version = '~> 2.3.0'
+  s.required_ruby_version = '~> 2.4.9'
 
   s.files = Dir['{app,config,db,lib}/**/*', 'MIT-LICENSE', 'Rakefile', 'README.md', 'SPREE_FLOW.md']
   s.require_path = 'lib'

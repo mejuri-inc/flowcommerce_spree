@@ -1,5 +1,23 @@
 # Changelog
 
+## [v0.0.17](https://github.com/mejuri-inc/flowcommerce_spree/tree/v0.0.17) (2021-09-24)
+
+[Full Changelog](https://github.com/mejuri-inc/flowcommerce_spree/compare/v.0.0.16...v0.0.17)
+
+**Merged pull requests:**
+
+- Preparing the new v0.0.17 release [\#69](https://github.com/mejuri-inc/flowcommerce_spree/pull/69) ([sebastiandl](https://github.com/sebastiandl))
+- \[DL-685\] Add support for samples shipping value [\#67](https://github.com/mejuri-inc/flowcommerce_spree/pull/67) ([mariano-mejuri](https://github.com/mariano-mejuri))
+
+## [v.0.0.16](https://github.com/mejuri-inc/flowcommerce_spree/tree/v.0.0.16) (2021-09-22)
+
+[Full Changelog](https://github.com/mejuri-inc/flowcommerce_spree/compare/v.0.0.15...v.0.0.16)
+
+**Merged pull requests:**
+
+- Preparing the new v0.0.16 release [\#68](https://github.com/mejuri-inc/flowcommerce_spree/pull/68) ([sebastiandl](https://github.com/sebastiandl))
+- \[DL-604\] - Fix voiding payments with flow [\#66](https://github.com/mejuri-inc/flowcommerce_spree/pull/66) ([abalpablo](https://github.com/abalpablo))
+
 ## [v.0.0.15](https://github.com/mejuri-inc/flowcommerce_spree/tree/v.0.0.15) (2021-09-03)
 
 [Full Changelog](https://github.com/mejuri-inc/flowcommerce_spree/compare/v.0.0.14...v.0.0.15)
@@ -143,7 +161,7 @@
 
 ## [v0.0.1](https://github.com/mejuri-inc/flowcommerce_spree/tree/v0.0.1) (2021-02-03)
 
-[Full Changelog](https://github.com/mejuri-inc/flowcommerce_spree/compare/8376622c8175de74c6b30ae88b42a35b34b64598...v0.0.1)
+[Full Changelog](https://github.com/mejuri-inc/flowcommerce_spree/compare/b9071fa9cdf3afd5de85ff97de7141cdf5250419...v0.0.1)
 
 **Merged pull requests:**
 
