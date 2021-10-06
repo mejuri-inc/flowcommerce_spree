@@ -131,16 +131,11 @@ module FlowcommerceSpree
           discounts: discount_data
         } 
       }
-
-      Rails.logger.debug(res)
       res
     end
 
     def map_discounts(line_item)
       line_item.adjustments.promotion.eligible.map do |adjustment|
-        Rails.logger.debug(adjustment.label)
-        Rails.logger.debug(adjustment.amount.to_f)
-        Rails.logger.debug(line_item.currency)
         {
           offer: {
             discriminator: 'discount_offer_fixed',
