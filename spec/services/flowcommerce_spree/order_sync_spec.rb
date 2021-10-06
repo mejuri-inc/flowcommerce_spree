@@ -88,6 +88,7 @@ RSpec.describe FlowcommerceSpree::OrderSync do
             let(:line_item) { order.line_items.first }
             let(:order_line_item) do
               { number: line_item.variant.sku,
+                discounts: { discounts: [] },
                 price: { amount: line_item.variant.price,
                          currency: line_item.variant.cost_currency },
                 center: FlowcommerceSpree::OrderSync::FLOW_CENTER,
@@ -114,6 +115,32 @@ RSpec.describe FlowcommerceSpree::OrderSync do
                 .with(FlowcommerceSpree::ORGANIZATION,
                       order.number, order_put_form, expand: ['experience'], experience: order.flow_io_experience_key)
               expect(instance).to receive(:refresh_checkout_token)
+            end
+
+            context 'has promotions on line_items' do
+              let(:line_item) { create(:line_item) }
+              let(:order_put_form) { build(:flow_order_put_form, items: [line_item_form]) }
+              let(:expected_result) do
+                { center: FLOW_CENTER,
+                  number: variant.sku,
+                  quantity: line_item.quantity,
+                  price: { amount: line_item.variant.price,
+                           currency: line_item.variant.cost_currency },
+                  discounts: [{ offer: { discriminator: 'discount_offer_fixed',
+                                money: { amount: 0.0, currency: 'USD' } }, target: 'item', label: 'Promotion' } ]}
+              end
+              before do
+                allow(instance).to receive(:add_item).and_call_original
+                line_item.adjustments << create(:promotion_adjustment,
+                                                adjustable: line_item, order: line_item.order)
+              end
+
+              it 'adds discounts to flow payload' do
+                expect(instance).to receive(:add_item).and_return(:expected_result)
+
+                instance.synchronize!
+                
+              end
             end
 
             context 'has locale set' do
