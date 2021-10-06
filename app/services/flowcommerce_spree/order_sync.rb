@@ -144,7 +144,7 @@ module FlowcommerceSpree
               currency: line_item.currency
             }
           },
-          target: 'item',
+          target: line_item.sku,
           label: adjustment.label,
         }
       end
