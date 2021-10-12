@@ -127,7 +127,8 @@ RSpec.describe FlowcommerceSpree::OrderSync do
                   price: { amount: line_item.variant.price,
                            currency: line_item.variant.cost_currency },
                   discounts: [{ offer: { discriminator: 'discount_offer_fixed',
-                                money: { amount: 0.0, currency: 'USD' } }, target: 'item', label: 'Promotion' } ]}
+                                         money: { amount: 0.0, currency: 'USD' } },
+                                target: 'item', label: 'Promotion' }] }
               end
               before do
                 allow(instance).to receive(:add_item).and_call_original
@@ -139,7 +140,6 @@ RSpec.describe FlowcommerceSpree::OrderSync do
                 expect(instance).to receive(:add_item).and_return(:expected_result)
 
                 instance.synchronize!
-                
               end
             end
 
