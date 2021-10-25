@@ -14,6 +14,7 @@ jobs:
   rspec-test:
     name: RSpec
     runs-on: ubuntu-latest
+    container: ruby:2.3.7
     services:
       postgres:
         image: postgres:11.6
@@ -24,36 +25,25 @@ jobs:
           POSTGRES_DB: ${{ secrets.POSTGRES_DB }}
     steps:
       - uses: actions/checkout@v2
-      - uses: actions/cache@v2.1.3
-        with:
-          key: ${{ runner.os }}-gems-${{ hashFiles('**/Gemfile.lock') }}
-          path: vendor/bundle
-      - uses: ruby/setup-ruby@master
-        id: ruby
-        with:
-          ruby-version: ${{ env.RUBY_VERSION }}
-          bundler: 1.17.3
-          bundler-cache: true
       - name: Install postgres client
-        run: sudo apt-get install libpq-dev
+        run: apt-get install libpq-dev
       - name: Install dependencies
+        env:
+          PERSONAL_GITHUB_TOKEN: ${{ secrets.PERSONAL_GITHUB_TOKEN }}
         run: |
-          sudo apt-get update
-          sudo apt-get install libcurl3-dev
+          apt-get update
+          apt-get install libcurl3-dev nodejs-legacy -y
+          gem update --system && gem install bundler:1.16.6
+          bundle
       - name: Create database
         run: |
           bundle exec rake db:create RAILS_ENV=test
       - name: Load Schema
         run: |
           bundle exec rake db:schema:load RAILS_ENV=test
-      - name: Run tests
-        run: REPORT_COVERAGE=true bundle exec rspec
-      - name: Upload coverage results
-        uses: actions/upload-artifact@master
-        if: always()
-        with:
-          name: coverage
-          path: coverage
+      - name: Test & Upload coverage results
+        run: |
+          bundler exec rake
   code-check:
     name:
     runs-on: ubuntu-latest
