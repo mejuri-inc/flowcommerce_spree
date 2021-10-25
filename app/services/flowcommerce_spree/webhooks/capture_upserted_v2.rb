@@ -64,7 +64,7 @@ module FlowcommerceSpree
 
         return if order.completed?
         return unless order.flow_io_captures_sum >= order.flow_io_total_amount && order.flow_io_balance_amount <= 0
-
+        
         FlowcommerceSpree::OrderUpdater.new(order: order).finalize_order
       end
 

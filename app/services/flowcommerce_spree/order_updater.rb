@@ -63,7 +63,8 @@ module FlowcommerceSpree
         payment.update_column(:identifier, p['id'])
       end
 
-      return if @order.payments.sum(:amount) < @order.amount || @order.state == 'complete'
+      return if ( @order.payments.sum(:amount) < @order.amount ||
+                @order.state == 'complete' || @order.flow_io_balance_amount > 0 )
 
       @order.state = 'confirm'
       @order.save!
