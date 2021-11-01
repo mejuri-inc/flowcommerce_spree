@@ -104,6 +104,7 @@ RSpec.describe FlowcommerceSpree::OrderUpdater do
 
       context 'when payments amount is less than order`s amount' do
         it 'does not call finalize_order if order is not updated to`complete`' do
+          allow(order).to(receive(:flow_io_total_amount).and_return(order.payments.sum(:amount) + 1))
           expect_any_instance_of(FlowcommerceSpree::OrderUpdater).not_to(receive(:finalize_order))
           subject.new(order: order).complete_checkout
         end
@@ -132,6 +133,7 @@ RSpec.describe FlowcommerceSpree::OrderUpdater do
       context 'when there is no flow payments information' do
         it 'does not update order as complete' do
           allow(order).to(receive(:flow_io_payments).and_return([]))
+          allow(order).to(receive(:flow_io_total_amount).and_return(100))
           subject.new(order: order).map_payments_to_spree
 
           expect(order.complete?).to(be_falsey)
