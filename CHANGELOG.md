@@ -1,5 +1,24 @@
 # Changelog
 
+## [v0.0.19](https://github.com/mejuri-inc/flowcommerce_spree/tree/v0.0.19) (2021-11-24)
+
+[Full Changelog](https://github.com/mejuri-inc/flowcommerce_spree/compare/v.0.0.18...v0.0.19)
+
+**Merged pull requests:**
+
+- Preparing the new v0.0.19 release [\#75](https://github.com/mejuri-inc/flowcommerce_spree/pull/75) ([sebastiandl](https://github.com/sebastiandl))
+- \[DL-874\] change on adjust\_zone\_and\_ip method to avoid updating last\_ip\_address almost allways, and instead only when needed [\#74](https://github.com/mejuri-inc/flowcommerce_spree/pull/74) ([sebastiandl](https://github.com/sebastiandl))
+
+## [v.0.0.18](https://github.com/mejuri-inc/flowcommerce_spree/tree/v.0.0.18) (2021-11-01)
+
+[Full Changelog](https://github.com/mejuri-inc/flowcommerce_spree/compare/v.0.0.17...v.0.0.18)
+
+**Merged pull requests:**
+
+- Preparing the new v0.0.18 release [\#73](https://github.com/mejuri-inc/flowcommerce_spree/pull/73) ([abalpablo](https://github.com/abalpablo))
+- \[NO-TICKET\] updating github workflow to run rspec without errors [\#72](https://github.com/mejuri-inc/flowcommerce_spree/pull/72) ([sebastiandl](https://github.com/sebastiandl))
+- \[DL-674\] - Send promotion info to flow [\#70](https://github.com/mejuri-inc/flowcommerce_spree/pull/70) ([abalpablo](https://github.com/abalpablo))
+
 ## [v.0.0.17](https://github.com/mejuri-inc/flowcommerce_spree/tree/v.0.0.17) (2021-09-24)
 
 [Full Changelog](https://github.com/mejuri-inc/flowcommerce_spree/compare/v.0.0.16...v.0.0.17)
@@ -161,7 +180,7 @@
 
 ## [v0.0.1](https://github.com/mejuri-inc/flowcommerce_spree/tree/v0.0.1) (2021-02-03)
 
-[Full Changelog](https://github.com/mejuri-inc/flowcommerce_spree/compare/8376622c8175de74c6b30ae88b42a35b34b64598...v0.0.1)
+[Full Changelog](https://github.com/mejuri-inc/flowcommerce_spree/compare/b9071fa9cdf3afd5de85ff97de7141cdf5250419...v0.0.1)
 
 **Merged pull requests:**
 
