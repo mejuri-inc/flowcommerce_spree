@@ -27,7 +27,7 @@ module Spree
           attrs_to_update = {}
 
           # Update last_ip_address only when last_ip_address is different.
-          attrs_to_update = { last_ip_address: ip_address } if @curren_order.last_ip_address != ip_address
+          attrs_to_update = { last_ip_address: ip_address } if @current_order.last_ip_address != ip_address
 
           # :meta is a jsonb column costly to update every time, especially with all the flow.io data, that's why
           # here it is updated only if no zone_id there was inside :meta
