@@ -63,8 +63,16 @@ module FlowcommerceSpree
         payment.update_column(:identifier, p['id'])
       end
 
+      if @order.payments.blank?
+        payment_method = Spree::PaymentMethod.find_by type: 'Spree::Gateway::FlowIo'
+        placeholder_payment = Spree::Payment.new(amount: @order.flow_io_total_amount, order: @order,
+          source: nil, payment_method_id: payment_method.id, state: 'pending')
+        @order.payments << placeholder_payment
+        @order.save
+      end
+
       return if @order.completed?
-      return if @order.payments.sum(:amount) < @order.flow_io_total_amount || @order.flow_io_balance_amount > 0
+      return if @order.payments.sum(:amount) < @order.flow_io_total_amount
 
       @order.state = 'confirm'
       @order.save!
