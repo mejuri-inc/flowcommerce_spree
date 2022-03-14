@@ -37,7 +37,7 @@ module FlowcommerceSpree
       def store_payment_capture(order, capture)
         upsert_order_captures(order, capture)
         payments = order.flow_io_payments
-        map_payment_captures_to_spree(order, payments)
+        map_payment_captures_to_spree(order, payments) if payments.present?
         order
       end
 
