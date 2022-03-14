@@ -66,7 +66,7 @@ module FlowcommerceSpree
       if @order.payments.blank?
         payment_method = Spree::PaymentMethod.find_by type: 'Spree::Gateway::FlowIo'
         placeholder_payment = Spree::Payment.new(amount: @order.flow_io_total_amount, order: @order,
-          source: nil, payment_method_id: payment_method.id, state: 'pending')
+                                                 source: nil, payment_method_id: payment_method.id, state: 'pending')
         @order.payments << placeholder_payment
         @order.save
       end
