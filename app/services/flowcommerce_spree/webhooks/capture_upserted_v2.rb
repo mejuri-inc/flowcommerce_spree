@@ -74,8 +74,8 @@ module FlowcommerceSpree
         payment = order.payments.first
 
         if flow_order_payments.blank? && payment.response_code.blank?
-          payment.response_code = capture.authorization.key
-          payment.identifier = capture.authorization.key
+          payment.response_code = capture.dig('authorization','key')
+          payment.identifier = capture.dig('authorization','key')
           payment.save
           return payment
         end
