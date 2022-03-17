@@ -134,6 +134,17 @@ RSpec.describe FlowcommerceSpree::Webhooks::CaptureUpsertedV2 do
             end
           end
 
+          context 'and the order contains placeholder payment' do
+            let!(:payment) { create(:payment, order: order, payment_method_id: gateway.id) }
+
+            it 'returns the Spree::Order with upserted captures' do
+              payment.response_code = nil
+              result = instance.process
+
+              expect_order_with_capture(result, 'succeeded')
+            end
+          end
+
           context 'and the order contains flow_io payments' do
             let(:flow_payment) { build(:flow_order_payment, reference: order_auth.id) }
             let(:zone) { create(:germany_zone, :with_flow_data) }
