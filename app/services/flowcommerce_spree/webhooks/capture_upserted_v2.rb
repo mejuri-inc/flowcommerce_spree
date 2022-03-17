@@ -54,7 +54,7 @@ module FlowcommerceSpree
 
       def map_payment_captures_to_spree(order, payments)
         order.flow_data['captures']&.each do |c|
-          next unless (payment = captured_payment(payments, c))
+          next unless (payment = captured_payment(payments, c, order))
 
           payment.capture_events.create!(amount: c['amount'], meta: { 'flow_data' => { 'id' => c['id'] } })
           return if payment.completed? || payment.capture_events.sum(:amount) < payment.amount
@@ -68,10 +68,18 @@ module FlowcommerceSpree
         FlowcommerceSpree::OrderUpdater.new(order: order).finalize_order
       end
 
-      def captured_payment(flow_order_payments, capture)
+      def captured_payment(flow_order_payments, capture, order)
         return unless capture['status'] == 'succeeded'
-
         auth = capture.dig('authorization', 'id')
+        payment = order.payments.first
+
+        if flow_order_payments.blank? && payment.response_code.blank?
+          payment.response_code = capture.dig('authorization', 'key')
+          payment.identifier = capture.dig('authorization', 'key')
+          payment.save
+          return payment
+        end
+
         return unless flow_order_payments&.find { |p| p['reference'] == auth }
 
         return unless (payment = Spree::Payment.find_by(response_code: auth))
