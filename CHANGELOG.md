@@ -1,8 +1,8 @@
 # Changelog
 
-## [v0.0.19](https://github.com/mejuri-inc/flowcommerce_spree/tree/v0.0.19) (2021-11-24)
+## [v.0.0.19](https://github.com/mejuri-inc/flowcommerce_spree/tree/v.0.0.19) (2021-11-24)
 
-[Full Changelog](https://github.com/mejuri-inc/flowcommerce_spree/compare/v.0.0.18...v0.0.19)
+[Full Changelog](https://github.com/mejuri-inc/flowcommerce_spree/compare/v.0.0.18...v.0.0.19)
 
 **Merged pull requests:**
 
@@ -180,7 +180,7 @@
 
 ## [v0.0.1](https://github.com/mejuri-inc/flowcommerce_spree/tree/v0.0.1) (2021-02-03)
 
-[Full Changelog](https://github.com/mejuri-inc/flowcommerce_spree/compare/b9071fa9cdf3afd5de85ff97de7141cdf5250419...v0.0.1)
+[Full Changelog](https://github.com/mejuri-inc/flowcommerce_spree/compare/8376622c8175de74c6b30ae88b42a35b34b64598...v0.0.1)
 
 **Merged pull requests:**
 
