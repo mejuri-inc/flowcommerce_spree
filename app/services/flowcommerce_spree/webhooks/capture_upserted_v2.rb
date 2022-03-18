@@ -36,8 +36,7 @@ module FlowcommerceSpree
 
       def store_payment_capture(order, capture)
         upsert_order_captures(order, capture)
-        payments = order.flow_io_payments
-        map_payment_captures_to_spree(order, payments) if payments.present?
+        map_payment_captures_to_spree(order)
         order
       end
 
@@ -52,9 +51,11 @@ module FlowcommerceSpree
         order.update_column(:meta, order.meta.to_json)
       end
 
-      def map_payment_captures_to_spree(order, payments)
+      def map_payment_captures_to_spree(order)
+        payments = order.flow_io_payments
         order.flow_data['captures']&.each do |c|
-          next unless (payment = captured_payment(payments, c, order))
+          payment = payments ? captured_payment(payments, c, order) : placeholder_captured_payment(order)
+          return unless payment
 
           payment.capture_events.create!(amount: c['amount'], meta: { 'flow_data' => { 'id' => c['id'] } })
           return if payment.completed? || payment.capture_events.sum(:amount) < payment.amount
@@ -68,17 +69,10 @@ module FlowcommerceSpree
         FlowcommerceSpree::OrderUpdater.new(order: order).finalize_order
       end
 
-      def captured_payment(flow_order_payments, capture, order)
+      def captured_payment(flow_order_payments, capture, _order)
         return unless capture['status'] == 'succeeded'
-        auth = capture.dig('authorization', 'id')
-        payment = order.payments.first
 
-        if flow_order_payments.blank? && payment.response_code.blank?
-          payment.response_code = capture.dig('authorization', 'key')
-          payment.identifier = capture.dig('authorization', 'key')
-          payment.save
-          return payment
-        end
+        auth = capture.dig('authorization', 'id')
 
         return unless flow_order_payments&.find { |p| p['reference'] == auth }
 
@@ -86,6 +80,17 @@ module FlowcommerceSpree
 
         return if Spree::PaymentCaptureEvent.where("meta -> 'flow_data' ->> 'id' = ?", capture['id']).exists?
 
+        payment
+      end
+
+      def placeholder_captured_payment(order)
+        payment = order.payments.first
+
+        if flow_order_payments.blank? && payment.response_code.blank?
+          payment.response_code = capture.dig('authorization', 'key')
+          payment.identifier = capture.dig('authorization', 'key')
+          payment.save
+        end
         payment
       end
     end
