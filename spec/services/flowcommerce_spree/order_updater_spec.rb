@@ -86,7 +86,11 @@ RSpec.describe FlowcommerceSpree::OrderUpdater do
     end
 
     describe '#complete_checkout' do
+      let(:payment_method) { create(:spree_payment_method_flow) }
+      let(:order_payment) { create(:payment, :completed) }
       before do
+        order.payments << order_payment
+        allow(Spree::PaymentMethod).to receive(:find_by).and_return(payment_method)
         expect_any_instance_of(FlowcommerceSpree::OrderUpdater).to(receive(:upsert_data))
         expect_any_instance_of(FlowcommerceSpree::OrderUpdater).to(receive(:map_payments_to_spree)).and_call_original
       end

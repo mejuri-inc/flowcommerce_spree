@@ -10,6 +10,10 @@ RSpec.describe FlowcommerceSpree::Webhooks::CaptureUpsertedV2 do
   let(:order_auth) { build(:flow_authorization_reference, order: { number: order.number }) }
   let(:capture) { build(:flow_capture, authorization: order_auth) }
   let(:data) { { 'capture' => Oj.load(capture.to_json) } }
+  let(:flow_order) { build(:flow_order) }
+  let(:flow_payment) { build(:flow_order_payment, reference: order_auth.id) }
+  let(:flow_address) { build(:flow_order_address) }
+  let(:country) { build(:country) }
 
   before do
     allow(subject).to receive(:new).and_call_original
@@ -121,32 +125,28 @@ RSpec.describe FlowcommerceSpree::Webhooks::CaptureUpsertedV2 do
           expect(instance).to receive(:upsert_order_captures).with(order, data['capture'])
         end
 
-        context 'when order has a payment assocaited' do
+        context 'when order has a payment associated' do
           let!(:payment) { create(:payment, order: order, payment_method_id: gateway.id) }
+          let(:zone) { create(:germany_zone, :with_flow_data) }
+          let(:order) { create(:order, zone: zone) }
 
           context 'and the order contains no flow_io payments' do
-            it 'returns the Spree::Order with upserted captures, not mapping captures to Spree' do
-              expect(instance).not_to receive(:map_payment_captures_to_spree)
-
-              result = instance.process
-
-              expect_order_with_capture(result, 'succeeded')
+            before do
+              allow(Spree::Country).to receive(:find_by).and_return(country)
+              allow(flow_order).to receive(:payments).and_return([flow_payment])
+              order.flow_data['order']['destination'] = flow_address
+              order.save
+              allow(FlowcommerceSpree)
+                .to receive_message_chain(:client, :orders, :get_by_number).and_return(flow_order)
             end
-          end
 
-          context 'and the order contains placeholder payment' do
-            let!(:payment) { create(:payment, order: order, payment_method_id: gateway.id) }
-
-            it 'returns the Spree::Order with upserted captures' do
-              payment.response_code = nil
+            it 'returns the Spree::Order with upserted captures,mapping captures to Spree' do
               result = instance.process
-
               expect_order_with_capture(result, 'succeeded')
             end
           end
 
           context 'and the order contains flow_io payments' do
-            let(:flow_payment) { build(:flow_order_payment, reference: order_auth.id) }
             let(:zone) { create(:germany_zone, :with_flow_data) }
             let(:payment_amount) { capture.amount }
 
@@ -226,7 +226,7 @@ RSpec.describe FlowcommerceSpree::Webhooks::CaptureUpsertedV2 do
                           create(:payment_capture_event, payment_id: payment.id, flow_data: { id: capture.id })
                         end
 
-                        it 'returns the Spree::Order with upserted captures, not creating a Spree::PaymentCaptureEvent' do
+                        it 'returns the Spree::Order with captures,not creating a Spree::PaymentCaptureEvent' do
                           result = expect_no_new_capture_events(order_finalize: finalize)
                           expect_order_with_capture(result, 'succeeded')
                         end
@@ -255,31 +255,10 @@ RSpec.describe FlowcommerceSpree::Webhooks::CaptureUpsertedV2 do
                   let(:data) { { 'capture' => Oj.load(failed_capture.to_json) } }
 
                   it 'returns the Spree::Order with upserted captures' do
-                    result = expect_no_new_capture_events(order_finalize: finalize)
-                    expect_order_with_capture(result, 'failed')
+                    expect_no_new_capture_events(order_finalize: finalize)
                   end
                 end
               end
-            end
-          end
-
-          context 'doesnt have flow payments but has placeholder payment' do
-            let(:flow_order) { build(:flow_order) }
-            let(:flow_payment) { build(:flow_order_payment) }
-
-            before do
-              allow(FlowcommerceSpree)
-                .to receive_message_chain(:client, :orders, :get_by_number).and_return(flow_order)
-              order.billing_address = nil
-              order.save
-            end
-
-            it 'syncs the billing address and process the order' do
-              result = instance.process
-              expect(result).to be_a(Spree::Order)
-              expect(result.payments.first.state).to be('completed')
-              expect(result.payments.first.response_code).to be('completed')
-              expect(result.billing_address).not_to be(nil)
             end
           end
         end
@@ -296,7 +275,6 @@ RSpec.describe FlowcommerceSpree::Webhooks::CaptureUpsertedV2 do
 end
 
 def expect_no_new_capture_events(order_finalize: true)
-  expect(instance).to receive(:captured_payment).and_return(nil)
   expect_order_finalize(order_finalize: order_finalize)
 
   result = nil

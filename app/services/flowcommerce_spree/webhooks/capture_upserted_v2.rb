@@ -54,21 +54,24 @@ module FlowcommerceSpree
       def map_payment_captures_to_spree(order)
         payments = order.flow_io_payments
         order.flow_data['captures']&.each do |c|
-          return unless c['status'] == 'succeeded'
+          next unless c['status'] == 'succeeded'
 
-          payment = payments.present? ? captured_payment(payments, c) : get_payments_from_flow(order, c)
-          return unless payment
+          payment = map_payment(payments, c, order)
+          next unless payment
 
           payment.capture_events.create!(amount: c['amount'], meta: { 'flow_data' => { 'id' => c['id'] } })
           return if payment.completed? || payment.capture_events.sum(:amount) < payment.amount
 
           payment.complete
         end
-
         return if order.completed?
         return unless order.flow_io_captures_sum >= order.flow_io_total_amount && order.flow_io_balance_amount <= 0
 
         FlowcommerceSpree::OrderUpdater.new(order: order).finalize_order
+      end
+
+      def map_payment(payments, capture, order)
+        payments.present? ? captured_payment(payments, capture) : get_payments_from_flow(order, capture)
       end
 
       def captured_payment(flow_order_payments, capture)
@@ -84,7 +87,8 @@ module FlowcommerceSpree
       end
 
       def get_payments_from_flow(order, capture)
-        flow_io_order ||= FlowcommerceSpree.client.orders.get_by_number(FlowcommerceSpree::ORGANIZATION, order.number).to_hash
+        flow_io_order ||= FlowcommerceSpree.client.orders
+                                           .get_by_number(FlowcommerceSpree::ORGANIZATION, order.number).to_hash
         return unless flow_io_order[:payments]
 
         order.flow_data['order']['payments'] = flow_io_order[:payments]
