@@ -131,12 +131,13 @@ RSpec.describe FlowcommerceSpree::OrderUpdater do
       end
 
       context 'when there is no flow payments information' do
-        it 'does not update order as complete' do
+        it 'does updates order as complete with placeholder payment' do
           allow(order).to(receive(:flow_io_payments).and_return([]))
           allow(order).to(receive(:flow_io_total_amount).and_return(100))
           subject.new(order: order).map_payments_to_spree
 
-          expect(order.complete?).to(be_falsey)
+          expect(order.complete?).to(be_truthy)
+          expect(order.payments.first.response_code).to be(nil)
         end
       end
     end

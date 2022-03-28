@@ -262,6 +262,26 @@ RSpec.describe FlowcommerceSpree::Webhooks::CaptureUpsertedV2 do
               end
             end
           end
+
+          context 'doesnt have flow payments but has placeholder payment' do
+            let(:flow_order) { build(:flow_order) }
+            let(:flow_payment) { build(:flow_order_payment) }
+
+            before do
+              allow(FlowcommerceSpree)
+                .to receive_message_chain(:client, :orders, :get_by_number).and_return(flow_order)
+              order.billing_address = nil
+              order.save
+            end
+
+            it 'syncs the billing address and process the order' do
+              result = instance.process
+              expect(result).to be_a(Spree::Order)
+              expect(result.payments.first.state).to be('completed')
+              expect(result.payments.first.response_code).to be('completed')
+              expect(result.billing_address).not_to be(nil)
+            end
+          end
         end
       end
 
