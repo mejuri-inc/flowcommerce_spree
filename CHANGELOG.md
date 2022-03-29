@@ -1,5 +1,14 @@
 # Changelog
 
+## [v.0.0.20](https://github.com/mejuri-inc/flowcommerce_spree/tree/v.0.0.20) (2022-03-17)
+
+[Full Changelog](https://github.com/mejuri-inc/flowcommerce_spree/compare/v.0.0.19...v.0.0.20)
+
+**Merged pull requests:**
+
+- Preparing the new v0.0.20 release [\#78](https://github.com/mejuri-inc/flowcommerce_spree/pull/78) ([abalpablo](https://github.com/abalpablo))
+- \[DL-758\] - Klarna payments sync [\#77](https://github.com/mejuri-inc/flowcommerce_spree/pull/77) ([abalpablo](https://github.com/abalpablo))
+
 ## [v.0.0.19](https://github.com/mejuri-inc/flowcommerce_spree/tree/v.0.0.19) (2021-11-24)
 
 [Full Changelog](https://github.com/mejuri-inc/flowcommerce_spree/compare/v.0.0.18...v.0.0.19)
