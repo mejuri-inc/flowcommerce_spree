@@ -39,7 +39,7 @@ RSpec.describe Users::SessionsController, type: :controller do
 
           expect(response).to have_http_status(:success)
           expect(Oj.load(response.body))
-            .to eql('checkout_url' => "https://checkout.mejuri.com/tokens/#{checkout_token.id}")
+            .to eql('checkout_url' => "https://checkout.flow.io/tokens/#{checkout_token.id}")
         end
       end
 
