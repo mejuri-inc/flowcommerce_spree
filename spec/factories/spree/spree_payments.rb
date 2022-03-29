@@ -3,6 +3,7 @@
 FactoryBot.define do
   factory :payment, class: Spree::Payment do
     order
+    payment_method { create(:spree_payment_method_flow) }
     response_code { Faker::Guid.guid }
   end
 

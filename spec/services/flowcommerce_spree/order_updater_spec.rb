@@ -86,7 +86,11 @@ RSpec.describe FlowcommerceSpree::OrderUpdater do
     end
 
     describe '#complete_checkout' do
+      let(:payment_method) { create(:spree_payment_method_flow) }
+      let(:order_payment) { create(:payment, :completed) }
       before do
+        order.payments << order_payment
+        allow(Spree::PaymentMethod).to receive(:find_by).and_return(payment_method)
         expect_any_instance_of(FlowcommerceSpree::OrderUpdater).to(receive(:upsert_data))
         expect_any_instance_of(FlowcommerceSpree::OrderUpdater).to(receive(:map_payments_to_spree)).and_call_original
       end
@@ -131,12 +135,13 @@ RSpec.describe FlowcommerceSpree::OrderUpdater do
       end
 
       context 'when there is no flow payments information' do
-        it 'does not update order as complete' do
+        it 'does updates order as complete with placeholder payment' do
           allow(order).to(receive(:flow_io_payments).and_return([]))
           allow(order).to(receive(:flow_io_total_amount).and_return(100))
           subject.new(order: order).map_payments_to_spree
 
-          expect(order.complete?).to(be_falsey)
+          expect(order.complete?).to(be_truthy)
+          expect(order.payments.first.response_code).to be(nil)
         end
       end
     end

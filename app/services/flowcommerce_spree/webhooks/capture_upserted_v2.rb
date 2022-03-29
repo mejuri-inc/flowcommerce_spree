@@ -36,8 +36,7 @@ module FlowcommerceSpree
 
       def store_payment_capture(order, capture)
         upsert_order_captures(order, capture)
-        payments = order.flow_io_payments
-        map_payment_captures_to_spree(order, payments) if payments.present?
+        map_payment_captures_to_spree(order)
         order
       end
 
@@ -52,39 +51,54 @@ module FlowcommerceSpree
         order.update_column(:meta, order.meta.to_json)
       end
 
-      def map_payment_captures_to_spree(order, payments)
+      def map_payment_captures_to_spree(order)
+        payments = order.flow_io_payments
         order.flow_data['captures']&.each do |c|
-          next unless (payment = captured_payment(payments, c, order))
+          next unless c['status'] == 'succeeded'
+
+          payment = map_payment(payments, c, order)
+          next unless payment
 
           payment.capture_events.create!(amount: c['amount'], meta: { 'flow_data' => { 'id' => c['id'] } })
           return if payment.completed? || payment.capture_events.sum(:amount) < payment.amount
 
           payment.complete
         end
-
         return if order.completed?
         return unless order.flow_io_captures_sum >= order.flow_io_total_amount && order.flow_io_balance_amount <= 0
 
         FlowcommerceSpree::OrderUpdater.new(order: order).finalize_order
       end
 
-      def captured_payment(flow_order_payments, capture, order)
-        return unless capture['status'] == 'succeeded'
-        auth = capture.dig('authorization', 'id')
-        payment = order.payments.first
+      def map_payment(payments, capture, order)
+        payments.present? ? captured_payment(payments, capture) : get_payments_from_flow(order, capture)
+      end
 
-        if flow_order_payments.blank? && payment.response_code.blank?
-          payment.response_code = capture.dig('authorization', 'key')
-          payment.identifier = capture.dig('authorization', 'key')
-          payment.save
-          return payment
-        end
+      def captured_payment(flow_order_payments, capture)
+        auth = capture.dig('authorization', 'id')
 
         return unless flow_order_payments&.find { |p| p['reference'] == auth }
 
         return unless (payment = Spree::Payment.find_by(response_code: auth))
 
         return if Spree::PaymentCaptureEvent.where("meta -> 'flow_data' ->> 'id' = ?", capture['id']).exists?
+
+        payment
+      end
+
+      def get_payments_from_flow(order, capture)
+        flow_io_order ||= FlowcommerceSpree.client.orders
+                                           .get_by_number(FlowcommerceSpree::ORGANIZATION, order.number).to_hash
+        return unless flow_io_order[:payments]
+
+        order.flow_data['order']['payments'] = flow_io_order[:payments]
+        attrs_to_update = { meta: order.meta.to_json }
+        attrs_to_update.merge!(order.prepare_flow_addresses)
+        order.update_columns(attrs_to_update)
+        payment = order.payments.first
+        payment.response_code = capture.dig('authorization', 'id')
+        payment.identifier = capture.dig('authorization', 'id')
+        payment.save
 
         payment
       end
