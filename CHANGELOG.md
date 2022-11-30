@@ -1,5 +1,19 @@
 # Changelog
 
+## [v0.0.22](https://github.com/mejuri-inc/flowcommerce_spree/tree/v0.0.22) (2022-11-30)
+
+[Full Changelog](https://github.com/mejuri-inc/flowcommerce_spree/compare/v.0.0.20...v0.0.22)
+
+**Closed issues:**
+
+- The gem version isn't updated internally [\#76](https://github.com/mejuri-inc/flowcommerce_spree/issues/76)
+
+**Merged pull requests:**
+
+- \[UDL-1425\] Updating FlowIo calculator to return nil when calculating taxes [\#81](https://github.com/mejuri-inc/flowcommerce_spree/pull/81) ([sebastiandl](https://github.com/sebastiandl))
+- Preparing the new v0.0.21 release  [\#80](https://github.com/mejuri-inc/flowcommerce_spree/pull/80) ([abalpablo](https://github.com/abalpablo))
+- \[UDL-760\] - Fixed klarna payment sync for flow orders [\#79](https://github.com/mejuri-inc/flowcommerce_spree/pull/79) ([abalpablo](https://github.com/abalpablo))
+
 ## [v.0.0.20](https://github.com/mejuri-inc/flowcommerce_spree/tree/v.0.0.20) (2022-03-17)
 
 [Full Changelog](https://github.com/mejuri-inc/flowcommerce_spree/compare/v.0.0.19...v.0.0.20)
@@ -189,7 +203,7 @@
 
 ## [v0.0.1](https://github.com/mejuri-inc/flowcommerce_spree/tree/v0.0.1) (2021-02-03)
 
-[Full Changelog](https://github.com/mejuri-inc/flowcommerce_spree/compare/8376622c8175de74c6b30ae88b42a35b34b64598...v0.0.1)
+[Full Changelog](https://github.com/mejuri-inc/flowcommerce_spree/compare/b9071fa9cdf3afd5de85ff97de7141cdf5250419...v0.0.1)
 
 **Merged pull requests:**
 
@@ -200,7 +214,6 @@
 - \[TEC-4696\] GitHub action configs [\#9](https://github.com/mejuri-inc/flowcommerce_spree/pull/9) ([sebastiandl](https://github.com/sebastiandl))
 - \[TEC-4667\] product variant model specs [\#8](https://github.com/mejuri-inc/flowcommerce_spree/pull/8) ([sebastiandl](https://github.com/sebastiandl))
 - \[TEC-4657\] Adding basic rspec configuration along with some specs for currentZoneLoader [\#7](https://github.com/mejuri-inc/flowcommerce_spree/pull/7) ([sebastiandl](https://github.com/sebastiandl))
-- Experience, products and order localizations sync by rake tasks and webhooks [\#4](https://github.com/mejuri-inc/flowcommerce_spree/pull/4) ([texpert](https://github.com/texpert))
 
 
 
