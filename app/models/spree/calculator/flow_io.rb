@@ -27,6 +27,8 @@ module Spree
         response.nil? ? 0 : response['rate']&.to_f
       end
 
+      def get_order_tax_amount(_taxable); end
+
       private
 
       def prev_tax_amount(item)
